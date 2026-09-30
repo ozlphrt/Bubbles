@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bubble Coalescence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div id="app-container">
+    <!-- Simulation Canvas -->
+    <canvas id="simCanvas"></canvas>
+
+    <!-- Top Left Objective & Timer Display -->
+    <div class="top-stats-container">
+      <div class="top-stat-group">
+        <span class="stat-mini-label">GOAL</span>
+        <span class="stat-large-val" id="topLeftObjective">140</span>
+      </div>
+      <div class="top-stat-group" id="topTimerGroup">
+        <span class="stat-mini-label">TIME</span>
+        <span class="stat-large-val" id="topTimerVal">--</span>
+      </div>
+    </div>
+
+    <!-- Top Right Level Selector Pulldown -->
+    <div class="top-level-dropdown-container">
+      <select id="topLevelSelect" class="top-level-select" aria-label="Select Level"></select>
+      <svg class="dropdown-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="6 9 12 15 18 9"></polyline>
+      </svg>
+    </div>
+
+    <!-- Sleek Glass Objective Modal -->
+    <div class="modal-overlay hidden" id="modalObjective">
+      <div class="modal-card modal-card-objective">
+        <div class="modal-eyebrow" id="objLevelBadge">LEVEL 1</div>
+        <h2 class="modal-headline" id="objGoalText">Grow Each Color to 140px</h2>
+
+        <div class="modal-color-preview" id="objColorsGrid">
+          <!-- Rendered dynamically: sleek glowing spheres -->
+        </div>
+
+        <button id="btnStartLevel" class="btn-hero-primary">
+          <span>Play</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Minimalist Glass Win Modal -->
+    <div class="modal-overlay hidden" id="modalWin">
+      <div class="modal-card modal-card-win">
+        <div class="star-rating-row" id="winStarRating">
+          <span class="star-glyph" data-star="1">★</span>
+          <span class="star-glyph" data-star="2">★</span>
+          <span class="star-glyph" data-star="3">★</span>
+        </div>
+        
+        <h2 class="modal-headline win-title">Cleared!</h2>
+        
+        <div class="modal-score-simple">
+          <span class="score-lbl">SCORE</span>
+          <strong class="score-digits" id="scoreTotal">0</strong>
+        </div>
+
+        <div class="modal-buttons-grid">
+          <button id="btnReplayWin" class="btn-hero-secondary" title="Replay">↺</button>
+          <button id="btnNextLevel" class="btn-hero-primary win-cta">
+            <span>Next Level</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Minimalist Glass Fail Modal -->
+    <div class="modal-overlay hidden" id="modalFail">
+      <div class="modal-card modal-card-fail">
+        <div class="modal-eyebrow fail-eyebrow">TIME EXPIRED</div>
+        <h2 class="modal-headline fail-title">Try Again</h2>
+        
+        <div class="fail-summary-box" id="failResultsGrid">
+          <!-- Clean minimal color checklist -->
+        </div>
+
+        <button id="btnTryAgain" class="btn-hero-primary danger-btn">
+          <span>Retry</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Floating Live Visual Tuner Widget -->
+    <div class="visual-tuner-card glass-panel" id="visualTunerCard">
+      <div class="tuner-header" id="tunerHeader">
+        <span class="tuner-title">🎨 Color & Lighting</span>
+        <div class="tuner-actions">
+          <button id="btnCopyColors" class="tuner-action-btn" title="Copy color or palette config to clipboard">📋 Copy</button>
+          <button id="btnResetVisuals" class="tuner-action-btn" title="Reset current selection to Defaults">↺ Reset</button>
+          <button id="btnToggleTuner" class="tuner-action-btn" title="Minimize / Expand">▾</button>
+        </div>
+      </div>
+      <div class="tuner-controls" id="tunerControls">
+        <div class="tuner-color-tabs" id="tunerColorTabs">
+          <button class="tuner-tab active" data-color="all"><span class="tab-dot dot-all"></span>All</button>
+          <button class="tuner-tab" data-color="white"><span class="tab-dot dot-white"></span>White</button>
+          <button class="tuner-tab" data-color="green"><span class="tab-dot dot-green"></span>Green</button>
+          <button class="tuner-tab" data-color="red"><span class="tab-dot dot-red"></span>Red</button>
+          <button class="tuner-tab" data-color="orange"><span class="tab-dot dot-orange"></span>Orange</button>
+          <button class="tuner-tab" data-color="purple"><span class="tab-dot dot-purple"></span>Purple</button>
+          <button class="tuner-tab" data-color="cyan"><span class="tab-dot dot-cyan"></span>Cyan</button>
+        </div>
+        <div class="tuner-row" id="tunerBaseColorRow">
+          <div class="tuner-label-row">
+            <span class="tuner-lbl">Base Color</span>
+            <div class="color-picker-wrapper">
+              <span class="tuner-val tuner-hex clickable-hex" id="valBaseColor" title="Click to copy hex">#38bdf8</span>
+              <input type="color" id="pickerBaseColor" value="#38bdf8" class="tuner-color-picker">
+            </div>
+          </div>
+        </div>
+        <div class="tuner-row">
+          <div class="tuner-label-row">
+            <span class="tuner-lbl">Saturation</span>
+            <span class="tuner-val" id="valSaturation">100%</span>
+          </div>
+          <input type="range" id="sliderSaturation" min="0" max="250" step="1" value="100" class="tuner-slider">
+        </div>
+        <div class="tuner-row">
+          <div class="tuner-label-row">
+            <span class="tuner-lbl">Hue Shift</span>
+            <span class="tuner-val" id="valHue">0°</span>
+          </div>
+          <input type="range" id="sliderHue" min="-180" max="180" step="1" value="0" class="tuner-slider">
+        </div>
+        <div class="tuner-row">
+          <div class="tuner-label-row">
+            <span class="tuner-lbl">Exposure</span>
+            <span class="tuner-val" id="valExposure">100%</span>
+          </div>
+          <input type="range" id="sliderExposure" min="30" max="200" step="1" value="100" class="tuner-slider">
+        </div>
+      </div>
+    </div>
+
+    <!-- Sandbox Settings Drawer -->
+    <aside class="side-drawer glass-panel" id="sideDrawer">
+      <div class="drawer-header">
+        <h2>Settings & Levels</h2>
+        <button id="btnCloseDrawer" class="icon-btn-sm" aria-label="Close">✕</button>
+      </div>
+
+      <div class="drawer-body">
+        <section class="control-section">
+          <h3>Select Level</h3>
+          <div class="level-jump-grid" id="levelJumpGrid"></div>
+        </section>
+
+        <section class="control-section">
+          <h3>Interaction Mode</h3>
+          <div class="tool-grid">
+            <button class="tool-pill active" data-mode="spawn"><span>🫧 Spawn</span></button>
+            <button class="tool-pill" data-mode="force"><span>🌀 Swirl</span></button>
+            <button class="tool-pill" data-mode="attract"><span>🧲 Attract</span></button>
+            <button class="tool-pill" data-mode="pop"><span>✂️ Burst</span></button>
+          </div>
+        </section>
+
+        <section class="control-section">
+          <h3>Visual Theme</h3>
+          <div class="preset-grid">
+            <button class="preset-card active" data-theme="soap"><span class="preset-preview theme-soap"></span><span>Iridescent Soap</span></button>
+            <button class="preset-card" data-theme="neon"><span class="preset-preview theme-neon"></span><span>Cyber Glow</span></button>
+            <button class="preset-card" data-theme="biolum"><span class="preset-preview theme-biolum"></span><span>Abyssal Deep</span></button>
+            <button class="preset-card" data-theme="lava"><span class="preset-preview theme-lava"></span><span>Molten Ember</span></button>
+            <button class="preset-card" data-theme="mercury"><span class="preset-preview theme-mercury"></span><span>Liquid Chrome</span></button>
+          </div>
+        </section>
+
+        <section class="control-section">
+          <h3>Live Physics Stats</h3>
+          <div class="drawer-stats-grid">
+            <div class="stat-card"><span class="stat-label">Bubbles</span><span class="stat-val" id="statBubbleCount">0</span></div>
+            <div class="stat-card"><span class="stat-label">Merges</span><span class="stat-val" id="statMergeCount">0</span></div>
+            <div class="stat-card"><span class="stat-label">Largest Ø</span><span class="stat-val" id="statMaxRadius">0px</span></div>
+            <div class="stat-card"><span class="stat-label">FPS</span><span class="stat-val" id="statFPS">60</span></div>
+          </div>
+        </section>
+
+        <section class="control-section">
+          <h3>Physics Tuning</h3>
+          <div class="slider-group">
+            <div class="slider-label-row">
+              <label for="sliderSurfaceTension">Surface Tension (&gamma;)</label>
+              <span class="slider-val" id="valSurfaceTension">0.95</span>
+            </div>
+            <input type="range" id="sliderSurfaceTension" min="0.10" max="1.0" step="0.01" value="0.95">
+          </div>
+          <div class="slider-group">
+            <div class="slider-label-row">
+              <label for="sliderGravity">Gravity (g)</label>
+              <span class="slider-val" id="valGravity">0.48</span>
+            </div>
+            <input type="range" id="sliderGravity" min="0.05" max="1.20" step="0.01" value="0.48">
+          </div>
+          <div class="slider-group">
+            <div class="slider-label-row">
+              <label for="sliderElasticity">Restitution</label>
+              <span class="slider-val" id="valElasticity">0.72</span>
+            </div>
+            <input type="range" id="sliderElasticity" min="0.10" max="0.95" step="0.02" value="0.72">
+          </div>
+        </section>
+      </div>
+    </aside>
+  </div>
+
+  <script type="module" src="/main.js"></script>
+</body>
+</html>
