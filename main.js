@@ -340,9 +340,9 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Floating Live Visual Tuner Controls
-  const visualTunerCard = document.getElementById('visualTunerCard');
-  const btnToggleTuner = document.getElementById('btnToggleTuner');
+  // Settings Drawer Color Tuner Controls
+  const btnToggleColorControls = document.getElementById('btnToggleColorControls');
+  const drawerTunerControls = document.getElementById('drawerTunerControls');
   const btnResetVisuals = document.getElementById('btnResetVisuals');
   const btnCopyColors = document.getElementById('btnCopyColors');
   const tunerColorTabs = document.querySelectorAll('.tuner-tab');
@@ -515,10 +515,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
   syncTunerSlidersFromColor(activeTunerColor);
 
-  if (btnToggleTuner && visualTunerCard) {
-    btnToggleTuner.addEventListener('click', () => {
-      const isMin = visualTunerCard.classList.toggle('minimized');
-      btnToggleTuner.textContent = isMin ? '▴' : '▾';
+  if (btnToggleColorControls && drawerTunerControls) {
+    btnToggleColorControls.addEventListener('click', () => {
+      const isHidden = drawerTunerControls.classList.toggle('hidden');
+      btnToggleColorControls.setAttribute('aria-expanded', !isHidden);
+      const icon = btnToggleColorControls.querySelector('.toggle-icon');
+      if (icon) icon.textContent = isHidden ? '▸' : '▾';
     });
   }
 

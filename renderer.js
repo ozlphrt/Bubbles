@@ -29,9 +29,11 @@ export class Renderer {
       green:  { saturation: 1.0, hueShift: 0, exposure: 1.0 },
       red:    { saturation: 1.0, hueShift: 0, exposure: 1.0 },
       orange: { saturation: 1.0, hueShift: 0, exposure: 1.0 },
-      purple: { saturation: 1.0, hueShift: 0, exposure: 1.0 },
+      purple: { saturation: 1.0, hueShift: 0, exposure: 0.75 },
       cyan:   { saturation: 1.0, hueShift: 0, exposure: 1.0 }
     };
+
+    this.defaultColorAdjustments = JSON.parse(JSON.stringify(this.colorAdjustments));
 
     this.initBackgroundStars();
   }
@@ -59,13 +61,11 @@ export class Renderer {
 
   resetColorAdjustment(colorKey) {
     if (colorKey === 'all') {
-      for (const k in this.colorAdjustments) {
-        this.colorAdjustments[k] = { saturation: 1.0, hueShift: 0, exposure: 1.0 };
-      }
+      this.colorAdjustments = JSON.parse(JSON.stringify(this.defaultColorAdjustments));
       this.baseColors = { ...this.defaultBaseColors };
     } else {
-      if (this.colorAdjustments[colorKey]) {
-        this.colorAdjustments[colorKey] = { saturation: 1.0, hueShift: 0, exposure: 1.0 };
+      if (this.defaultColorAdjustments[colorKey]) {
+        this.colorAdjustments[colorKey] = { ...this.defaultColorAdjustments[colorKey] };
       }
       if (this.defaultBaseColors[colorKey]) {
         this.baseColors[colorKey] = this.defaultBaseColors[colorKey];

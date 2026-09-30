@@ -138,14 +138,50 @@ html, body {
   50% { transform: scale(1.06); }
 }
 
-/* Top Right Level Selector Pulldown */
-.top-level-dropdown-container {
+/* Top Right Controls (Level Selector & Settings Button) */
+.top-controls-container {
   position: absolute;
   top: 22px;
   right: 28px;
   display: flex;
   align-items: center;
+  gap: 10px;
   z-index: 20;
+}
+
+.top-level-dropdown-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.top-settings-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(15, 23, 42, 0.78);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--border-glass-subtle);
+  border-radius: var(--radius-full);
+  color: #94a3b8;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  transition: all var(--transition-fast);
+}
+
+.top-settings-btn:hover {
+  background: rgba(30, 41, 59, 0.95);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #38bdf8;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55), 0 0 16px rgba(56, 189, 248, 0.35);
+  transform: rotate(45deg);
+}
+
+.top-settings-btn:active {
+  transform: scale(0.94) rotate(45deg);
 }
 
 .top-level-select {
@@ -867,50 +903,59 @@ input[type="range"]::-webkit-slider-thumb {
 
 /* =========================================================
    FLOATING LIVE VISUAL TUNER CARD
+/* =========================================================
+   SETTINGS DRAWER COLOR TUNER CONTROLS (COLLAPSIBLE / HIDDEN BY DEFAULT)
    ========================================================= */
-.visual-tuner-card {
-  position: absolute;
-  bottom: 22px;
-  right: 24px;
-  width: 300px;
-  border-radius: var(--radius-lg);
-  padding: 14px 16px;
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.15);
-  z-index: 25;
-  transition: all var(--transition-spring);
-}
-
-.visual-tuner-card.minimized .tuner-controls {
-  display: none;
-}
-
-.visual-tuner-card.minimized {
-  padding: 10px 14px;
-}
-
-.tuner-header {
+.section-toggle-btn {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.visual-tuner-card.minimized .tuner-header {
-  margin-bottom: 0;
-}
-
-.tuner-title {
-  font-family: var(--font-sans);
-  font-size: 0.84rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
   color: #f1f5f9;
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
 }
 
-.tuner-actions {
+.section-toggle-btn:hover {
+  background: rgba(56, 189, 248, 0.12);
+  border-color: rgba(56, 189, 248, 0.40);
+  color: #38bdf8;
+}
+
+.section-toggle-btn .toggle-title {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
+}
+
+.section-toggle-btn .toggle-icon {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  transition: transform var(--transition-fast);
+}
+
+.drawer-tuner-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  margin-top: 6px;
+}
+
+.drawer-tuner-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
 }
 
 .tuner-action-btn {

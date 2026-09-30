@@ -26,12 +26,20 @@
       </div>
     </div>
 
-    <!-- Top Right Level Selector Pulldown -->
-    <div class="top-level-dropdown-container">
-      <select id="topLevelSelect" class="top-level-select" aria-label="Select Level"></select>
-      <svg class="dropdown-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="6 9 12 15 18 9"></polyline>
-      </svg>
+    <!-- Top Right Controls (Settings Button) -->
+    <div class="top-controls-container">
+      <div class="top-level-dropdown-container hidden">
+        <select id="topLevelSelect" class="top-level-select" aria-label="Select Level"></select>
+        <svg class="dropdown-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </div>
+      <button id="btnToggleControls" class="top-settings-btn" title="Settings & Tuning" aria-label="Settings">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </button>
     </div>
 
     <!-- Sleek Glass Objective Modal -->
@@ -91,59 +99,6 @@
       </div>
     </div>
 
-    <!-- Floating Live Visual Tuner Widget -->
-    <div class="visual-tuner-card glass-panel" id="visualTunerCard">
-      <div class="tuner-header" id="tunerHeader">
-        <span class="tuner-title">🎨 Color & Lighting</span>
-        <div class="tuner-actions">
-          <button id="btnCopyColors" class="tuner-action-btn" title="Copy color or palette config to clipboard">📋 Copy</button>
-          <button id="btnResetVisuals" class="tuner-action-btn" title="Reset current selection to Defaults">↺ Reset</button>
-          <button id="btnToggleTuner" class="tuner-action-btn" title="Minimize / Expand">▾</button>
-        </div>
-      </div>
-      <div class="tuner-controls" id="tunerControls">
-        <div class="tuner-color-tabs" id="tunerColorTabs">
-          <button class="tuner-tab active" data-color="all"><span class="tab-dot dot-all"></span>All</button>
-          <button class="tuner-tab" data-color="white"><span class="tab-dot dot-white"></span>White</button>
-          <button class="tuner-tab" data-color="green"><span class="tab-dot dot-green"></span>Green</button>
-          <button class="tuner-tab" data-color="red"><span class="tab-dot dot-red"></span>Red</button>
-          <button class="tuner-tab" data-color="orange"><span class="tab-dot dot-orange"></span>Orange</button>
-          <button class="tuner-tab" data-color="purple"><span class="tab-dot dot-purple"></span>Purple</button>
-          <button class="tuner-tab" data-color="cyan"><span class="tab-dot dot-cyan"></span>Cyan</button>
-        </div>
-        <div class="tuner-row" id="tunerBaseColorRow">
-          <div class="tuner-label-row">
-            <span class="tuner-lbl">Base Color</span>
-            <div class="color-picker-wrapper">
-              <span class="tuner-val tuner-hex clickable-hex" id="valBaseColor" title="Click to copy hex">#38bdf8</span>
-              <input type="color" id="pickerBaseColor" value="#38bdf8" class="tuner-color-picker">
-            </div>
-          </div>
-        </div>
-        <div class="tuner-row">
-          <div class="tuner-label-row">
-            <span class="tuner-lbl">Saturation</span>
-            <span class="tuner-val" id="valSaturation">100%</span>
-          </div>
-          <input type="range" id="sliderSaturation" min="0" max="250" step="1" value="100" class="tuner-slider">
-        </div>
-        <div class="tuner-row">
-          <div class="tuner-label-row">
-            <span class="tuner-lbl">Hue Shift</span>
-            <span class="tuner-val" id="valHue">0°</span>
-          </div>
-          <input type="range" id="sliderHue" min="-180" max="180" step="1" value="0" class="tuner-slider">
-        </div>
-        <div class="tuner-row">
-          <div class="tuner-label-row">
-            <span class="tuner-lbl">Exposure</span>
-            <span class="tuner-val" id="valExposure">100%</span>
-          </div>
-          <input type="range" id="sliderExposure" min="30" max="200" step="1" value="100" class="tuner-slider">
-        </div>
-      </div>
-    </div>
-
     <!-- Sandbox Settings Drawer -->
     <aside class="side-drawer glass-panel" id="sideDrawer">
       <div class="drawer-header">
@@ -152,6 +107,65 @@
       </div>
 
       <div class="drawer-body">
+        <!-- Collapsible Color & Lighting Tuning Section (Hidden by Default) -->
+        <section class="control-section">
+          <button type="button" class="section-toggle-btn" id="btnToggleColorControls" aria-expanded="false">
+            <span class="toggle-title">🎨 Color Controls</span>
+            <span class="toggle-icon">▸</span>
+          </button>
+          
+          <div class="drawer-tuner-controls hidden" id="drawerTunerControls">
+            <div class="drawer-tuner-actions">
+              <button id="btnCopyColors" class="tuner-action-btn" title="Copy color or palette config to clipboard">📋 Copy Config</button>
+              <button id="btnResetVisuals" class="tuner-action-btn" title="Reset current selection to Defaults">↺ Reset</button>
+            </div>
+
+            <div class="tuner-color-tabs" id="tunerColorTabs">
+              <button class="tuner-tab active" data-color="all"><span class="tab-dot dot-all"></span>All</button>
+              <button class="tuner-tab" data-color="white"><span class="tab-dot dot-white"></span>White</button>
+              <button class="tuner-tab" data-color="green"><span class="tab-dot dot-green"></span>Green</button>
+              <button class="tuner-tab" data-color="red"><span class="tab-dot dot-red"></span>Red</button>
+              <button class="tuner-tab" data-color="orange"><span class="tab-dot dot-orange"></span>Orange</button>
+              <button class="tuner-tab" data-color="purple"><span class="tab-dot dot-purple"></span>Purple</button>
+              <button class="tuner-tab" data-color="cyan"><span class="tab-dot dot-cyan"></span>Cyan</button>
+            </div>
+
+            <div class="tuner-row" id="tunerBaseColorRow">
+              <div class="tuner-label-row">
+                <span class="tuner-lbl">Base Color</span>
+                <div class="color-picker-wrapper">
+                  <span class="tuner-val tuner-hex clickable-hex" id="valBaseColor" title="Click to copy hex">#38bdf8</span>
+                  <input type="color" id="pickerBaseColor" value="#38bdf8" class="tuner-color-picker">
+                </div>
+              </div>
+            </div>
+
+            <div class="tuner-row">
+              <div class="tuner-label-row">
+                <span class="tuner-lbl">Saturation</span>
+                <span class="tuner-val" id="valSaturation">100%</span>
+              </div>
+              <input type="range" id="sliderSaturation" min="0" max="250" step="1" value="100" class="tuner-slider">
+            </div>
+
+            <div class="tuner-row">
+              <div class="tuner-label-row">
+                <span class="tuner-lbl">Hue Shift</span>
+                <span class="tuner-val" id="valHue">0°</span>
+              </div>
+              <input type="range" id="sliderHue" min="-180" max="180" step="1" value="0" class="tuner-slider">
+            </div>
+
+            <div class="tuner-row">
+              <div class="tuner-label-row">
+                <span class="tuner-lbl">Exposure</span>
+                <span class="tuner-val" id="valExposure">100%</span>
+              </div>
+              <input type="range" id="sliderExposure" min="30" max="200" step="1" value="100" class="tuner-slider">
+            </div>
+          </div>
+        </section>
+
         <section class="control-section">
           <h3>Select Level</h3>
           <div class="level-jump-grid" id="levelJumpGrid"></div>
