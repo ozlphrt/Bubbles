@@ -6,54 +6,79 @@
 
 import { soundEngine } from './audio.js';
 
-export class ParticleShockwave {
-  constructor(x, y, radius, color) {
+export class BurstParticle {
+  constructor(x, y, vx, vy, size, color, glowColor, type = 'droplet') {
     this.x = x;
     this.y = y;
-    this.radius = radius * 0.7;
-    this.maxRadius = radius * 1.85 + 24;
-    this.color = color || 'rgba(255, 255, 255, 0.9)';
-    this.life = 1.0;
-    this.decay = 0.045;
-  }
-
-  update() {
-    this.radius += (this.maxRadius - this.radius) * 0.22;
-    this.life -= this.decay;
-    return this.life > 0;
-  }
-}
-
-export class SplashDroplet {
-  constructor(x, y, vx, vy, radius, color) {
-    this.x = x;
-    this.y = y;
+    this.prevX = x;
+    this.prevY = y;
     this.vx = vx;
     this.vy = vy;
-    this.radius = radius;
+    this.size = size;
     this.color = color;
+    this.glowColor = glowColor || color;
+    this.type = type; // 'spark', 'star', 'droplet', 'fizz'
     this.life = 1.0;
-    this.decay = 0.03 + Math.random() * 0.03;
+    this.maxLife = 1.0;
+    this.rotation = Math.random() * Math.PI * 2;
+    this.rotSpeed = (Math.random() - 0.5) * 0.3;
+    this.twinklePhase = Math.random() * Math.PI * 2;
+    this.decay = type === 'spark' ? (0.065 + Math.random() * 0.035) : (0.052 + Math.random() * 0.025);
+    this.drag = type === 'spark' ? 0.08 : (type === 'fizz' ? 0.04 : 0.055);
+    this.gravityScale = type === 'fizz' ? -0.25 : (type === 'star' ? 0.10 : 0.35);
   }
 
-  update(gravity, drag) {
-    this.vy += gravity * 0.6;
-    this.vx *= (1 - drag);
-    this.vy *= (1 - drag);
+  update(gravity, baseDrag = 0.02) {
+    this.prevX = this.x;
+    this.prevY = this.y;
+
+    this.vy += gravity * this.gravityScale;
+    const totalDrag = Math.min(0.25, baseDrag + this.drag);
+    this.vx *= (1 - totalDrag);
+    this.vy *= (1 - totalDrag);
+
     this.x += this.vx;
     this.y += this.vy;
+
+    this.rotation += this.rotSpeed;
+    this.twinklePhase += 0.18;
     this.life -= this.decay;
+
     return this.life > 0;
   }
 }
 
 export const BUBBLE_COLORS = [
-  { id: 'white',  name: 'White',  hue: 0,   isWhite: true },
-  { id: 'green',  name: 'Green',  hue: 140, isWhite: false },
-  { id: 'red',    name: 'Red',    hue: 0,   isWhite: false },
-  { id: 'orange', name: 'Orange', hue: 40,  isWhite: false },
-  { id: 'purple', name: 'Purple', hue: 270, isWhite: false },
-  { id: 'cyan',   name: 'Cyan',   hue: 195, isWhite: false }
+  { 
+    id: 'white',  name: 'Pearl',    hue: 0,   isWhite: true,
+    elasticity: 0.88, massFactor: 0.90, friction: 0.010, wobbleFreq: 0.20,
+    shininess: 1.00, reflectivity: 0.95, smoothness: 0.96
+  },
+  { 
+    id: 'cyan',   name: 'Sapphire', hue: 200, isWhite: false,
+    elasticity: 0.85, massFactor: 0.95, friction: 0.012, wobbleFreq: 0.18,
+    shininess: 0.94, reflectivity: 0.88, smoothness: 0.92
+  },
+  { 
+    id: 'red',    name: 'Ruby',     hue: 345, isWhite: false,
+    elasticity: 0.78, massFactor: 1.00, friction: 0.014, wobbleFreq: 0.16,
+    shininess: 0.90, reflectivity: 0.92, smoothness: 0.86
+  },
+  { 
+    id: 'purple', name: 'Amethyst', hue: 265, isWhite: false,
+    elasticity: 0.72, massFactor: 1.05, friction: 0.016, wobbleFreq: 0.15,
+    shininess: 0.85, reflectivity: 0.80, smoothness: 0.82
+  },
+  { 
+    id: 'orange', name: 'Amber',    hue: 35,  isWhite: false,
+    elasticity: 0.62, massFactor: 1.10, friction: 0.022, wobbleFreq: 0.12,
+    shininess: 0.78, reflectivity: 0.72, smoothness: 0.72
+  },
+  { 
+    id: 'green',  name: 'Emerald',  hue: 160, isWhite: false,
+    elasticity: 0.65, massFactor: 1.15, friction: 0.020, wobbleFreq: 0.13,
+    shininess: 0.72, reflectivity: 0.66, smoothness: 0.68
+  }
 ];
 
 export class Bubble {
@@ -65,18 +90,6 @@ export class Bubble {
     this.vy = vy;
     this.radius = radius;
     this.targetRadius = radius;
-    this.mass = Math.max(0.2, Math.pow(radius / 22, 2)); // Normalized mass (standard bubble ~ 1.0)
-
-    // Rayleigh oscillation harmonics (wobble modes)
-    this.wobble = 0.0;
-    this.wobbleFreq = 0.15;
-    this.wobblePhase = Math.random() * Math.PI * 2;
-    this.wobbleDecay = 0.94;
-    this.wobbleAngle = Math.random() * Math.PI * 2;
-
-    // Secondary mode (triangular/octupole distortion)
-    this.wobbleMode3 = 0.0;
-    this.wobblePhase3 = Math.random() * Math.PI * 2;
 
     // Color Resolution (supports ID string, number index, or active color list)
     let c = null;
@@ -99,6 +112,28 @@ export class Bubble {
     this.colorId = c.id;
     this.hue = c.hue;
     this.isWhite = c.isWhite;
+
+    // Distinct Gemstone Material Physics Traits per Color
+    this.elasticity = c.elasticity !== undefined ? c.elasticity : 0.72;
+    this.friction = c.friction !== undefined ? c.friction : 0.016;
+    this.wobbleFreq = c.wobbleFreq !== undefined ? c.wobbleFreq : 0.15;
+    this.shininess = c.shininess !== undefined ? c.shininess : 0.85;
+    this.reflectivity = c.reflectivity !== undefined ? c.reflectivity : 0.80;
+    this.smoothness = c.smoothness !== undefined ? c.smoothness : 0.80;
+
+    // Mass adjusted slightly by gemstone mineral density
+    const density = c.massFactor || 1.0;
+    this.mass = Math.max(0.2, Math.pow(radius / 22, 2) * density);
+
+    // Rayleigh oscillation harmonics (wobble modes)
+    this.wobble = 0.0;
+    this.wobblePhase = Math.random() * Math.PI * 2;
+    this.wobbleDecay = 0.94;
+    this.wobbleAngle = Math.random() * Math.PI * 2;
+
+    // Secondary mode (triangular/octupole distortion)
+    this.wobbleMode3 = 0.0;
+    this.wobblePhase3 = Math.random() * Math.PI * 2;
 
     this.filmPhase = Math.random() * 100;
     this.highlightAngle = -Math.PI / 4;
@@ -125,28 +160,32 @@ export class Bubble {
   update(config, width, height) {
     this.age += 1;
 
-    // Smooth elastic recovery from scale pulse and merge flash
+    // Smooth, snappy elastic recovery from scale pulse and merge flash
     if (this.scalePulse > 1.002) {
-      this.scalePulse += (1.0 - this.scalePulse) * 0.15;
+      this.scalePulse += (1.0 - this.scalePulse) * 0.32;
     } else {
       this.scalePulse = 1.0;
     }
     if (this.flashLife > 0.01) {
-      this.flashLife -= 0.055;
+      this.flashLife -= 0.12;
     } else {
       this.flashLife = 0;
     }
 
-    // Laplace flexibility: Balanced surface tension for natural spherical resilience
+    // Laplace surface tension rigidity:
+    // Young-Laplace Law: ΔP = 2γ / R.
+    // Small bubbles have high internal Laplace pressure -> extremely rigid, spherical, and deformation-resistant.
+    // Large bubbles have low Laplace pressure -> compliant, soft, deforming easily under contact and gravity.
     const gamma = Math.max(0.1, config.surfaceTension);
-    this.flexibility = Math.min(1.0, Math.max(0.2, Math.pow(this.radius / 28, 1.2) / gamma));
+    this.flexibility = Math.min(1.0, Math.max(0.04, Math.pow(Math.max(0, this.radius - 12) / 38, 1.6) / gamma));
 
     // Fluid forces: Gravity + Air Current + Drag
     this.vy += config.gravity;
     this.vx += config.wind;
 
-    // Responsive fluid air drag
-    const dragForce = Math.min(0.06, config.viscosity * (1 + this.radius * 0.015));
+    // Responsive fluid air drag incorporating surface smoothness/friction
+    const baseDrag = this.friction !== undefined ? this.friction : config.viscosity;
+    const dragForce = Math.min(0.06, baseDrag * (1 + this.radius * 0.015));
     this.vx *= (1 - dragForce);
     this.vy *= (1 - dragForce);
 
@@ -165,7 +204,8 @@ export class Bubble {
     // Radius smoothing when merging
     if (this.radius !== this.targetRadius) {
       this.radius += (this.targetRadius - this.radius) * 0.25;
-      this.mass = Math.max(0.2, Math.pow(this.radius / 22, 2));
+      const density = this.massFactor || 1.0;
+      this.mass = Math.max(0.2, Math.pow(this.radius / 22, 2) * density);
     }
 
     // Steady load squish based on floor proximity and weight on top
@@ -224,7 +264,8 @@ export class Bubble {
   }
 
   exciteWobble(amount, angle) {
-    this.wobble = Math.min(0.6, this.wobble + amount * 0.35);
+    const scale = (this.flexibility !== undefined) ? this.flexibility : 1.0;
+    this.wobble = Math.min(0.6, this.wobble + amount * 0.35 * scale);
     if (angle !== undefined) {
       this.wobbleAngle = angle;
     }
@@ -241,6 +282,7 @@ export class PhysicsEngine {
     this.lastWeberMetric = 0.35;
     this.activeColors = ['white', 'green', 'red', 'orange'];
     this.shrinkPhaseActive = false;
+    this.onMerge = null;
 
     this.config = {
       surfaceTension: 0.95,   // Ultra-high surface tension barrier (stable foam & resilient bouncing)
@@ -253,8 +295,8 @@ export class PhysicsEngine {
       wind: 0.0,              // Horizontal current
       autoRain: true,         // Continuous spawn
       autoMerge: true,        // Coalescence enabled with color affinity
-      spawnRate: 7,           // Bubbles per second
-      sizeVariance: 24,       // Radius baseline
+      spawnRate: 5,           // Bubbles per second (clear, enjoyable drop rhythm)
+      sizeVariance: 20,       // Radius baseline (starts 14-34px)
       popLimit: true,         // Pop when oversized
       maxBubbleRadius: 100    // Max diameter Ø200px (bursts beyond this threshold)
     };
@@ -282,14 +324,97 @@ export class PhysicsEngine {
     }
   }
 
-  createSplashDroplets(x, y, count = 6, color = 'rgba(186, 230, 253, 0.65)') {
-    for (let i = 0; i < count; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const speed = 1.2 + Math.random() * 2.5;
+  createMergeBurst(b1, b2, newX, newY, newRadius, colorId, hue, isWhite) {
+    let baseColor = 'rgba(255, 255, 255, 0.95)';
+    let glowColor = 'rgba(255, 255, 255, 0.85)';
+    let sparkColor = '#ffffff';
+
+    if (!isWhite) {
+      if (colorId === 'green' || (hue >= 100 && hue <= 169)) {
+        baseColor = 'rgba(16, 185, 129, 0.90)';
+        glowColor = 'rgba(5, 150, 105, 0.85)';
+        sparkColor = '#6ee7b7';
+      } else if (colorId === 'red' || (hue >= 320 || hue <= 14)) {
+        baseColor = 'rgba(225, 29, 72, 0.90)';
+        glowColor = 'rgba(190, 18, 60, 0.85)';
+        sparkColor = '#fda4af';
+      } else if (colorId === 'orange' || (hue >= 15 && hue <= 80)) {
+        baseColor = 'rgba(217, 119, 6, 0.90)';
+        glowColor = 'rgba(180, 83, 9, 0.85)';
+        sparkColor = '#fde68a';
+      } else if (colorId === 'purple' || (hue >= 240 && hue <= 300)) {
+        baseColor = 'rgba(124, 58, 237, 0.90)';
+        glowColor = 'rgba(109, 40, 217, 0.85)';
+        sparkColor = '#c4b5fd';
+      } else if (colorId === 'cyan' || (hue >= 170 && hue <= 230)) {
+        baseColor = 'rgba(2, 132, 199, 0.90)';
+        glowColor = 'rgba(3, 105, 161, 0.85)';
+        sparkColor = '#7dd3fc';
+      }
+    }
+
+    let contactAngle = Math.random() * Math.PI * 2;
+    if (b1 && b2 && b1.x !== undefined && b2.x !== undefined) {
+      contactAngle = Math.atan2(b2.y - b1.y, b2.x - b1.x);
+    }
+
+    const totalCount = Math.min(22, Math.max(12, Math.floor(10 + newRadius * 0.18)));
+
+    // 1. Tangential Contact Seam Sparks (shooting outward perpendicular to impact line)
+    const seamCount = Math.floor(totalCount * 0.35);
+    for (let i = 0; i < seamCount; i++) {
+      const side = (i % 2 === 0) ? 1 : -1;
+      const angle = contactAngle + (side * Math.PI * 0.5) + (Math.random() - 0.5) * 0.6;
+      const spawnOffset = newRadius * (0.65 + Math.random() * 0.35);
+      const spawnX = newX + Math.cos(angle) * spawnOffset;
+      const spawnY = newY + Math.sin(angle) * spawnOffset;
+      const speed = 4.5 + Math.random() * 5.2 + (newRadius * 0.04);
       const vx = Math.cos(angle) * speed;
       const vy = Math.sin(angle) * speed;
-      const rad = 1.5 + Math.random() * 2.0;
-      this.droplets.push(new SplashDroplet(x, y, vx, vy, rad, color));
+      const size = 2.4 + Math.random() * 2.6;
+      this.droplets.push(new BurstParticle(spawnX, spawnY, vx, vy, size, sparkColor, glowColor, 'spark'));
+    }
+
+    // 2. Full 360-degree Radial Perimeter Fireworks
+    const radialCount = Math.floor(totalCount * 0.35);
+    for (let i = 0; i < radialCount; i++) {
+      const angle = (i / radialCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.3;
+      const spawnDist = newRadius * (0.80 + Math.random() * 0.35);
+      const spawnX = newX + Math.cos(angle) * spawnDist;
+      const spawnY = newY + Math.sin(angle) * spawnDist;
+      const speed = 3.5 + Math.random() * 4.8;
+      const vx = Math.cos(angle) * speed;
+      const vy = Math.sin(angle) * speed;
+      const size = 2.6 + Math.random() * 3.0;
+      const type = (i % 2 === 0) ? 'star' : 'spark';
+      this.droplets.push(new BurstParticle(spawnX, spawnY, vx, vy, size, (type === 'star' ? '#ffffff' : sparkColor), glowColor, type));
+    }
+
+    // 3. Floating Fizz & Glowing Bubble Droplets
+    const orbCount = Math.floor(totalCount * 0.30);
+    for (let i = 0; i < orbCount; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const spawnDist = newRadius * (0.75 + Math.random() * 0.45);
+      const spawnX = newX + Math.cos(angle) * spawnDist;
+      const spawnY = newY + Math.sin(angle) * spawnDist;
+      const speed = 1.2 + Math.random() * 2.8;
+      const vx = Math.cos(angle) * speed;
+      const vy = Math.sin(angle) * speed - 0.6;
+      const size = 2.6 + Math.random() * 3.2;
+      const type = (i % 2 === 0) ? 'droplet' : 'fizz';
+      this.droplets.push(new BurstParticle(spawnX, spawnY, vx, vy, size, baseColor, glowColor, type));
+    }
+  }
+
+  createSplashDroplets(x, y, count = 10, color = 'rgba(186, 230, 253, 0.85)') {
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 1.8 + Math.random() * 3.5;
+      const vx = Math.cos(angle) * speed;
+      const vy = Math.sin(angle) * speed;
+      const rad = 1.6 + Math.random() * 2.4;
+      const type = (i % 3 === 0) ? 'star' : ((i % 3 === 1) ? 'spark' : 'droplet');
+      this.droplets.push(new BurstParticle(x, y, vx, vy, rad, color, color, type));
     }
   }
 
@@ -345,8 +470,7 @@ export class PhysicsEngine {
     }
 
     this.burstCount++;
-    const dropletColor = b.isWhite ? 'rgba(203, 213, 225, 0.65)' : `hsla(${b.hue || 195}, 65%, 52%, 0.65)`;
-    this.createSplashDroplets(b.x, b.y, Math.min(16, Math.max(6, Math.floor(b.radius / 2.5))), dropletColor);
+    this.createMergeBurst(null, null, b.x, b.y, b.radius, b.colorId, b.hue, b.isWhite);
     
     if (soundEngine) {
       soundEngine.playPop(b.radius);
@@ -446,11 +570,14 @@ export class PhysicsEngine {
     for (let i = 0; i < this.bubbles.length; i++) {
       this.bubbles[i].update(this.config, width, height);
 
-      if (this.config.popLimit && this.bubbles[i].radius >= this.config.maxBubbleRadius) {
+      if (this.config.popLimit && this.bubbles[i].radius >= this.config.maxBubbleRadius && !this.bubbles[i].mergeState) {
         this.popBubble(i);
         i--;
       }
     }
+
+    // Clean up finished merged bubbles
+    this.bubbles = this.bubbles.filter(b => !b.isDead);
 
     // Multi-pass constraint solver for crisp non-penetration stability
     for (let iter = 0; iter < 4; iter++) {
@@ -481,12 +608,23 @@ export class PhysicsEngine {
 
     for (let i = 0; i < len; i++) {
       const b1 = bubbles[i];
+      if (b1.isDead) continue;
+
       for (let j = i + 1; j < len; j++) {
         const b2 = bubbles[j];
+        if (b2.isDead) continue;
+
+        // Skip collision separation if these two bubbles are actively fusing into each other
+        if (b1.mergeState || b2.mergeState) {
+          if ((b1.mergeState && b1.mergeState.partner === b2) || (b2.mergeState && b2.mergeState.partner === b1)) {
+            continue;
+          }
+        }
+
         const dx = b2.x - b1.x;
         const dy = b2.y - b1.y;
         const distSq = dx * dx + dy * dy;
-        const minDist = (b1.radius + b2.radius) * 0.95;
+        const minDist = b1.radius + b2.radius;
 
         if (distSq < minDist * minDist) {
           const dist = Math.max(0.001, Math.sqrt(distSq));
@@ -498,10 +636,11 @@ export class PhysicsEngine {
           const ratio1 = b2.mass / totalMass;
           const ratio2 = b1.mass / totalMass;
 
-          b1.x -= nx * overlap * ratio1 * 0.50;
-          b1.y -= ny * overlap * ratio1 * 0.50;
-          b2.x += nx * overlap * ratio2 * 0.50;
-          b2.y += ny * overlap * ratio2 * 0.50;
+          // Firm non-penetration position correction (bubbles cannot overlap)
+          b1.x -= nx * overlap * ratio1 * 0.85;
+          b1.y -= ny * overlap * ratio1 * 0.85;
+          b2.x += nx * overlap * ratio2 * 0.85;
+          b2.y += ny * overlap * ratio2 * 0.85;
         }
       }
 
@@ -516,8 +655,13 @@ export class PhysicsEngine {
       
       if (b1.y + b1.radius >= height) {
         b1.y = height - b1.radius;
-        b1.vy = 0;
-        b1.vx *= 0.85;
+        if (b1.vy > 0.8) {
+          b1.vy = -b1.vy * (b1.elasticity || 0.72) * 0.35;
+          b1.exciteWobble(0.20 * b1.flexibility, Math.PI / 2);
+        } else {
+          b1.vy = 0;
+        }
+        b1.vx *= Math.max(0.70, 1 - (b1.friction || 0.016) * 8);
         if (Math.abs(b1.vx) < 0.04) b1.vx = 0;
       }
     }
@@ -608,35 +752,34 @@ export class PhysicsEngine {
             ? (b1.colorIndex === b2.colorIndex)
             : (b1.hue === b2.hue);
 
-          // 1. Impact Kinetic Energy
+          // 1. Impact Kinetic Energy (Moderate drop impact triggers merge)
           const impactSpeed = Math.max(0, -velAlongNormal);
           let kineticEnergyFactor = 0;
-          if (isSameColor && impactSpeed > 0.35) {
-            kineticEnergyFactor = Math.pow(impactSpeed - 0.28, 1.2) * 1.4;
+          if (isSameColor && impactSpeed > 0.40) {
+            kineticEnergyFactor = Math.pow(impactSpeed - 0.25, 1.1) * 0.85;
           }
 
-          // 2. Size Domination (Absorption threshold for same-colored bubbles)
+          // 2. Size Domination (Larger bubbles absorb smaller ones of the same color)
           let sizeDomination = 0;
           if (isSameColor && sizeRatio >= 1.3) {
-            sizeDomination = Math.pow(sizeRatio - 1.1, 1.2) * (this.config.sizeAdvantage * 1.2);
+            sizeDomination = Math.pow(sizeRatio - 1.1, 1.1) * (this.config.sizeAdvantage * 0.65);
           }
 
           // 3. Same-color contact affinity bonus
-          const sameColorBonus = isSameColor ? 0.85 : 0.0;
+          const sameColorBonus = isSameColor ? 0.50 : 0.0;
 
-          // 4. Overburden and Heavy Load Stress
-          const loadStress = ((b1.smoothLoad || 0) + (b2.smoothLoad || 0)) * 0.45 + (b1.weightOnTop + b2.weightOnTop) * 0.10;
-          const pressureStress = Math.min(1.8, (b1.contactPressure + b2.contactPressure) * 0.35 + loadStress);
+          // 4. Overburden and Heavy Load Stress (Bubbles resting together in the stack merge smoothly)
+          const loadStress = ((b1.smoothLoad || 0) + (b2.smoothLoad || 0)) * 0.40 + (b1.weightOnTop + b2.weightOnTop) * 0.08;
+          const pressureStress = Math.min(1.2, (b1.contactPressure + b2.contactPressure) * 0.30 + loadStress);
 
           const mergeScore = kineticEnergyFactor + sizeDomination + sameColorBonus + pressureStress;
-          // Surface tension barrier for same-color coalescence
-          const barrier = Math.max(0.1, this.config.surfaceTension) * 0.95;
+          // Balanced surface tension barrier for natural, steady growth
+          const barrier = Math.max(0.3, this.config.surfaceTension) * 1.05;
 
           this.lastWeberMetric = isSameColor ? Math.min(1.0, mergeScore / barrier) : 0;
 
           // DECISION: Only bubbles of the exact same color can merge
           if (this.config.autoMerge && isSameColor && mergeScore > barrier) {
-            // === COALESCENCE (SURFACE TENSION BROKEN) ===
             const newVol = Math.pow(b1.radius, 3) + Math.pow(b2.radius, 3);
             const newRadius = Math.cbrt(newVol);
 
@@ -648,14 +791,12 @@ export class PhysicsEngine {
             const newY = (b1.y * b1.mass + b2.y * b2.mass) / totalMass;
 
             if (this.config.popLimit && newRadius >= this.config.maxBubbleRadius) {
-              // Exceeded maximum allowable size (Ø200px) -> bursts into droplet spray and respawns
               this.burstCount++;
-              this.createSplashDroplets(newX, newY, 24);
+              this.createMergeBurst(null, null, newX, newY, newRadius, larger.colorId, larger.hue, larger.isWhite);
               if (soundEngine) {
                 soundEngine.playPop(newRadius);
               }
 
-              // Respawn replacement bubble of the exact same size and color at the top
               const colorId = larger.colorId;
               const spawnRadius = Math.min(newRadius, (this.config.maxBubbleRadius || 100) - 2);
               const respawnX = Math.max(spawnRadius + 10, Math.min(width - spawnRadius - 10, newX));
@@ -677,55 +818,52 @@ export class PhysicsEngine {
             larger.targetRadius = newRadius;
             larger.radius = (larger.radius + newRadius) * 0.5;
             larger.mass = totalMass;
-            larger.contactPressure = 0; // Pressure released on merge
+            larger.contactPressure = 0;
 
-            // Visual Merge Pulse & Fusion Flash
-            larger.scalePulse = 1.34;
-            larger.flashLife = 1.0;
+            // Visual Merge Pulse, Fusion Flash, and Elastic Wobble
+            larger.scalePulse = 1.18;
+            larger.flashLife = 0.75;
+            larger.exciteWobble(0.28 * larger.flexibility, Math.random() * Math.PI * 2);
 
-            // Push and strongly shake surrounding neighboring bubbles outward
-            const blastRange = newRadius * 1.6 + 75;
+            // Gentle ripple push on neighboring bubbles
+            const blastRange = newRadius * 1.4 + 50;
             for (let k = 0; k < len; k++) {
               if (k === i || k === j) continue;
               const nb = this.bubbles[k];
               const kdx = nb.x - newX;
               const kdy = nb.y - newY;
               const kDistSq = kdx * kdx + kdy * kdy;
-              const maxRange = newRadius + nb.radius + 75;
+              const maxRange = newRadius + nb.radius + 50;
               if (kDistSq < maxRange * maxRange && kDistSq > 0.001) {
                 const kDist = Math.sqrt(kDistSq);
                 const unx = kdx / kDist;
                 const uny = kdy / kDist;
                 const distRatio = Math.max(0, 1 - kDist / maxRange);
-                const pushStrength = Math.pow(distRatio, 1.1) * (3.2 + (newRadius / 35) * 1.6);
+                const pushStrength = Math.pow(distRatio, 1.2) * (1.2 + (newRadius / 45) * 0.9);
 
-                // Outward physical impulse scaled by mass
+                // Soft outward impulse scaled by mass
                 const massFactor = 1.0 / Math.sqrt(Math.max(0.25, nb.mass));
-                nb.vx += unx * pushStrength * 1.4 * massFactor;
-                nb.vy += uny * pushStrength * 1.4 * massFactor;
+                nb.vx += unx * pushStrength * 0.65 * massFactor;
+                nb.vy += uny * pushStrength * 0.65 * massFactor;
 
-                // Immediate physical displacement kick
-                nb.x += unx * pushStrength * 2.8;
-                nb.y += uny * pushStrength * 2.8;
+                // Subtle physical displacement
+                nb.x += unx * pushStrength * 0.6;
+                nb.y += uny * pushStrength * 0.6;
 
                 // Elastic recoil shake pulse on neighbor
-                nb.scalePulse = Math.max(nb.scalePulse || 1.0, 1.0 + distRatio * 0.18);
+                nb.scalePulse = Math.max(nb.scalePulse || 1.0, 1.0 + distRatio * 0.14);
               }
             }
 
-            // Spawn color-coordinated spark spray
-            let sparkColor = 'rgba(203, 213, 225, 0.70)';
-            if (!larger.isWhite) {
-              if (larger.hue >= 100 && larger.hue <= 180) sparkColor = 'rgba(34, 197, 94, 0.70)';
-              else if (larger.hue >= 15 && larger.hue <= 80) sparkColor = 'rgba(245, 158, 11, 0.70)';
-              else if (larger.hue >= 240 && larger.hue <= 300) sparkColor = 'rgba(168, 85, 247, 0.70)';
-              else if (larger.hue >= 170 && larger.hue <= 230) sparkColor = 'rgba(56, 189, 248, 0.70)';
-              else sparkColor = 'rgba(225, 29, 72, 0.70)';
-            }
-            this.createSplashDroplets(newX, newY, Math.floor(8 + sizeRatio * 2), sparkColor);
+            // Trigger rich multi-layered merging particle burst
+            this.createMergeBurst(b1, b2, newX, newY, newRadius, larger.colorId, larger.hue, larger.isWhite);
 
             if (soundEngine) {
               soundEngine.playMerge(newRadius, sizeRatio);
+            }
+
+            if (this.onMerge) {
+              this.onMerge(newX, newY, newRadius, sizeRatio, larger.colorId);
             }
 
             this.totalMerges++;
@@ -736,7 +874,8 @@ export class PhysicsEngine {
             const overlap = Math.max(0, minDist - dist);
 
             if (velAlongNormal < -0.1) {
-              const impulse = -(1 + this.config.elasticity) * velAlongNormal / (1 / b1.mass + 1 / b2.mass);
+              const combinedElasticity = ((b1.elasticity || this.config.elasticity) + (b2.elasticity || this.config.elasticity)) * 0.5;
+              const impulse = -(1 + combinedElasticity) * velAlongNormal / (1 / b1.mass + 1 / b2.mass);
               
               b1.vx -= (impulse / b1.mass) * nx;
               b1.vy -= (impulse / b1.mass) * ny;
@@ -751,20 +890,22 @@ export class PhysicsEngine {
               b2.contactSquish = Math.min(0.25, (overlap / b2.radius) * 0.3 * b2.flexibility);
 
               if (velAlongNormal < -0.45) {
-                const squishFactor = Math.min(0.4, Math.abs(velAlongNormal) * 0.15) * b1.flexibility;
-                b1.exciteWobble(squishFactor, bounceAngle);
-                b2.exciteWobble(squishFactor * (b2.flexibility / b1.flexibility), bounceAngle + Math.PI);
+                const squish1 = Math.min(0.4, Math.abs(velAlongNormal) * 0.15 * (b1.elasticity || 0.72)) * b1.flexibility;
+                const squish2 = Math.min(0.4, Math.abs(velAlongNormal) * 0.15 * (b2.elasticity || 0.72)) * b2.flexibility;
+                b1.exciteWobble(squish1, bounceAngle);
+                b2.exciteWobble(squish2, bounceAngle + Math.PI);
               }
 
               if (soundEngine && Math.abs(velAlongNormal) > 0.4) {
                 soundEngine.playBounce(Math.min(1.0, Math.abs(velAlongNormal) / 3.0), smaller.radius);
               }
             } else {
-              // Gentle resting contact damping
-              b1.vx *= 0.95;
-              b1.vy *= 0.95;
-              b2.vx *= 0.95;
-              b2.vy *= 0.95;
+              // Gentle resting contact damping modulated by surface friction
+              const frictionDamping = 1 - Math.min(0.12, ((b1.friction || 0.016) + (b2.friction || 0.016)) * 2);
+              b1.vx *= frictionDamping;
+              b1.vy *= frictionDamping;
+              b2.vx *= frictionDamping;
+              b2.vy *= frictionDamping;
             }
           }
         }

@@ -13,12 +13,12 @@ export class Renderer {
     this.time = 0;
 
     this.baseColors = {
-      white: '#ffffff',
-      green: '#22c55e',
-      red: '#f43f5e',
-      orange: '#f97316',
-      purple: '#a855f7',
-      cyan: '#06b6d4'
+      white: '#f1f5f9', // Opalescent Pearl
+      green: '#059669', // Emerald Jade
+      red: '#be123c',   // Velvet Crimson / Rose Quartz
+      orange: '#d97706',// Honey Topaz / Amber
+      purple: '#7c3aed',// Royal Amethyst
+      cyan: '#0284c7'   // Glacier Sapphire
     };
 
     this.defaultBaseColors = { ...this.baseColors };
@@ -34,8 +34,20 @@ export class Renderer {
     };
 
     this.defaultColorAdjustments = JSON.parse(JSON.stringify(this.colorAdjustments));
+    this.floatingTexts = [];
 
     this.initBackgroundStars();
+  }
+
+  addFloatingText(text, x, y, color = '#34d399') {
+    this.floatingTexts.push({
+      text,
+      x,
+      y,
+      vy: -2.2,
+      life: 1.0,
+      color
+    });
   }
 
   getBaseColor(colorKey) {
@@ -143,7 +155,7 @@ export class Renderer {
     }
   }
 
-  render(physics, mouseState) {
+  render(physics, mouseState, targetDiameter = 0) {
     const ctx = this.ctx;
     const width = window.innerWidth;
     const height = window.innerHeight;
@@ -152,17 +164,54 @@ export class Renderer {
     this.renderBackground(ctx, width, height);
     this.renderGrid(ctx, width, height);
     this.renderAmbientParticles(ctx, width, height);
-    this.renderDroplets(ctx, physics.droplets);
-
     // Render all bubbles with Plateau foam partition boundary geometry
     for (let i = 0; i < physics.bubbles.length; i++) {
       this.renderBubble(ctx, physics.bubbles[i], physics.bubbles, height, width);
     }
 
-    // Render floating max size label badge for each color
-    this.renderMaxLabels(ctx, physics.bubbles);
+    // Render popping spark particles and droplet bursts over bubbles
+    this.renderDroplets(ctx, physics.droplets);
+
+    // Render floating max size label badge for each color with goal highlight
+    this.renderMaxLabels(ctx, physics.bubbles, targetDiameter);
+
+    // Render floating bonus time & combo texts
+    this.renderFloatingTexts(ctx);
 
     this.renderMouseFX(ctx, mouseState);
+  }
+
+  renderFloatingTexts(ctx) {
+    if (this.floatingTexts.length === 0) return;
+    ctx.save();
+    for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
+      const ft = this.floatingTexts[i];
+      ft.y += ft.vy;
+      ft.life -= 0.052;
+      if (ft.life <= 0) {
+        this.floatingTexts.splice(i, 1);
+        continue;
+      }
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, Math.min(1, ft.life * 1.3));
+      const scale = 1.0 + (1.0 - ft.life) * 0.16;
+      ctx.translate(ft.x, ft.y);
+      ctx.scale(scale, scale);
+
+      ctx.font = '800 20px Outfit, Inter, system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      // Luminous glow shadow
+      ctx.shadowColor = ft.color;
+      ctx.shadowBlur = 8;
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(ft.text, 0, 0);
+
+      ctx.restore();
+    }
+    ctx.restore();
   }
 
   renderGrid(ctx, width, height) {
@@ -267,11 +316,103 @@ export class Renderer {
     if (!droplets || droplets.length === 0) return;
     ctx.save();
     for (let d of droplets) {
-      ctx.beginPath();
-      ctx.arc(d.x, d.y, Math.max(1.2, d.radius), 0, Math.PI * 2);
-      ctx.fillStyle = d.color || `rgba(255, 255, 255, ${d.life * 0.8})`;
-      ctx.globalAlpha = Math.max(0, d.life);
-      ctx.fill();
+      const alpha = Math.max(0, Math.min(1, d.life));
+      if (alpha <= 0) continue;
+
+      if (d.type === 'spark') {
+        // 1. High-speed radiant spark streak with velocity-aligned trail
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.strokeStyle = d.color;
+        ctx.lineWidth = Math.max(1.2, (d.size || 2.0) * alpha);
+        ctx.lineCap = 'round';
+        ctx.shadowColor = d.glowColor || d.color;
+        ctx.shadowBlur = 10 * alpha;
+
+        const vx = d.vx || 0;
+        const vy = d.vy || 0;
+        const streakLen = Math.max(4, Math.sqrt(vx * vx + vy * vy) * 2.2);
+        const angle = Math.atan2(vy, vx);
+
+        ctx.beginPath();
+        ctx.moveTo(d.x, d.y);
+        ctx.lineTo(d.x - Math.cos(angle) * streakLen, d.y - Math.sin(angle) * streakLen);
+        ctx.stroke();
+
+        // Hot white sparkling tip
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(d.x, d.y, Math.max(0.7, (d.size || 2.0) * 0.45 * alpha), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+      } else if (d.type === 'star') {
+        // 2. Rotating 4-point sparkle star glitter
+        ctx.save();
+        ctx.translate(d.x, d.y);
+        ctx.rotate(d.rotation || 0);
+        const twinkle = 0.75 + 0.35 * Math.sin(d.twinklePhase || 0);
+        const starSize = Math.max(1.8, (d.size || 2.5) * alpha * twinkle);
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = d.color || '#ffffff';
+        ctx.shadowColor = d.glowColor || '#ffffff';
+        ctx.shadowBlur = 12 * alpha;
+
+        ctx.beginPath();
+        ctx.moveTo(0, -starSize);
+        ctx.quadraticCurveTo(0, 0, starSize, 0);
+        ctx.quadraticCurveTo(0, 0, 0, starSize);
+        ctx.quadraticCurveTo(0, 0, -starSize, 0);
+        ctx.quadraticCurveTo(0, 0, 0, -starSize);
+        ctx.fill();
+
+        // Bright white center sparkle
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(0, 0, starSize * 0.28, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+      } else if (d.type === 'fizz') {
+        // 3. Floating fizz micro-bubble with specular dot
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        const fizzRadius = Math.max(1.0, (d.size || 1.8) * (0.85 + 0.15 * Math.sin(d.twinklePhase || 0)));
+        ctx.beginPath();
+        ctx.arc(d.x, d.y, fizzRadius, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.20)';
+        ctx.fill();
+        ctx.strokeStyle = d.glowColor || 'rgba(255, 255, 255, 0.8)';
+        ctx.lineWidth = 0.8;
+        ctx.shadowColor = d.glowColor || '#ffffff';
+        ctx.shadowBlur = 6 * alpha;
+        ctx.stroke();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(d.x - fizzRadius * 0.35, d.y - fizzRadius * 0.35, fizzRadius * 0.28, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+      } else {
+        // 4. Vibrant glowing droplet sphere
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        const dropRadius = Math.max(1.2, (d.size || 2.2) * Math.sqrt(alpha));
+        ctx.beginPath();
+        ctx.arc(d.x, d.y, dropRadius, 0, Math.PI * 2);
+        ctx.fillStyle = d.color || 'rgba(255, 255, 255, 0.9)';
+        ctx.shadowColor = d.glowColor || d.color || '#ffffff';
+        ctx.shadowBlur = 10 * alpha;
+        ctx.fill();
+
+        // Specular 3D highlight
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+        ctx.beginPath();
+        ctx.arc(d.x - dropRadius * 0.3, d.y - dropRadius * 0.3, dropRadius * 0.35, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
     }
     ctx.restore();
   }
@@ -322,7 +463,7 @@ export class Renderer {
       boundaries.push({ angle: Math.PI / 2, chordDist: Math.max(2, height - b.y), overlap: Math.max(0, radius - (height - b.y)) });
     }
 
-    // 3. Compute clean deformed contour points (exact contact chord flattening with smooth corner filleting)
+    // 3. Compute clean non-overlapping deformed contour points (strictly zero overlap)
     const numPoints = 64;
     const rawRadii = new Float32Array(numPoints);
 
@@ -330,7 +471,7 @@ export class Renderer {
       const theta = (i / numPoints) * Math.PI * 2;
       let r = radius;
 
-      // Exact chord clipping against neighboring bubbles
+      // Exact chord clipping against neighboring bubbles - strictly zero overlap
       for (let n of interactingNeighbors) {
         const cosDiff = Math.cos(theta - n.angle);
         if (cosDiff > 0.001) {
@@ -341,7 +482,7 @@ export class Renderer {
         }
       }
 
-      // Exact chord clipping against floor / walls
+      // Exact chord clipping against floor / walls - strictly zero boundary overshoot
       for (let bd of boundaries) {
         const cosDiff = Math.cos(theta - bd.angle);
         if (cosDiff > 0.001) {
@@ -379,23 +520,27 @@ export class Renderer {
       });
     }
 
-    // 4. Draw smooth continuous spline contour
-    ctx.beginPath();
-    ctx.moveTo(points[0].x, points[0].y);
-    for (let i = 0; i < points.length; i++) {
-      const p0 = points[i];
-      const p1 = points[(i + 1) % points.length];
-      const midX = (p0.x + p1.x) * 0.5;
-      const midY = (p0.y + p1.y) * 0.5;
-      ctx.quadraticCurveTo(p0.x, p0.y, midX, midY);
-    }
-    ctx.closePath();
+    // 4. Define and draw bubble contour
+    const traceContour = () => {
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      for (let i = 0; i < points.length; i++) {
+        const p0 = points[i];
+        const p1 = points[(i + 1) % points.length];
+        const midX = (p0.x + p1.x) * 0.5;
+        const midY = (p0.y + p1.y) * 0.5;
+        ctx.quadraticCurveTo(p0.x, p0.y, midX, midY);
+      }
+      ctx.closePath();
+    };
 
-    // 5. 3D Volumetric Plastic Shading (No border outlines or clamped halo)
+    traceContour();
+
+    // 5. Faceted Brilliant Gemstone Shading
     if (b.opacity !== undefined && b.opacity < 1.0) {
       ctx.globalAlpha = Math.max(0, b.opacity);
     }
-    this.applyThemeStyle(ctx, b, radius);
+    this.applyThemeStyle(ctx, b, radius, traceContour);
 
     // 6. Fusion Energy Flash Glow Overlay on Merge
     if (b.flashLife && b.flashLife > 0.02) {
@@ -407,89 +552,157 @@ export class Renderer {
       ctx.fill();
     }
 
-    // 7. Specular Plastic Highlights
+    // 7. Specular Diamond Starburst Highlights & Scintillation Glints
     this.renderHighlights(ctx, radius, b);
 
     ctx.restore();
   }
 
-  generateGradientStops(baseHex, colorKey) {
-    if (colorKey === 'white' && (baseHex.toLowerCase() === '#ffffff' || baseHex.toLowerCase() === '#fff')) {
-      return [
-        this.adjustColor('#ffffff', 'white', true),
-        this.adjustColor('#f5f5f5', 'white', true),
-        this.adjustColor('#d4d4d4', 'white', true),
-        this.adjustColor('#737373', 'white', true)
-      ];
-    }
+  getGemColorInfo(colorKey, b = null) {
+    const isWhite = colorKey === 'white';
+    const baseHex = this.getBaseColor(colorKey);
+    const master = (this.colorAdjustments && this.colorAdjustments.all) || { saturation: 1.0, hueShift: 0, exposure: 1.0 };
+    const spec = (this.colorAdjustments && this.colorAdjustments[colorKey]) || { saturation: 1.0, hueShift: 0, exposure: 1.0 };
 
     let c = baseHex.replace('#', '');
     if (c.length === 3) c = c[0] + c[0] + c[1] + c[1] + c[2] + c[2];
     const r = parseInt(c.substring(0, 2), 16) / 255;
     const g = parseInt(c.substring(2, 4), 16) / 255;
-    const b = parseInt(c.substring(4, 6), 16) / 255;
+    const bVal = parseInt(c.substring(4, 6), 16) / 255;
 
-    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    const max = Math.max(r, g, bVal), min = Math.min(r, g, bVal);
     let h = 0, s = 0, l = (max + min) / 2;
     const d = max - min;
     if (d > 0.001) {
       s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
       switch (max) {
-        case r: h = ((g - b) / d + (g < b ? 6 : 0)); break;
-        case g: h = ((b - r) / d + 2); break;
-        case b: h = ((r - g) / d + 4); break;
+        case r: h = ((g - bVal) / d + (g < bVal ? 6 : 0)); break;
+        case g: h = ((bVal - r) / d + 2); break;
+        case bVal: h = ((r - g) / d + 4); break;
       }
       h *= 60;
     }
 
-    const hslToHex = (hDeg, sVal, lVal) => {
-      hDeg = (hDeg % 360 + 360) % 360;
-      sVal = Math.max(0, Math.min(1, sVal));
-      lVal = Math.max(0, Math.min(1, lVal));
-      const cVal = (1 - Math.abs(2 * lVal - 1)) * sVal;
-      const xVal = cVal * (1 - Math.abs(((hDeg / 60) % 2) - 1));
-      const mVal = lVal - cVal / 2;
-      let rP = 0, gP = 0, bP = 0;
-      if (hDeg < 60) { rP = cVal; gP = xVal; }
-      else if (hDeg < 120) { rP = xVal; gP = cVal; }
-      else if (hDeg < 180) { gP = cVal; bP = xVal; }
-      else if (hDeg < 240) { gP = xVal; bP = cVal; }
-      else if (hDeg < 300) { rP = xVal; bP = cVal; }
-      else { rP = cVal; bP = xVal; }
-      const toHex = (n) => Math.round((n + mVal) * 255).toString(16).padStart(2, '0');
-      return `#${toHex(rP)}${toHex(gP)}${toHex(bP)}`;
+    const totalSat = isWhite ? 0.08 : Math.max(0, Math.min(1, s * master.saturation * spec.saturation));
+    const totalHue = isWhite ? 212 : ((h + master.hueShift + spec.hueShift + 3600) % 360);
+    const totalExp = Math.max(0.2, Math.min(2.0, l * master.exposure * spec.exposure));
+
+    // Per-color material optical properties:
+    // shininess: intensity of specular light glints
+    // reflectivity: strength of Fresnel rim and internal caustics
+    // smoothness: sharpness and polish of reflections vs soft velvety dispersion
+    const GEM_OPTICS = {
+      white:  { shininess: 1.00, reflectivity: 0.95, smoothness: 0.96 }, // Diamond / Pearl: Mirror-smooth, high refractive index, intense glints
+      cyan:   { shininess: 0.94, reflectivity: 0.88, smoothness: 0.92 }, // Sapphire: High polish, sharp icy glints, bright rim
+      red:    { shininess: 0.90, reflectivity: 0.92, smoothness: 0.86 }, // Ruby: Fiery gloss, radiant glowing caustic pool
+      purple: { shininess: 0.85, reflectivity: 0.80, smoothness: 0.82 }, // Amethyst: Crystalline sheen, silky polished luster
+      orange: { shininess: 0.78, reflectivity: 0.72, smoothness: 0.72 }, // Amber: Warm honey luster, softer specular spread
+      green:  { shininess: 0.72, reflectivity: 0.66, smoothness: 0.68 }  // Emerald / Jade: Velvety stone luster, softer diffuse highlights
     };
 
-    const isNeutral = (colorKey === 'white') || (s < 0.04);
-    const stop0 = hslToHex(h, s * 0.40, l + (1 - l) * 0.78);
-    const stop1 = hslToHex(h, s * 0.85, l + (1 - l) * 0.35);
-    const stop2 = baseHex;
-    const stop3 = hslToHex(h, Math.min(1, s * 1.15), l * 0.52);
+    const def = GEM_OPTICS[colorKey] || { shininess: 0.85, reflectivity: 0.80, smoothness: 0.80 };
+    const shininess = (b && b.shininess !== undefined) ? b.shininess : def.shininess;
+    const reflectivity = (b && b.reflectivity !== undefined) ? b.reflectivity : def.reflectivity;
+    const smoothness = (b && b.smoothness !== undefined) ? b.smoothness : def.smoothness;
 
-    return [
-      this.adjustColor(stop0, colorKey, isNeutral),
-      this.adjustColor(stop1, colorKey, isNeutral),
-      this.adjustColor(stop2, colorKey, isNeutral),
-      this.adjustColor(stop3, colorKey, isNeutral)
-    ];
+    return { isWhite, h: totalHue, s: totalSat, l: totalExp, shininess, reflectivity, smoothness };
   }
 
-  applyThemeStyle(ctx, b, radius) {
+  getFacetColor(gem, factor, alpha = 1.0) {
+    if (gem.isWhite) {
+      const lightness = Math.round((0.20 + factor * 0.78) * 100);
+      const saturation = Math.round((0.16 - factor * 0.12) * 100);
+      return `hsla(214, ${saturation}%, ${lightness}%, ${alpha})`;
+    } else {
+      let lightness, saturation;
+      if (factor > 0.5) {
+        const t = (factor - 0.5) * 2;
+        lightness = Math.round((gem.l * 0.88 + t * 0.46) * 100);
+        saturation = Math.round(Math.min(1, gem.s * (1.0 - t * 0.32)) * 100);
+      } else {
+        const t = factor * 2;
+        lightness = Math.round((0.10 + t * (gem.l * 0.88 - 0.10)) * 100);
+        saturation = Math.round(Math.min(1, gem.s * (0.85 + t * 0.25)) * 100);
+      }
+      return `hsla(${Math.round(gem.h)}, ${saturation}%, ${Math.min(98, Math.max(5, lightness))}%, ${alpha})`;
+    }
+  }
+
+  applyThemeStyle(ctx, b, radius, traceContour) {
     const isWhite = b.isWhite || b.colorId === 'white' || (b.colorIndex === 0 && b.hue === 0);
     const colorKey = isWhite ? 'white' : (b.colorId || 'red');
-    const baseHex = this.getBaseColor(colorKey);
+    const gem = this.getGemColorInfo(colorKey, b);
 
-    // Dynamic real-time adjusted 3D volumetric sphere shading
-    const bodyGrad = ctx.createRadialGradient(-radius * 0.30, -radius * 0.30, radius * 0.04, 0, 0, radius * 1.25);
-    const stops = this.generateGradientStops(baseHex, colorKey);
+    // Clip all internal glass refraction and caustics strictly within the bubble contour
+    ctx.save();
+    ctx.clip();
 
-    bodyGrad.addColorStop(0, stops[0]);
-    bodyGrad.addColorStop(0.25, stops[1]);
-    bodyGrad.addColorStop(0.60, stops[2]);
-    bodyGrad.addColorStop(1.0, stops[3]);
+    // 1. Translucent Optical Glass Body (Smoothness modulates clarity vs velvety dispersion)
+    const bodyGrad = ctx.createRadialGradient(-radius * 0.22, -radius * 0.22, radius * 0.05, 0, 0, radius * 1.05);
+    const centerAlpha = gem.smoothness > 0.85 ? 0.65 : 0.72;
+    const midAlpha = gem.smoothness > 0.85 ? 0.42 : 0.48;
 
+    if (gem.isWhite) {
+      bodyGrad.addColorStop(0, `rgba(255, 255, 255, ${centerAlpha})`);
+      bodyGrad.addColorStop(0.35, `rgba(224, 242, 254, ${midAlpha})`);
+      bodyGrad.addColorStop(0.70, 'rgba(148, 163, 184, 0.50)');
+      bodyGrad.addColorStop(1.0, 'rgba(15, 23, 42, 0.85)');
+    } else {
+      bodyGrad.addColorStop(0, `hsla(${gem.h}, ${Math.round(gem.s * 95)}%, ${Math.round(gem.l * 82)}%, ${centerAlpha})`);
+      bodyGrad.addColorStop(0.38, `hsla(${gem.h}, ${Math.round(gem.s * 92)}%, ${Math.round(gem.l * 65)}%, ${midAlpha})`);
+      bodyGrad.addColorStop(0.72, `hsla(${gem.h}, ${Math.round(gem.s * 95)}%, ${Math.round(gem.l * 42)}%, 0.58)`);
+      bodyGrad.addColorStop(1.0, `hsla(${gem.h}, ${Math.round(gem.s * 100)}%, 14%, 0.88)`);
+    }
     ctx.fillStyle = bodyGrad;
     ctx.fill();
+
+    // 2. Internal Refractive Caustic Pool (Reflectivity modulates internal light brilliance)
+    const cx = radius * 0.26;
+    const cy = radius * 0.26;
+    const cr = radius * 0.62;
+    const causticGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, cr);
+    const causticPeak = Math.min(0.95, 0.55 + 0.40 * gem.reflectivity);
+
+    if (gem.isWhite) {
+      causticGrad.addColorStop(0, `rgba(255, 255, 255, ${causticPeak.toFixed(2)})`);
+      causticGrad.addColorStop(0.45, `rgba(186, 230, 253, ${(causticPeak * 0.45).toFixed(2)})`);
+      causticGrad.addColorStop(1.0, 'rgba(255, 255, 255, 0)');
+    } else {
+      causticGrad.addColorStop(0, `hsla(${gem.h}, 100%, ${Math.min(92, Math.round(gem.l * 125))}%, ${causticPeak.toFixed(2)})`);
+      causticGrad.addColorStop(0.45, `hsla(${gem.h}, 95%, ${Math.round(gem.l * 90)}%, ${(causticPeak * 0.48).toFixed(2)})`);
+      causticGrad.addColorStop(1.0, `hsla(${gem.h}, 90%, 30%, 0)`);
+    }
+    ctx.fillStyle = causticGrad;
+    ctx.beginPath();
+    ctx.arc(cx, cy, cr, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore(); // Ends clipping
+
+    // 3. Polished Glass Rim (Fresnel Rim - reflectivity modulates edge reflection strength)
+    if (typeof traceContour === 'function') {
+      ctx.save();
+      traceContour();
+      ctx.lineWidth = Math.max(1.1, radius * (0.034 + 0.012 * gem.reflectivity));
+      const rimGrad = ctx.createLinearGradient(-radius, -radius, radius, radius);
+      const topRimAlpha = Math.min(0.98, 0.65 + 0.32 * gem.reflectivity).toFixed(2);
+      const midRimAlpha = (0.45 + 0.35 * gem.reflectivity).toFixed(2);
+
+      if (gem.isWhite) {
+        rimGrad.addColorStop(0, `rgba(255, 255, 255, ${topRimAlpha})`);
+        rimGrad.addColorStop(0.35, `rgba(224, 242, 254, ${midRimAlpha})`);
+        rimGrad.addColorStop(0.70, 'rgba(148, 163, 184, 0.35)');
+        rimGrad.addColorStop(1.0, 'rgba(15, 23, 42, 0.85)');
+      } else {
+        rimGrad.addColorStop(0, `rgba(255, 255, 255, ${topRimAlpha})`);
+        rimGrad.addColorStop(0.30, `hsla(${gem.h}, 95%, 80%, ${midRimAlpha})`);
+        rimGrad.addColorStop(0.70, `hsla(${gem.h}, 80%, 40%, 0.30)`);
+        rimGrad.addColorStop(1.0, 'rgba(0, 0, 0, 0.75)');
+      }
+      ctx.strokeStyle = rimGrad;
+      ctx.stroke();
+      ctx.restore();
+    }
   }
 
   renderHighlights(ctx, radius, b) {
@@ -497,47 +710,122 @@ export class Renderer {
 
     const isWhite = b.isWhite || b.colorId === 'white' || (b.colorIndex === 0 && b.hue === 0);
     const colorKey = isWhite ? 'white' : (b.colorId || 'red');
-    const master = (this.colorAdjustments && this.colorAdjustments.all) || { exposure: 1.0 };
-    const spec = (this.colorAdjustments && this.colorAdjustments[colorKey]) || { exposure: 1.0 };
-    const exp = master.exposure * spec.exposure;
+    const gem = this.getGemColorInfo(colorKey, b);
 
-    const hx = -radius * 0.35;
-    const hy = -radius * 0.35;
-    const hr = Math.max(1.8, radius * 0.20);
-
+    // 1. Primary Curved Glass Gloss Crescent
+    // Smoothness controls tightness/polish of the reflection arc
+    // Shininess controls peak gloss luminance
     ctx.save();
-    ctx.translate(hx, hy);
+    ctx.translate(-radius * 0.30, -radius * 0.34);
     ctx.rotate(-Math.PI / 4);
 
-    const hlGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, hr);
-    hlGrad.addColorStop(0, `rgba(255, 255, 255, ${Math.min(0.9, 0.55 * exp)})`);
-    hlGrad.addColorStop(0.38, `rgba(255, 255, 255, ${Math.min(0.5, 0.18 * exp)})`);
-    hlGrad.addColorStop(1.0, 'rgba(255, 255, 255, 0)');
+    const glossRx = Math.max(2.5, radius * (0.33 + (1 - gem.smoothness) * 0.16));
+    const glossRy = Math.max(1.2, radius * (0.11 + (1 - gem.smoothness) * 0.08));
 
+    const glossGrad = ctx.createLinearGradient(-glossRx, -glossRy, glossRx, glossRy);
+    const peakGloss = Math.min(0.98, 0.60 + 0.38 * gem.shininess).toFixed(2);
+    const midGloss = (0.40 + 0.35 * gem.shininess).toFixed(2);
+
+    glossGrad.addColorStop(0, `rgba(255, 255, 255, ${peakGloss})`);
+    glossGrad.addColorStop(0.45, `rgba(255, 255, 255, ${midGloss})`);
+    glossGrad.addColorStop(1.0, 'rgba(255, 255, 255, 0)');
+
+    ctx.fillStyle = glossGrad;
     ctx.beginPath();
-    ctx.ellipse(0, 0, hr * 1.20, hr * 0.75, 0, 0, Math.PI * 2);
-    ctx.fillStyle = hlGrad;
+    ctx.ellipse(0, 0, glossRx, glossRy, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
 
-    // Subtle secondary glint
-    if (radius > 8) {
+    // 2. Pinpoint Sparkling Glass Dot
+    // Smoothness controls pinpoint sharpness; shininess controls core brightness
+    ctx.save();
+    const sx = -radius * 0.44;
+    const sy = -radius * 0.44;
+    const dotR = Math.max(1.0, radius * (0.052 + (1 - gem.smoothness) * 0.030));
+
+    ctx.beginPath();
+    ctx.arc(sx, sy, dotR, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255, 255, 255, ${(0.65 + 0.35 * gem.shininess).toFixed(2)})`;
+    ctx.shadowColor = gem.isWhite ? '#93c5fd' : '#ffffff';
+    ctx.shadowBlur = Math.max(2, radius * 0.12 * gem.shininess);
+    ctx.fill();
+    ctx.restore();
+
+    // 3. Secondary Glass Surface Glint (Present on high-shininess/high-polish gems)
+    if (radius > 14 && gem.shininess > 0.80) {
+      ctx.save();
+      const s2x = -radius * 0.12;
+      const s2y = -radius * 0.56;
       ctx.beginPath();
-      ctx.arc(-radius * 0.18, -radius * 0.48, Math.max(1.0, radius * 0.05), 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(0.8, 0.35 * exp)})`;
+      ctx.arc(s2x, s2y, Math.max(0.7, radius * 0.038 * gem.shininess), 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255, 255, 255, ${(0.50 + 0.30 * gem.shininess).toFixed(2)})`;
       ctx.fill();
+      ctx.restore();
     }
+
+    // 4. Opposing Rim Internal Caustic Bounce (Modulated by reflectivity)
+    if (radius > 10) {
+      ctx.save();
+      const oppAngle = Math.PI / 4;
+      const ox = Math.cos(oppAngle) * (radius * 0.76);
+      const oy = Math.sin(oppAngle) * (radius * 0.76);
+      const or = radius * (0.22 + 0.08 * gem.reflectivity);
+
+      const bounceAlpha = (0.25 + 0.30 * gem.reflectivity).toFixed(2);
+      const rimBounce = ctx.createRadialGradient(ox, oy, 0, ox, oy, or);
+      rimBounce.addColorStop(0, gem.isWhite ? `rgba(255, 255, 255, ${bounceAlpha})` : `hsla(${gem.h}, 95%, 80%, ${bounceAlpha})`);
+      rimBounce.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+      ctx.fillStyle = rimBounce;
+      ctx.beginPath();
+      ctx.arc(ox, oy, or, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  /**
+   * Renders an isolated preview bubble with the exact same material shader,
+   * thin-film Fresnel rim, Rayleigh interference, and specular glints as gameplay.
+   */
+  renderStandaloneBubble(ctx, x, y, radius, colorId) {
+    ctx.save();
+    ctx.translate(x, y);
+
+    const b = {
+      colorId,
+      isWhite: colorId === 'white',
+      scalePulse: 1.0
+    };
+
+    const traceContour = () => {
+      ctx.beginPath();
+      ctx.arc(0, 0, radius, 0, Math.PI * 2);
+      ctx.closePath();
+    };
+
+    traceContour();
+
+    // Identical faceted cut-gemstone shader
+    this.applyThemeStyle(ctx, b, radius, traceContour);
+
+    // Identical diamond sparkle flares, caustics & prismatic dispersion
+    this.renderHighlights(ctx, radius, b);
+
+    ctx.restore();
   }
 
   /**
    * Identifies the largest bubble for each color and renders a sleek size label
    */
-  renderMaxLabels(ctx, bubbles) {
+  renderMaxLabels(ctx, bubbles, targetDiameter = 0) {
     if (!bubbles || bubbles.length === 0) return;
 
     const maxByColor = {};
 
     for (let b of bubbles) {
+      if (!b || b.radius < 14) continue;
+
       let key = b.colorId;
       if (!key) {
         const isWhite = b.isWhite || (b.colorIndex === 0 && b.hue === 0);
@@ -557,42 +845,97 @@ export class Renderer {
       }
     }
 
+    const EMISSIONS = {
+      white:  { glow: '#38bdf8', glowRgb: '56, 189, 248', stroke: 'rgba(3, 7, 18, 0.92)', core: '#ffffff' },
+      cyan:   { glow: '#38bdf8', glowRgb: '56, 189, 248', stroke: 'rgba(2, 6, 23, 0.90)',  core: '#ffffff' },
+      green:  { glow: '#34d399', glowRgb: '52, 211, 153', stroke: 'rgba(2, 20, 12, 0.90)', core: '#ffffff' },
+      red:    { glow: '#fb7185', glowRgb: '251, 113, 133', stroke: 'rgba(24, 2, 8, 0.90)', core: '#ffffff' },
+      orange: { glow: '#fbbf24', glowRgb: '251, 191, 36',  stroke: 'rgba(26, 14, 2, 0.90)', core: '#ffffff' },
+      purple: { glow: '#c084fc', glowRgb: '192, 132, 252', stroke: 'rgba(20, 4, 32, 0.90)', core: '#ffffff' }
+    };
+
     ctx.save();
     for (let key of Object.keys(maxByColor)) {
       const b = maxByColor[key];
       if (!b || b.radius < 14) continue;
 
       const diameter = Math.round(b.radius * 2);
+      const isGoalReached = targetDiameter > 0 && diameter >= targetDiameter;
       const text = `${diameter}`;
+      const em = EMISSIONS[key] || EMISSIONS.cyan;
 
       ctx.save();
       ctx.translate(b.x, b.y);
 
-      // Scale font size as big as the bubble allows (fills ~70-75% of the sphere)
-      let fontSize = Math.floor(b.radius * 0.95);
+      // Scale font size to fit comfortably inside the gem
+      let fontSize = Math.floor(b.radius * 0.88);
       ctx.font = `800 ${fontSize}px Outfit, Inter, system-ui, sans-serif`;
       let textWidth = ctx.measureText(text).width;
-      const maxAllowedWidth = b.radius * 1.38;
+      const maxAllowedWidth = b.radius * 1.35;
       if (textWidth > maxAllowedWidth) {
         fontSize = Math.floor(fontSize * (maxAllowedWidth / textWidth));
         ctx.font = `800 ${fontSize}px Outfit, Inter, system-ui, sans-serif`;
+        textWidth = ctx.measureText(text).width;
       }
 
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
 
-      const isWhite = b.isWhite || b.colorId === 'white' || (b.colorIndex === 0 && b.hue === 0);
+      // 1. Soft radial vignette & light emission aura behind number
+      // Guarantees 100% contrast over specular highlights, pearls, and internal caustics
+      const auraRadius = Math.max(textWidth * 0.70, fontSize * 0.85);
+      const auraGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, auraRadius);
+      auraGrad.addColorStop(0, 'rgba(3, 7, 18, 0.58)');
+      auraGrad.addColorStop(0.55, isGoalReached ? 'rgba(251, 191, 36, 0.28)' : `rgba(${em.glowRgb}, 0.24)`);
+      auraGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
 
-      // Clean contrast with drop shadow
-      ctx.shadowColor = isWhite ? 'rgba(255, 255, 255, 0.85)' : 'rgba(0, 0, 0, 0.55)';
-      ctx.shadowBlur = Math.max(2, fontSize * 0.12);
-      ctx.shadowOffsetY = Math.max(1, fontSize * 0.05);
+      ctx.beginPath();
+      ctx.arc(0, 0, auraRadius, 0, Math.PI * 2);
+      ctx.fillStyle = auraGrad;
+      ctx.fill();
 
-      ctx.fillStyle = isWhite ? '#1e293b' : '#ffffff';
+      // 2. Outer Light Emission Bloom
+      ctx.save();
+      ctx.shadowColor = isGoalReached ? '#fbbf24' : em.glow;
+      ctx.shadowBlur = Math.max(12, fontSize * 0.45);
+      ctx.lineWidth = Math.max(2, fontSize * 0.06);
+      ctx.strokeStyle = isGoalReached ? 'rgba(251, 191, 36, 0.75)' : `rgba(${em.glowRgb}, 0.75)`;
+      ctx.lineJoin = 'round';
+      ctx.strokeText(text, 0, 0);
+      ctx.restore();
+
+      // 3. Crisp Dark Outline Halo (Detaches text cleanly from glossy reflections)
+      ctx.save();
+      ctx.strokeStyle = isGoalReached ? 'rgba(15, 23, 42, 0.95)' : em.stroke;
+      ctx.lineWidth = Math.max(3.2, fontSize * 0.12);
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.65)';
+      ctx.shadowBlur = Math.max(4, fontSize * 0.14);
+      ctx.shadowOffsetY = Math.max(1, fontSize * 0.04);
+      ctx.strokeText(text, 0, 0);
+      ctx.restore();
+
+      // 4. White-Hot Luminous Core Fill
+      ctx.save();
+      ctx.fillStyle = '#ffffff';
+      ctx.shadowColor = isGoalReached ? '#fef08a' : em.glow;
+      ctx.shadowBlur = Math.max(4, fontSize * 0.16);
       ctx.fillText(text, 0, 0);
+      ctx.restore();
 
-      ctx.shadowBlur = 0;
-      ctx.shadowOffsetY = 0;
+      // 5. Goal Reached Radiant Crown Sparkle
+      if (isGoalReached) {
+        ctx.save();
+        const glyphSize = Math.max(10, fontSize * 0.35);
+        const glyphY = -fontSize * 0.56;
+        ctx.font = `800 ${glyphSize}px Outfit, sans-serif`;
+        ctx.fillStyle = '#fef08a';
+        ctx.shadowColor = '#fbbf24';
+        ctx.shadowBlur = Math.max(8, glyphSize * 0.8);
+        ctx.fillText('✦', 0, glyphY);
+        ctx.restore();
+      }
 
       ctx.restore();
     }

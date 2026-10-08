@@ -18,6 +18,7 @@ window.addEventListener('DOMContentLoaded', () => {
   audio.init();
 
   // DOM Elements - Minimal Top Stats
+  const topLevelVal = document.getElementById('topLevelVal');
   const topLeftObjective = document.getElementById('topLeftObjective');
   const topTimerGroup = document.getElementById('topTimerGroup');
   const topTimerVal = document.getElementById('topTimerVal');
@@ -144,9 +145,44 @@ window.addEventListener('DOMContentLoaded', () => {
     return c ? c.name : cid;
   }
 
+  function renderObjectivePreviewCanvas(colors) {
+    const canvas = document.getElementById('modalColorsCanvas');
+    if (!canvas || !Array.isArray(colors) || colors.length === 0) return;
+    const dpr = window.devicePixelRatio || 1;
+    const count = colors.length;
+    const bubbleRadius = 13.5;
+    const spacing = 34;
+    const totalW = count * spacing;
+    const w = Math.max(totalW + 12, 140);
+    const h = 34;
+
+    canvas.width = w * dpr;
+    canvas.height = h * dpr;
+    canvas.style.width = `${w}px`;
+    canvas.style.height = `${h}px`;
+
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, w, h);
+
+    const startX = (w - (count - 1) * spacing) * 0.5;
+    const centerY = h * 0.5;
+
+    colors.forEach((colorId, idx) => {
+      const cx = startX + idx * spacing;
+      renderer.renderStandaloneBubble(ctx, cx, centerY, bubbleRadius, colorId);
+    });
+
+    canvas.title = colors.map(getColorName).join(', ');
+  }
+
   // Game Engine State Callbacks
   gameEngine.onStateChange = (state, levelConfig) => {
     updateLevelJumpActive(levelConfig.level);
+
+    if (topLevelVal) {
+      topLevelVal.textContent = levelConfig.level;
+    }
 
     if (topLeftObjective) {
       topLeftObjective.textContent = levelConfig.targetDiameter;
@@ -168,17 +204,9 @@ window.addEventListener('DOMContentLoaded', () => {
       modalObjective.classList.remove('hidden');
 
       if (objLevelBadge) objLevelBadge.textContent = `LEVEL ${levelConfig.level}`;
-      if (objGoalText) objGoalText.textContent = `Grow Each Color to ${levelConfig.targetDiameter}px`;
+      if (objGoalText) objGoalText.textContent = `Grow to ${levelConfig.targetDiameter}px`;
 
-      if (objColorsGrid) {
-        objColorsGrid.innerHTML = '';
-        levelConfig.colors.forEach(cid => {
-          const div = document.createElement('div');
-          div.className = `modal-sphere sphere-${cid}`;
-          div.title = getColorName(cid);
-          objColorsGrid.appendChild(div);
-        });
-      }
+      renderObjectivePreviewCanvas(levelConfig.colors);
     } else if (state === GameState.PHASE2_MERGE) {
       modalObjective.classList.add('hidden');
       modalWin.classList.add('hidden');
@@ -205,6 +233,34 @@ window.addEventListener('DOMContentLoaded', () => {
       }
     }
   };
+
+  gameEngine.onBonusTime = (seconds, x, y) => {
+    if (topTimerGroup) {
+      topTimerGroup.classList.remove('bonus-flash');
+      void topTimerGroup.offsetWidth;
+      topTimerGroup.classList.add('bonus-flash');
+      setTimeout(() => {
+        topTimerGroup.classList.remove('bonus-flash');
+      }, 550);
+    }
+  };
+
+  physics.onMerge = (x, y, newRadius, sizeRatio, colorId) => {
+    if (gameEngine.state === GameState.PHASE2_MERGE) {
+      if (newRadius >= 54) {
+        // Colossal merge milestone: +5s bonus
+        gameEngine.addBonusTime(5, x, y);
+        renderer.addFloatingText('+5s', x, y, '#34d399');
+        audio.playBonusTime(true);
+      } else if (newRadius >= 34) {
+        // Significant merge milestone: +3s bonus
+        gameEngine.addBonusTime(3, x, y);
+        renderer.addFloatingText('+3s', x, y, '#38bdf8');
+        audio.playBonusTime(false);
+      }
+    }
+  };
+
   gameEngine.onSpawnUpdate = (fillRatio, total) => {};
   gameEngine.onColorProgress = (progressList) => {};
 
@@ -570,8 +626,9 @@ window.addEventListener('DOMContentLoaded', () => {
           physics.popBubble(hitIndex, true);
         }
       } else {
-        const radius = 16 + Math.random() * 16;
-        physics.spawnBubble(coords.x, coords.y, radius, (Math.random() - 0.5) * 1.5, (Math.random() - 0.5) * 1.5);
+        const radius = 26 + Math.random() * 18;
+        const b = physics.spawnBubble(coords.x, coords.y, radius, (Math.random() - 0.5) * 1.5, (Math.random() - 0.5) * 1.5);
+        if (b) b.scalePulse = 1.15;
       }
     }
   });
@@ -591,8 +648,9 @@ window.addEventListener('DOMContentLoaded', () => {
           mouseState.spawnCooldown = 0;
           const hitIndex = findBubbleAt(coords.x, coords.y);
           if (hitIndex === -1) {
-            const radius = 16 + Math.random() * 16;
-            physics.spawnBubble(coords.x, coords.y, radius, (Math.random() - 0.5) * 2, -0.5 - Math.random() * 1.5);
+            const radius = 24 + Math.random() * 16;
+            const b = physics.spawnBubble(coords.x, coords.y, radius, (Math.random() - 0.5) * 2, -0.5 - Math.random() * 1.5);
+            if (b) b.scalePulse = 1.12;
           }
         }
       }
@@ -689,7 +747,8 @@ window.addEventListener('DOMContentLoaded', () => {
       physics.update(window.innerWidth, window.innerHeight);
     }
 
-    renderer.render(physics, mouseState);
+    const targetDiameter = gameEngine.getCurrentLevel() ? gameEngine.getCurrentLevel().targetDiameter : 0;
+    renderer.render(physics, mouseState, targetDiameter);
 
     // Drawer Live Stats
     if (statBubbleCount) statBubbleCount.textContent = physics.bubbles.length;

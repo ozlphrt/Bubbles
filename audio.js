@@ -19,7 +19,7 @@ export class SoundEngine {
       if (!AudioContext) return;
       this.ctx = new AudioContext();
       this.masterGain = this.ctx.createGain();
-      this.masterGain.gain.setValueAtTime(0.18, this.ctx.currentTime);
+      this.masterGain.gain.setValueAtTime(0.85, this.ctx.currentTime);
       this.masterGain.connect(this.ctx.destination);
       this.initialized = true;
 
@@ -73,7 +73,7 @@ export class SoundEngine {
   }
 
   /**
-   * Subtle, delicate fluid bubble merge: Soft, warm liquid bloop
+   * Fluid bubble merge: Crisp, warm liquid bloop audible on mobile speakers
    */
   playMerge(newRadius = 40) {
     if (!this.enabled || !this.ctx) return;
@@ -81,12 +81,12 @@ export class SoundEngine {
       this.ensureAudio();
       const now = this.ctx.currentTime;
 
-      // Low, warm fluid frequency (110Hz for giant to 240Hz for small)
+      // Frequency tuned for small mobile speakers with audible harmonics (160Hz to 320Hz)
       const clampedR = Math.max(16, Math.min(100, newRadius));
-      const fStart = 240 - (clampedR - 16) * 1.55; // 110Hz - 240Hz
-      const fEnd = fStart * 1.18; // Gentle subtle upward fluid glide
+      const fStart = 320 - (clampedR - 16) * 1.8; 
+      const fEnd = fStart * 1.25; 
 
-      const duration = 0.075; // 75ms delicate bloop
+      const duration = 0.09;
 
       // 1. Primary Minnaert cavity oscillator (Sine wave)
       const osc1 = this.ctx.createOscillator();
@@ -98,28 +98,28 @@ export class SoundEngine {
       osc1.frequency.exponentialRampToValueAtTime(fEnd, now + duration * 0.4);
       osc1.frequency.exponentialRampToValueAtTime(fEnd * 0.94, now + duration);
 
-      // Smooth, whisper-soft fluid envelope (4ms soft attack, natural decay)
+      // Fluid envelope with punchy presence
       gain1.gain.setValueAtTime(0.0001, now);
-      gain1.gain.linearRampToValueAtTime(0.055, now + 0.005);
-      gain1.gain.exponentialRampToValueAtTime(0.015, now + 0.035);
+      gain1.gain.linearRampToValueAtTime(0.35, now + 0.005);
+      gain1.gain.exponentialRampToValueAtTime(0.12, now + 0.04);
       gain1.gain.exponentialRampToValueAtTime(0.0001, now + duration);
 
-      // 2. Secondary subtle body
+      // 2. Harmonic overtone for mobile speaker clarity
       const osc2 = this.ctx.createOscillator();
       const gain2 = this.ctx.createGain();
-      osc2.type = 'sine';
-      osc2.frequency.setValueAtTime(fStart * 1.98, now);
-      osc2.frequency.exponentialRampToValueAtTime(fEnd * 1.95, now + duration * 0.35);
+      osc2.type = 'triangle';
+      osc2.frequency.setValueAtTime(fStart * 2.0, now);
+      osc2.frequency.exponentialRampToValueAtTime(fEnd * 2.0, now + duration * 0.35);
 
       gain2.gain.setValueAtTime(0.0001, now);
-      gain2.gain.linearRampToValueAtTime(0.012, now + 0.004);
-      gain2.gain.exponentialRampToValueAtTime(0.0001, now + duration * 0.45);
+      gain2.gain.linearRampToValueAtTime(0.12, now + 0.004);
+      gain2.gain.exponentialRampToValueAtTime(0.0001, now + duration * 0.5);
 
-      // 3. Warm fluid low-pass filter
+      // 3. Low-pass filter
       const filter = this.ctx.createBiquadFilter();
       filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(fStart * 2.0, now);
-      filter.Q.setValueAtTime(0.8, now);
+      filter.frequency.setValueAtTime(Math.max(600, fStart * 3.2), now);
+      filter.Q.setValueAtTime(1.0, now);
 
       osc1.connect(gain1);
       osc2.connect(gain2);
@@ -135,7 +135,7 @@ export class SoundEngine {
   }
 
   /**
-   * Subtle soap bubble burst: Delicate, soft acoustic "pop"
+   * Bubble burst: Crisp acoustic "pop"
    */
   playPop(radius = 30) {
     if (!this.enabled || !this.ctx) return;
@@ -144,11 +144,11 @@ export class SoundEngine {
       const now = this.ctx.currentTime;
 
       const clampedR = Math.max(16, Math.min(100, radius));
-      // Low, rounded pop pitch (190Hz for giant to 360Hz for small)
-      const popStartFreq = 360 - (clampedR - 16) * 2.0; // 190Hz - 360Hz
-      const popEndFreq = Math.max(50, popStartFreq * 0.32);
+      // Pop pitch range
+      const popStartFreq = 420 - (clampedR - 16) * 2.2;
+      const popEndFreq = Math.max(70, popStartFreq * 0.3);
 
-      const popDuration = 0.035; // 35ms delicate pop
+      const popDuration = 0.045;
 
       // 1. Soft pressure release transient
       const osc = this.ctx.createOscillator();
@@ -156,18 +156,18 @@ export class SoundEngine {
       osc.type = 'sine';
 
       osc.frequency.setValueAtTime(popStartFreq, now);
-      osc.frequency.exponentialRampToValueAtTime(popEndFreq, now + 0.022);
+      osc.frequency.exponentialRampToValueAtTime(popEndFreq, now + 0.025);
 
       oscGain.gain.setValueAtTime(0.0001, now);
-      oscGain.gain.linearRampToValueAtTime(0.065, now + 0.002);
+      oscGain.gain.linearRampToValueAtTime(0.42, now + 0.002);
       oscGain.gain.exponentialRampToValueAtTime(0.0001, now + popDuration);
 
-      // 2. Soft air puff noise
-      const snapLen = Math.floor(this.ctx.sampleRate * 0.015);
+      // 2. Air puff noise
+      const snapLen = Math.floor(this.ctx.sampleRate * 0.02);
       const snapBuffer = this.ctx.createBuffer(1, snapLen, this.ctx.sampleRate);
       const data = snapBuffer.getChannelData(0);
       for (let i = 0; i < snapLen; i++) {
-        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / snapLen, 2.2);
+        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / snapLen, 2.0);
       }
 
       const noiseSource = this.ctx.createBufferSource();
@@ -175,12 +175,12 @@ export class SoundEngine {
 
       const snapFilter = this.ctx.createBiquadFilter();
       snapFilter.type = 'bandpass';
-      snapFilter.frequency.setValueAtTime(650, now);
-      snapFilter.Q.setValueAtTime(0.9, now);
+      snapFilter.frequency.setValueAtTime(800, now);
+      snapFilter.Q.setValueAtTime(1.2, now);
 
       const snapGain = this.ctx.createGain();
-      snapGain.gain.setValueAtTime(0.02, now);
-      snapGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.015);
+      snapGain.gain.setValueAtTime(0.18, now);
+      snapGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.02);
 
       osc.connect(oscGain);
       oscGain.connect(this.masterGain);
@@ -192,12 +192,52 @@ export class SoundEngine {
       osc.start(now);
       noiseSource.start(now);
       osc.stop(now + popDuration);
-      noiseSource.stop(now + 0.016);
+      noiseSource.stop(now + 0.022);
     } catch (e) {}
   }
 
   /**
-   * Subtle, elegant level victory chime (soft ascending sine triad)
+   * Subtle, soft organic chime for bonus time rewards on big merges
+   */
+  playBonusTime(isColossal = false) {
+    if (!this.enabled || !this.ctx) return;
+    try {
+      this.ensureAudio();
+      const now = this.ctx.currentTime;
+      // Warm, gentle mid-register tones (C5/E5 or A4/C#5/E5)
+      const notes = isColossal ? [440.00, 554.37, 659.25] : [523.25, 659.25];
+      const peakGain = isColossal ? 0.055 : 0.038;
+
+      // Soft low-pass filter to remove harsh edge and create a velvety acoustic glass feel
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(1200, now);
+      filter.connect(this.masterGain);
+
+      notes.forEach((freq, idx) => {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        const t = now + idx * 0.07;
+        const noteDuration = 0.22;
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, t);
+
+        gain.gain.setValueAtTime(0.0001, t);
+        gain.gain.linearRampToValueAtTime(peakGain, t + 0.025);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + noteDuration);
+
+        osc.connect(gain);
+        gain.connect(filter);
+
+        osc.start(t);
+        osc.stop(t + noteDuration);
+      });
+    } catch (e) {}
+  }
+
+  /**
+   * Victory chime (ascending triad)
    */
   playWin() {
     if (!this.enabled || !this.ctx) return;
@@ -210,13 +250,13 @@ export class SoundEngine {
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         const startTime = now + index * 0.09;
-        const noteDuration = 0.35;
+        const noteDuration = 0.38;
 
         osc.type = 'sine';
         osc.frequency.setValueAtTime(freq, startTime);
 
         gain.gain.setValueAtTime(0.0001, startTime);
-        gain.gain.linearRampToValueAtTime(0.045, startTime + 0.015);
+        gain.gain.linearRampToValueAtTime(0.28, startTime + 0.015);
         gain.gain.exponentialRampToValueAtTime(0.0001, startTime + noteDuration);
 
         osc.connect(gain);
@@ -229,7 +269,7 @@ export class SoundEngine {
   }
 
   /**
-   * Soft, warm level fail tone (descending minor interval)
+   * Level fail tone
    */
   playFail() {
     if (!this.enabled || !this.ctx) return;
@@ -242,13 +282,13 @@ export class SoundEngine {
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         const startTime = now + index * 0.16;
-        const noteDuration = 0.4;
+        const noteDuration = 0.45;
 
         osc.type = 'sine';
         osc.frequency.setValueAtTime(freq, startTime);
 
         gain.gain.setValueAtTime(0.0001, startTime);
-        gain.gain.linearRampToValueAtTime(0.04, startTime + 0.02);
+        gain.gain.linearRampToValueAtTime(0.25, startTime + 0.02);
         gain.gain.exponentialRampToValueAtTime(0.0001, startTime + noteDuration);
 
         osc.connect(gain);
@@ -261,7 +301,7 @@ export class SoundEngine {
   }
 
   /**
-   * Subtle high-frequency timer tick (<10ms, dry and minimal)
+   * Timer tick (<10ms)
    */
   playTick() {
     if (!this.enabled || !this.ctx) return;
@@ -276,7 +316,7 @@ export class SoundEngine {
       osc.frequency.exponentialRampToValueAtTime(800, now + 0.008);
 
       gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.linearRampToValueAtTime(0.018, now + 0.001);
+      gain.gain.linearRampToValueAtTime(0.12, now + 0.001);
       gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.008);
 
       osc.connect(gain);

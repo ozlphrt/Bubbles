@@ -30,14 +30,48 @@ export class GameEngine {
     // Callbacks for UI updates
     this.onStateChange = null;
     this.onTimerUpdate = null;
+    this.onBonusTime = null;
     this.onSpawnUpdate = null;
     this.onColorProgress = null;
     this.onLevelWin = null;
     this.onLevelFail = null;
   }
 
+  addBonusTime(seconds, x, y) {
+    if (this.state !== GameState.PHASE2_MERGE) return;
+    this.timer += seconds;
+    if (this.onBonusTime) {
+      this.onBonusTime(seconds, x, y);
+    }
+    if (this.onTimerUpdate) {
+      this.onTimerUpdate(this.timer, this.maxTimer);
+    }
+  }
+
   getCurrentLevel() {
     return this.levelConfig;
+  }
+
+  sampleBubbleRadius(levelConfig) {
+    const tiers = levelConfig.sizeTiers || { small: 1.0, medium: 0, large: 0 };
+    const rand = Math.random();
+    let r = 20;
+
+    // Safety ceiling: never allow initial radius to approach targetDiameter / 2
+    const maxCap = Math.min(58, Math.floor((levelConfig.targetDiameter || 172) * 0.5 - 14));
+
+    if (rand < (tiers.small || 0)) {
+      // Small: radius 18 - 25px (Ø36 - Ø50px)
+      r = 18 + Math.random() * 7;
+    } else if (rand < (tiers.small || 0) + (tiers.medium || 0)) {
+      // Medium: radius 28 - 40px (Ø56 - Ø80px)
+      r = 28 + Math.random() * 12;
+    } else {
+      // Large pre-merged: radius 45 - 58px (Ø90 - Ø116px)
+      r = 45 + Math.random() * 13;
+    }
+
+    return Math.min(r, maxCap);
   }
 
   startLevel(levelNum = 1, width = window.innerWidth, height = window.innerHeight) {
@@ -61,7 +95,7 @@ export class GameEngine {
     const activeColors = this.levelConfig.colors;
 
     // Multi-pass fill and settle until the foam reaches the top ceiling edge (100% screen full)
-    const avgRadius = 22;
+    const avgRadius = this.levelConfig.avgRadius || 22;
     const rowHeight = avgRadius * 1.55;
     const colWidth = avgRadius * 1.90;
     const numCols = Math.max(4, Math.floor(width / colWidth));
@@ -78,7 +112,7 @@ export class GameEngine {
 
       for (let c = 0; c < rowCols; c++) {
         const x = offsetX + (c + 0.5) * (width / numCols);
-        const radius = 18 + Math.random() * 8; // 18px to 26px radius
+        const radius = this.sampleBubbleRadius(this.levelConfig);
         const colorId = activeColors[spawnIndex % activeColors.length];
         physicsEngine.spawnBubble(x, y, radius, 0, 0, colorId);
         spawnIndex++;
@@ -109,7 +143,7 @@ export class GameEngine {
 
         for (let c = 0; c < rowCols; c++) {
           const x = offsetX + (c + 0.5) * (width / numCols);
-          const radius = 18 + Math.random() * 8;
+          const radius = this.sampleBubbleRadius(this.levelConfig);
           const colorId = activeColors[spawnIndex % activeColors.length];
           physicsEngine.spawnBubble(x, y, radius, 0, 0.1, colorId);
           spawnIndex++;
@@ -123,6 +157,20 @@ export class GameEngine {
 
     // Clean up any stray bubble that ended up completely outside top
     physicsEngine.bubbles = physicsEngine.bubbles.filter(b => b.y + b.radius >= 0);
+
+    // Safeguard: Ensure no bubble starts at or above targetDiameter / 2
+    const maxAllowedInitialRadius = Math.floor((this.levelConfig.targetDiameter || 172) * 0.5 - 10);
+    for (let b of physicsEngine.bubbles) {
+      if (b.radius > maxAllowedInitialRadius) {
+        b.radius = maxAllowedInitialRadius;
+        b.targetRadius = maxAllowedInitialRadius;
+        b.mass = Math.max(0.2, Math.pow(b.radius / 22, 2));
+      }
+    }
+
+    // Reset gameplay tracking stats so initial background settlement doesn't penalize the player
+    physicsEngine.burstCount = 0;
+    physicsEngine.totalMerges = 0;
 
     // Calm all residual velocities for a static resting foam field
     for (let b of physicsEngine.bubbles) {
