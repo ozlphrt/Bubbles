@@ -172,8 +172,14 @@
         </section>
 
         <section class="control-section">
-          <h3>Select Level</h3>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <h3>Select Level</h3>
+            <span class="stat-mini-label" id="progressSummaryLabel">UNLOCKED: L1</span>
+          </div>
           <div class="level-jump-grid" id="levelJumpGrid"></div>
+          <div style="margin-top: 10px; display: flex; justify-content: flex-end;">
+            <button id="btnResetProgress" class="tuner-action-btn" title="Reset saved level progress back to Level 1">↺ Reset Progress</button>
+          </div>
         </section>
 
         <section class="control-section">

@@ -1051,7 +1051,7 @@ html, body {
 }
 
 .level-jump-btn {
-  padding: 6px 2px;
+  padding: 6px 3px;
   border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--border-glass-subtle);
@@ -1060,12 +1060,44 @@ html, body {
   font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 38px;
+  transition: all var(--transition-fast);
+}
+
+.level-jump-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--border-glass);
 }
 
 .level-jump-btn.current {
   background: rgba(99, 102, 241, 0.35);
   border-color: #818cf8;
   color: #ffffff;
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.35);
+}
+
+.level-jump-btn.completed {
+  border-color: rgba(74, 222, 128, 0.40);
+  color: #a7f3d0;
+}
+
+.level-jump-btn.completed.current {
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.28);
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.35);
+}
+
+.level-jump-btn .lvl-stars {
+  font-size: 0.55rem;
+  color: #fbbf24;
+  letter-spacing: -1px;
+  line-height: 1;
 }
 
 .tool-grid, .preset-grid {

@@ -9,6 +9,7 @@ import { soundEngine } from './audio.js';
 import { physicsEngine, BUBBLE_COLORS } from './physics.js';
 import { Renderer } from './renderer.js';
 import { gameEngine, GameState } from './game.js';
+import { GameStorage } from './storage.js';
 
 window.addEventListener('DOMContentLoaded', () => {
   const canvas = document.getElementById('simCanvas');
@@ -89,56 +90,47 @@ window.addEventListener('DOMContentLoaded', () => {
   onResize();
 
   const topLevelSelect = document.getElementById('topLevelSelect');
+  const btnResetProgress = document.getElementById('btnResetProgress');
 
-  // Top Right Level Selector Pulldown
-  if (topLevelSelect) {
-    topLevelSelect.innerHTML = '';
-    for (let i = 1; i <= 10; i++) {
-      const opt = document.createElement('option');
-      opt.value = i;
-      opt.textContent = `Level ${i}`;
-      topLevelSelect.appendChild(opt);
-    }
-    topLevelSelect.addEventListener('change', (e) => {
-      audio.ensureAudio();
-      const selectedLevel = parseInt(e.target.value, 10);
-      gameEngine.startLevel(selectedLevel, window.innerWidth, window.innerHeight);
-    });
-  }
+  function renderLevelSelectors(activeLevel) {
+    const progress = GameStorage.loadProgress();
+    const maxLevelToShow = Math.max(10, progress.highestLevel, activeLevel);
 
-  // Drawer Level Jump Grid
-  if (levelJumpGrid) {
-    levelJumpGrid.innerHTML = '';
-    for (let i = 1; i <= 10; i++) {
-      const btn = document.createElement('button');
-      btn.className = `level-jump-btn ${i === 1 ? 'current' : ''}`;
-      btn.textContent = `L${i}`;
-      btn.addEventListener('click', () => {
-        audio.ensureAudio();
-        gameEngine.startLevel(i, window.innerWidth, window.innerHeight);
-        sideDrawer.classList.remove('open');
-      });
-      levelJumpGrid.appendChild(btn);
-    }
-  }
-
-  function updateLevelJumpActive(levelNum) {
+    // Top Right Level Selector Pulldown
     if (topLevelSelect) {
-      let opt = topLevelSelect.querySelector(`option[value="${levelNum}"]`);
-      if (!opt) {
-        opt = document.createElement('option');
-        opt.value = String(levelNum);
-        opt.textContent = `Level ${levelNum}`;
+      topLevelSelect.innerHTML = '';
+      for (let i = 1; i <= maxLevelToShow; i++) {
+        const opt = document.createElement('option');
+        opt.value = i;
+        const isComp = GameStorage.isLevelCompleted(i);
+        opt.textContent = `Level ${i}${isComp ? ' ✓' : ''}`;
         topLevelSelect.appendChild(opt);
       }
-      topLevelSelect.value = String(levelNum);
+      topLevelSelect.value = String(activeLevel);
     }
+
+    // Drawer Level Jump Grid
     if (levelJumpGrid) {
-      const currentCount = levelJumpGrid.querySelectorAll('.level-jump-btn').length;
-      for (let i = currentCount + 1; i <= Math.max(10, levelNum); i++) {
+      levelJumpGrid.innerHTML = '';
+      for (let i = 1; i <= maxLevelToShow; i++) {
         const btn = document.createElement('button');
-        btn.className = 'level-jump-btn';
-        btn.textContent = `L${i}`;
+        const isCurrent = (i === activeLevel);
+        const isComp = GameStorage.isLevelCompleted(i);
+        const stats = GameStorage.getLevelStats(i);
+
+        let cls = 'level-jump-btn';
+        if (isCurrent) cls += ' current';
+        if (isComp) cls += ' completed';
+        btn.className = cls;
+
+        let starsHtml = '';
+        if (stats && stats.stars) {
+          starsHtml = `<span class="lvl-stars">${'★'.repeat(stats.stars)}</span>`;
+        }
+
+        btn.innerHTML = `<span class="lvl-num">L${i}</span>${starsHtml}`;
+        btn.title = `Level ${i}${isComp ? ` (Completed${stats ? ` - ${stats.score} pts` : ''})` : ''}`;
+
         btn.addEventListener('click', () => {
           audio.ensureAudio();
           gameEngine.startLevel(i, window.innerWidth, window.innerHeight);
@@ -146,12 +138,36 @@ window.addEventListener('DOMContentLoaded', () => {
         });
         levelJumpGrid.appendChild(btn);
       }
-
-      const buttons = levelJumpGrid.querySelectorAll('.level-jump-btn');
-      buttons.forEach((btn, idx) => {
-        btn.classList.toggle('current', idx + 1 === levelNum);
-      });
     }
+
+    // Update Progress Summary Label in Drawer
+    const progressSummaryLabel = document.getElementById('progressSummaryLabel');
+    if (progressSummaryLabel) {
+      const completedCount = Object.keys(progress.completedLevels || {}).length;
+      progressSummaryLabel.textContent = `UNLOCKED: L${progress.highestLevel} (${completedCount} CLEARED)`;
+    }
+  }
+
+  function updateLevelJumpActive(levelNum) {
+    renderLevelSelectors(levelNum);
+  }
+
+  if (topLevelSelect) {
+    topLevelSelect.addEventListener('change', (e) => {
+      audio.ensureAudio();
+      const selectedLevel = parseInt(e.target.value, 10);
+      gameEngine.startLevel(selectedLevel, window.innerWidth, window.innerHeight);
+    });
+  }
+
+  if (btnResetProgress) {
+    btnResetProgress.addEventListener('click', () => {
+      if (confirm('Reset your saved progress back to Level 1?')) {
+        GameStorage.resetProgress();
+        gameEngine.startLevel(1, window.innerWidth, window.innerHeight);
+        renderLevelSelectors(1);
+      }
+    });
   }
 
   function formatTime(seconds) {
@@ -305,6 +321,8 @@ window.addEventListener('DOMContentLoaded', () => {
         s.classList.toggle('filled', idx < scoreData.stars);
       });
     }
+
+    renderLevelSelectors(scoreData.level);
   };
 
   gameEngine.onLevelFail = (failData) => {
@@ -750,8 +768,10 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Launch Level 1 Game Flow
-  gameEngine.startLevel(1, window.innerWidth, window.innerHeight);
+  // Launch from Most Current Level (saved locally in localStorage)
+  const savedProgress = GameStorage.loadProgress();
+  const initialLevel = savedProgress.currentLevel || 1;
+  gameEngine.startLevel(initialLevel, window.innerWidth, window.innerHeight);
 
   // Animation Loop
   function loop(currentTime) {

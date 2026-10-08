@@ -7,6 +7,7 @@
 import { LEVEL_DEFINITIONS, getLevelConfig } from './levels.js';
 import { physicsEngine } from './physics.js';
 import { soundEngine } from './audio.js';
+import { GameStorage } from './storage.js';
 
 export const GameState = {
   IDLE: 'IDLE',
@@ -84,6 +85,9 @@ export class GameEngine {
     const num = Math.max(1, Math.floor(levelNum));
     this.currentLevelIndex = num - 1;
     this.levelConfig = getLevelConfig(num);
+
+    // Save current level to persistent storage
+    GameStorage.saveCurrentLevel(num);
 
     // Reset physics
     physicsEngine.clear();
@@ -290,6 +294,7 @@ export class GameEngine {
     soundEngine.playWin();
 
     const scoreData = this.calculateScore();
+    GameStorage.saveLevelWin(scoreData);
     this.notifyStateChange();
 
     if (this.onLevelWin) {
