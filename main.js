@@ -245,18 +245,26 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  let lastBonusTimeMs = 0;
   physics.onMerge = (x, y, newRadius, sizeRatio, colorId) => {
     if (gameEngine.state === GameState.PHASE2_MERGE) {
-      if (newRadius >= 54) {
-        // Colossal merge milestone: +5s bonus
-        gameEngine.addBonusTime(5, x, y);
-        renderer.addFloatingText('+5s', x, y, '#34d399');
-        audio.playBonusTime(true);
-      } else if (newRadius >= 34) {
-        // Significant merge milestone: +3s bonus
-        gameEngine.addBonusTime(3, x, y);
-        renderer.addFloatingText('+3s', x, y, '#38bdf8');
-        audio.playBonusTime(false);
+      const now = performance.now();
+      if (now - lastBonusTimeMs < 3000) return;
+
+      if (newRadius >= 68) {
+        // Colossal merge milestone: +2s bonus
+        if (gameEngine.addBonusTime(2, x, y)) {
+          lastBonusTimeMs = now;
+          renderer.addFloatingText('+2s', x, y, '#34d399');
+          audio.playBonusTime(true);
+        }
+      } else if (newRadius >= 52) {
+        // Significant merge milestone: +1s bonus
+        if (gameEngine.addBonusTime(1, x, y)) {
+          lastBonusTimeMs = now;
+          renderer.addFloatingText('+1s', x, y, '#38bdf8');
+          audio.playBonusTime(false);
+        }
       }
     }
   };

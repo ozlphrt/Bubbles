@@ -38,14 +38,20 @@ export class GameEngine {
   }
 
   addBonusTime(seconds, x, y) {
-    if (this.state !== GameState.PHASE2_MERGE) return;
-    this.timer += seconds;
+    if (this.state !== GameState.PHASE2_MERGE || this.maxTimer <= 0) return false;
+    // Cap at maxTimer so player can only recover lost time, not bank infinite surplus
+    const prev = this.timer;
+    this.timer = Math.min(this.maxTimer, this.timer + seconds);
+    const added = this.timer - prev;
+    if (added <= 0.05) return false;
+
     if (this.onBonusTime) {
-      this.onBonusTime(seconds, x, y);
+      this.onBonusTime(added, x, y);
     }
     if (this.onTimerUpdate) {
       this.onTimerUpdate(this.timer, this.maxTimer);
     }
+    return true;
   }
 
   getCurrentLevel() {
