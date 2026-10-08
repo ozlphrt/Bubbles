@@ -159,7 +159,22 @@ export class Renderer {
     const ctx = this.ctx;
     const width = window.innerWidth;
     const height = window.innerHeight;
+    const cornerR = 40;
     this.time += 0.015;
+
+    ctx.clearRect(0, 0, width, height);
+
+    ctx.save();
+    // Clip the canvas view to rounded bottom corners
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(width, 0);
+    ctx.lineTo(width, height - cornerR);
+    ctx.arcTo(width, height, width - cornerR, height, cornerR);
+    ctx.lineTo(cornerR, height);
+    ctx.arcTo(0, height, 0, height - cornerR, cornerR);
+    ctx.closePath();
+    ctx.clip();
 
     this.renderBackground(ctx, width, height);
     this.renderGrid(ctx, width, height);
@@ -179,6 +194,32 @@ export class Renderer {
     this.renderFloatingTexts(ctx);
 
     this.renderMouseFX(ctx, mouseState);
+
+    // Sleek dual-layer glass bottom border accent along rounded corners
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(0, height - cornerR);
+    ctx.arcTo(0, height, cornerR, height, cornerR);
+    ctx.lineTo(width - cornerR, height);
+    ctx.arcTo(width, height, width, height - cornerR, cornerR);
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.25)';
+    ctx.lineWidth = 3;
+    ctx.shadowColor = 'rgba(56, 189, 248, 0.35)';
+    ctx.shadowBlur = 8;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(0, height - cornerR);
+    ctx.arcTo(0, height, cornerR, height, cornerR);
+    ctx.lineTo(width - cornerR, height);
+    ctx.arcTo(width, height, width, height - cornerR, cornerR);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.32)';
+    ctx.lineWidth = 1.5;
+    ctx.shadowBlur = 0;
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.restore();
   }
 
   renderFloatingTexts(ctx) {
@@ -451,8 +492,27 @@ export class Renderer {
       }
     }
 
-    // 2. Container wall & floor boundaries
+    // 2. Container wall & floor boundaries (including rounded bottom corners)
     const boundaries = [];
+    const cornerR = 40;
+    if (b.y > height - cornerR - 10) {
+      if (b.x < cornerR + 10) {
+        const cx = cornerR;
+        const cy = height - cornerR;
+        const angle = Math.atan2(b.y - cy, b.x - cx);
+        const dist = Math.hypot(b.x - cx, b.y - cy);
+        const chordDist = Math.max(2, cornerR - dist);
+        boundaries.push({ angle, chordDist, overlap: Math.max(0, radius - chordDist) });
+      } else if (b.x > width - cornerR - 10) {
+        const cx = width - cornerR;
+        const cy = height - cornerR;
+        const angle = Math.atan2(b.y - cy, b.x - cx);
+        const dist = Math.hypot(b.x - cx, b.y - cy);
+        const chordDist = Math.max(2, cornerR - dist);
+        boundaries.push({ angle, chordDist, overlap: Math.max(0, radius - chordDist) });
+      }
+    }
+
     if (b.x - radius < 12) {
       boundaries.push({ angle: Math.PI, chordDist: Math.max(2, b.x), overlap: Math.max(0, radius - b.x) });
     }

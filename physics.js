@@ -261,6 +261,48 @@ export class Bubble {
       this.vx *= 0.85; // Natural floor friction
       if (Math.abs(this.vx) < 0.04) this.vx = 0;
     }
+
+    // Rounded bottom corners containment (radius = 40px)
+    const cornerR = 40;
+    if (this.y > height - cornerR) {
+      if (this.x < cornerR) {
+        const cx = cornerR;
+        const cy = height - cornerR;
+        const dx = this.x - cx;
+        const dy = this.y - cy;
+        const dist = Math.hypot(dx, dy);
+        const maxAllowed = Math.max(2, cornerR - this.radius);
+        if (dist > maxAllowed && dist > 0.001) {
+          const nx = dx / dist;
+          const ny = dy / dist;
+          this.x = cx + nx * maxAllowed;
+          this.y = cy + ny * maxAllowed;
+          const vDot = this.vx * nx + this.vy * ny;
+          if (vDot > 0) {
+            this.vx -= (1 + (this.elasticity || 0.72)) * vDot * nx * 0.7;
+            this.vy -= (1 + (this.elasticity || 0.72)) * vDot * ny * 0.7;
+          }
+        }
+      } else if (this.x > width - cornerR) {
+        const cx = width - cornerR;
+        const cy = height - cornerR;
+        const dx = this.x - cx;
+        const dy = this.y - cy;
+        const dist = Math.hypot(dx, dy);
+        const maxAllowed = Math.max(2, cornerR - this.radius);
+        if (dist > maxAllowed && dist > 0.001) {
+          const nx = dx / dist;
+          const ny = dy / dist;
+          this.x = cx + nx * maxAllowed;
+          this.y = cy + ny * maxAllowed;
+          const vDot = this.vx * nx + this.vy * ny;
+          if (vDot > 0) {
+            this.vx -= (1 + (this.elasticity || 0.72)) * vDot * nx * 0.7;
+            this.vy -= (1 + (this.elasticity || 0.72)) * vDot * ny * 0.7;
+          }
+        }
+      }
+    }
   }
 
   exciteWobble(amount, angle) {
@@ -663,6 +705,50 @@ export class PhysicsEngine {
         }
         b1.vx *= Math.max(0.70, 1 - (b1.friction || 0.016) * 8);
         if (Math.abs(b1.vx) < 0.04) b1.vx = 0;
+      }
+
+      // Rounded bottom corners containment (radius = 40px)
+      const cornerR = 40;
+      if (b1.y > height - cornerR) {
+        // Bottom-left rounded corner
+        if (b1.x < cornerR) {
+          const cx = cornerR;
+          const cy = height - cornerR;
+          const dx = b1.x - cx;
+          const dy = b1.y - cy;
+          const dist = Math.hypot(dx, dy);
+          const maxAllowed = Math.max(2, cornerR - b1.radius);
+          if (dist > maxAllowed && dist > 0.001) {
+            const nx = dx / dist;
+            const ny = dy / dist;
+            b1.x = cx + nx * maxAllowed;
+            b1.y = cy + ny * maxAllowed;
+            const vDot = b1.vx * nx + b1.vy * ny;
+            if (vDot > 0) {
+              b1.vx -= (1 + (b1.elasticity || 0.72)) * vDot * nx * 0.7;
+              b1.vy -= (1 + (b1.elasticity || 0.72)) * vDot * ny * 0.7;
+            }
+          }
+        } else if (b1.x > width - cornerR) {
+          // Bottom-right rounded corner
+          const cx = width - cornerR;
+          const cy = height - cornerR;
+          const dx = b1.x - cx;
+          const dy = b1.y - cy;
+          const dist = Math.hypot(dx, dy);
+          const maxAllowed = Math.max(2, cornerR - b1.radius);
+          if (dist > maxAllowed && dist > 0.001) {
+            const nx = dx / dist;
+            const ny = dy / dist;
+            b1.x = cx + nx * maxAllowed;
+            b1.y = cy + ny * maxAllowed;
+            const vDot = b1.vx * nx + b1.vy * ny;
+            if (vDot > 0) {
+              b1.vx -= (1 + (b1.elasticity || 0.72)) * vDot * nx * 0.7;
+              b1.vy -= (1 + (b1.elasticity || 0.72)) * vDot * ny * 0.7;
+            }
+          }
+        }
       }
     }
   }
