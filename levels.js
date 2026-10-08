@@ -116,3 +116,66 @@ export const LEVEL_DEFINITIONS = [
     sizeTiers: { small: 0.25, medium: 0.45, large: 0.30 }
   }
 ];
+
+function toRoman(n) {
+  const roman = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV', 'XV', 'XVI', 'XVII', 'XVIII', 'XIX', 'XX'];
+  return roman[n - 1] || `${n}`;
+}
+
+/**
+ * Returns level config for any level index >= 1.
+ * Levels 1-10 use curated LEVEL_DEFINITIONS;
+ * Levels 11+ dynamically scale into endless procedural mastery tiers.
+ */
+export function getLevelConfig(levelNum = 1) {
+  const num = Math.max(1, Math.floor(levelNum));
+  if (num <= LEVEL_DEFINITIONS.length) {
+    return LEVEL_DEFINITIONS[num - 1];
+  }
+
+  // Procedural Endless Progression for Level 11+
+  const endlessIndex = num - LEVEL_DEFINITIONS.length; // 1, 2, 3...
+  const cycle = (endlessIndex - 1) % 5;
+  const cycleCount = Math.floor((endlessIndex - 1) / 5) + 1;
+
+  const TITLES = [
+    "Quantum Foam",
+    "Apex Fusion",
+    "Singularity Core",
+    "Hyper-Tension",
+    "Infinite Horizon"
+  ];
+
+  // Target diameter scales between 188 and 196px (under the 200px burst ceiling)
+  const targetDiameters = [188, 190, 192, 194, 196];
+  const targetDiameter = targetDiameters[cycle];
+
+  // Timer remains engaging (140s - 180s)
+  const timerSeconds = Math.max(140, 185 - cycleCount * 5 - cycle * 3);
+
+  const allColors = ['white', 'green', 'red', 'orange', 'purple', 'cyan'];
+  let colors;
+  if (cycle === 0 && cycleCount % 2 === 1) {
+    colors = ['white', 'green', 'red', 'purple', 'cyan'];
+  } else if (cycle === 2 && cycleCount % 2 === 0) {
+    colors = ['green', 'red', 'orange', 'purple', 'cyan'];
+  } else {
+    colors = allColors;
+  }
+
+  return {
+    level: num,
+    name: `${TITLES[cycle]} ${toRoman(cycleCount)}`,
+    description: `Endless Mastery Tier: Coalesce ${colors.length} gem colors to Ø${targetDiameter}px under intense surface tension.`,
+    colors,
+    dropBudget: Math.min(42, 32 + cycle * 2 + cycleCount),
+    targetDiameter,
+    timerSeconds,
+    avgRadius: Math.min(34, 31 + Math.floor(cycle * 0.7)),
+    sizeTiers: {
+      small: Math.max(0.18, 0.28 - cycle * 0.02),
+      medium: 0.44,
+      large: Math.min(0.38, 0.28 + cycle * 0.02)
+    }
+  };
+}

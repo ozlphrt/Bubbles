@@ -4,7 +4,7 @@
  * timers, win/fail logic, and score calculations.
  */
 
-import { LEVEL_DEFINITIONS } from './levels.js';
+import { LEVEL_DEFINITIONS, getLevelConfig } from './levels.js';
 import { physicsEngine } from './physics.js';
 import { soundEngine } from './audio.js';
 
@@ -81,9 +81,9 @@ export class GameEngine {
   }
 
   startLevel(levelNum = 1, width = window.innerWidth, height = window.innerHeight) {
-    const idx = Math.max(0, Math.min(this.levels.length - 1, levelNum - 1));
-    this.currentLevelIndex = idx;
-    this.levelConfig = this.levels[idx];
+    const num = Math.max(1, Math.floor(levelNum));
+    this.currentLevelIndex = num - 1;
+    this.levelConfig = getLevelConfig(num);
 
     // Reset physics
     physicsEngine.clear();
@@ -363,15 +363,13 @@ export class GameEngine {
   }
 
   restartCurrentLevel(width = window.innerWidth, height = window.innerHeight) {
-    this.startLevel(this.levelConfig.level, width, height);
+    const currentNum = (this.levelConfig && this.levelConfig.level) || 1;
+    this.startLevel(currentNum, width, height);
   }
 
   nextLevel(width = window.innerWidth, height = window.innerHeight) {
-    if (this.currentLevelIndex + 1 < this.levels.length) {
-      this.startLevel(this.currentLevelIndex + 2, width, height);
-    } else {
-      this.startLevel(1, width, height);
-    }
+    const currentNum = (this.levelConfig && this.levelConfig.level) || 1;
+    this.startLevel(currentNum + 1, width, height);
   }
 }
 

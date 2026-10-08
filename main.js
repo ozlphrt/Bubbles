@@ -124,9 +124,29 @@ window.addEventListener('DOMContentLoaded', () => {
 
   function updateLevelJumpActive(levelNum) {
     if (topLevelSelect) {
+      let opt = topLevelSelect.querySelector(`option[value="${levelNum}"]`);
+      if (!opt) {
+        opt = document.createElement('option');
+        opt.value = String(levelNum);
+        opt.textContent = `Level ${levelNum}`;
+        topLevelSelect.appendChild(opt);
+      }
       topLevelSelect.value = String(levelNum);
     }
     if (levelJumpGrid) {
+      const currentCount = levelJumpGrid.querySelectorAll('.level-jump-btn').length;
+      for (let i = currentCount + 1; i <= Math.max(10, levelNum); i++) {
+        const btn = document.createElement('button');
+        btn.className = 'level-jump-btn';
+        btn.textContent = `L${i}`;
+        btn.addEventListener('click', () => {
+          audio.ensureAudio();
+          gameEngine.startLevel(i, window.innerWidth, window.innerHeight);
+          sideDrawer.classList.remove('open');
+        });
+        levelJumpGrid.appendChild(btn);
+      }
+
       const buttons = levelJumpGrid.querySelectorAll('.level-jump-btn');
       buttons.forEach((btn, idx) => {
         btn.classList.toggle('current', idx + 1 === levelNum);
