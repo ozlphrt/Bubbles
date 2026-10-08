@@ -50,32 +50,32 @@ export class BurstParticle {
 
 export const BUBBLE_COLORS = [
   { 
-    id: 'white',  name: 'Pearl',    hue: 0,   isWhite: true,
+    id: 'white',  name: 'Pearl',    hue: 210, isWhite: true,
     elasticity: 0.88, massFactor: 0.90, friction: 0.010, wobbleFreq: 0.20,
     shininess: 1.00, reflectivity: 0.95, smoothness: 0.96
   },
   { 
-    id: 'cyan',   name: 'Sapphire', hue: 200, isWhite: false,
+    id: 'cyan',   name: 'Sapphire', hue: 205, isWhite: false,
     elasticity: 0.85, massFactor: 0.95, friction: 0.012, wobbleFreq: 0.18,
     shininess: 0.94, reflectivity: 0.88, smoothness: 0.92
   },
   { 
-    id: 'red',    name: 'Ruby',     hue: 345, isWhite: false,
+    id: 'red',    name: 'Ruby',     hue: 350, isWhite: false,
     elasticity: 0.78, massFactor: 1.00, friction: 0.014, wobbleFreq: 0.16,
     shininess: 0.90, reflectivity: 0.92, smoothness: 0.86
   },
   { 
-    id: 'purple', name: 'Amethyst', hue: 265, isWhite: false,
+    id: 'purple', name: 'Amethyst', hue: 275, isWhite: false,
     elasticity: 0.72, massFactor: 1.05, friction: 0.016, wobbleFreq: 0.15,
     shininess: 0.85, reflectivity: 0.80, smoothness: 0.82
   },
   { 
-    id: 'orange', name: 'Amber',    hue: 35,  isWhite: false,
+    id: 'orange', name: 'Amber',    hue: 42,  isWhite: false,
     elasticity: 0.62, massFactor: 1.10, friction: 0.022, wobbleFreq: 0.12,
     shininess: 0.78, reflectivity: 0.72, smoothness: 0.72
   },
   { 
-    id: 'green',  name: 'Emerald',  hue: 160, isWhite: false,
+    id: 'green',  name: 'Emerald',  hue: 156, isWhite: false,
     elasticity: 0.65, massFactor: 1.15, friction: 0.020, wobbleFreq: 0.13,
     shininess: 0.72, reflectivity: 0.66, smoothness: 0.68
   }

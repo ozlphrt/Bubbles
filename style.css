@@ -332,11 +332,11 @@ html, body {
 }
 
 .dot-white { background: #f8fafc; color: #f8fafc; }
-.dot-green { background: #22c55e; color: #22c55e; }
-.dot-red { background: #e11d48; color: #e11d48; }
+.dot-green { background: #10b981; color: #10b981; }
+.dot-red { background: #f43f5e; color: #f43f5e; }
 .dot-orange { background: #f59e0b; color: #f59e0b; }
-.dot-purple { background: #9333ea; color: #9333ea; }
-.dot-cyan { background: #38bdf8; color: #38bdf8; }
+.dot-purple { background: #a855f7; color: #a855f7; }
+.dot-cyan { background: #0ea5e9; color: #0ea5e9; }
 
 /* Top right action buttons */
 .hud-actions {

@@ -13,12 +13,12 @@ export class Renderer {
     this.time = 0;
 
     this.baseColors = {
-      white: '#f1f5f9', // Opalescent Pearl
-      green: '#059669', // Emerald Jade
-      red: '#be123c',   // Velvet Crimson / Rose Quartz
-      orange: '#d97706',// Honey Topaz / Amber
-      purple: '#7c3aed',// Royal Amethyst
-      cyan: '#0284c7'   // Glacier Sapphire
+      white:  '#f8fafc', // Ethereal Diamond Pearl (bright, clean, luminous)
+      green:  '#10b981', // Radiant Emerald (vivid, lush green)
+      red:    '#f43f5e', // Vivid Ruby Rose (bright, fiery, unmistakable red)
+      orange: '#f59e0b', // Glowing Amber Gold (warm rich honey topaz)
+      purple: '#a855f7', // Royal Amethyst (vibrant neon violet)
+      cyan:   '#0ea5e9'  // Electric Sapphire (brilliant crystal azure)
     };
 
     this.defaultBaseColors = { ...this.baseColors };
@@ -637,40 +637,40 @@ export class Renderer {
     ctx.save();
     ctx.clip();
 
-    // 1. Translucent Optical Glass Body (Smoothness modulates clarity vs velvety dispersion)
+    // 1. Translucent Optical Glass Body (Vibrant, high-chroma gem shader)
     const bodyGrad = ctx.createRadialGradient(-radius * 0.22, -radius * 0.22, radius * 0.05, 0, 0, radius * 1.05);
-    const centerAlpha = gem.smoothness > 0.85 ? 0.65 : 0.72;
-    const midAlpha = gem.smoothness > 0.85 ? 0.42 : 0.48;
+    const centerAlpha = gem.smoothness > 0.85 ? 0.70 : 0.78;
+    const midAlpha = gem.smoothness > 0.85 ? 0.50 : 0.58;
 
     if (gem.isWhite) {
       bodyGrad.addColorStop(0, `rgba(255, 255, 255, ${centerAlpha})`);
-      bodyGrad.addColorStop(0.35, `rgba(224, 242, 254, ${midAlpha})`);
-      bodyGrad.addColorStop(0.70, 'rgba(148, 163, 184, 0.50)');
-      bodyGrad.addColorStop(1.0, 'rgba(15, 23, 42, 0.85)');
+      bodyGrad.addColorStop(0.32, `rgba(240, 249, 255, ${midAlpha})`);
+      bodyGrad.addColorStop(0.68, 'rgba(203, 213, 225, 0.55)');
+      bodyGrad.addColorStop(1.0, 'rgba(100, 116, 139, 0.65)');
     } else {
-      bodyGrad.addColorStop(0, `hsla(${gem.h}, ${Math.round(gem.s * 95)}%, ${Math.round(gem.l * 82)}%, ${centerAlpha})`);
-      bodyGrad.addColorStop(0.38, `hsla(${gem.h}, ${Math.round(gem.s * 92)}%, ${Math.round(gem.l * 65)}%, ${midAlpha})`);
-      bodyGrad.addColorStop(0.72, `hsla(${gem.h}, ${Math.round(gem.s * 95)}%, ${Math.round(gem.l * 42)}%, 0.58)`);
-      bodyGrad.addColorStop(1.0, `hsla(${gem.h}, ${Math.round(gem.s * 100)}%, 14%, 0.88)`);
+      bodyGrad.addColorStop(0, `hsla(${gem.h}, 98%, ${Math.min(88, Math.round(gem.l * 88))}%, ${centerAlpha})`);
+      bodyGrad.addColorStop(0.35, `hsla(${gem.h}, 96%, ${Math.min(76, Math.round(gem.l * 72))}%, ${midAlpha})`);
+      bodyGrad.addColorStop(0.70, `hsla(${gem.h}, 96%, ${Math.round(gem.l * 54)}%, 0.68)`);
+      bodyGrad.addColorStop(1.0, `hsla(${gem.h}, 98%, 28%, 0.82)`);
     }
     ctx.fillStyle = bodyGrad;
     ctx.fill();
 
-    // 2. Internal Refractive Caustic Pool (Reflectivity modulates internal light brilliance)
+    // 2. Internal Refractive Caustic Pool (Luminous colored focal heart)
     const cx = radius * 0.26;
     const cy = radius * 0.26;
     const cr = radius * 0.62;
     const causticGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, cr);
-    const causticPeak = Math.min(0.95, 0.55 + 0.40 * gem.reflectivity);
+    const causticPeak = Math.min(0.96, 0.62 + 0.36 * gem.reflectivity);
 
     if (gem.isWhite) {
       causticGrad.addColorStop(0, `rgba(255, 255, 255, ${causticPeak.toFixed(2)})`);
-      causticGrad.addColorStop(0.45, `rgba(186, 230, 253, ${(causticPeak * 0.45).toFixed(2)})`);
+      causticGrad.addColorStop(0.45, `rgba(224, 242, 254, ${(causticPeak * 0.55).toFixed(2)})`);
       causticGrad.addColorStop(1.0, 'rgba(255, 255, 255, 0)');
     } else {
-      causticGrad.addColorStop(0, `hsla(${gem.h}, 100%, ${Math.min(92, Math.round(gem.l * 125))}%, ${causticPeak.toFixed(2)})`);
-      causticGrad.addColorStop(0.45, `hsla(${gem.h}, 95%, ${Math.round(gem.l * 90)}%, ${(causticPeak * 0.48).toFixed(2)})`);
-      causticGrad.addColorStop(1.0, `hsla(${gem.h}, 90%, 30%, 0)`);
+      causticGrad.addColorStop(0, `hsla(${gem.h}, 100%, ${Math.min(94, Math.round(gem.l * 135))}%, ${causticPeak.toFixed(2)})`);
+      causticGrad.addColorStop(0.45, `hsla(${gem.h}, 100%, ${Math.round(gem.l * 95)}%, ${(causticPeak * 0.55).toFixed(2)})`);
+      causticGrad.addColorStop(1.0, `hsla(${gem.h}, 95%, 45%, 0)`);
     }
     ctx.fillStyle = causticGrad;
     ctx.beginPath();
@@ -679,25 +679,25 @@ export class Renderer {
 
     ctx.restore(); // Ends clipping
 
-    // 3. Polished Glass Rim (Fresnel Rim - reflectivity modulates edge reflection strength)
+    // 3. Polished Glass Rim (Fresnel Rim - wraps bubble in vibrant chromatic edge)
     if (typeof traceContour === 'function') {
       ctx.save();
       traceContour();
-      ctx.lineWidth = Math.max(1.1, radius * (0.034 + 0.012 * gem.reflectivity));
+      ctx.lineWidth = Math.max(1.2, radius * (0.036 + 0.012 * gem.reflectivity));
       const rimGrad = ctx.createLinearGradient(-radius, -radius, radius, radius);
-      const topRimAlpha = Math.min(0.98, 0.65 + 0.32 * gem.reflectivity).toFixed(2);
-      const midRimAlpha = (0.45 + 0.35 * gem.reflectivity).toFixed(2);
+      const topRimAlpha = Math.min(0.98, 0.70 + 0.28 * gem.reflectivity).toFixed(2);
+      const midRimAlpha = (0.50 + 0.35 * gem.reflectivity).toFixed(2);
 
       if (gem.isWhite) {
         rimGrad.addColorStop(0, `rgba(255, 255, 255, ${topRimAlpha})`);
         rimGrad.addColorStop(0.35, `rgba(224, 242, 254, ${midRimAlpha})`);
-        rimGrad.addColorStop(0.70, 'rgba(148, 163, 184, 0.35)');
-        rimGrad.addColorStop(1.0, 'rgba(15, 23, 42, 0.85)');
+        rimGrad.addColorStop(0.70, 'rgba(186, 230, 253, 0.45)');
+        rimGrad.addColorStop(1.0, 'rgba(71, 85, 105, 0.65)');
       } else {
         rimGrad.addColorStop(0, `rgba(255, 255, 255, ${topRimAlpha})`);
-        rimGrad.addColorStop(0.30, `hsla(${gem.h}, 95%, 80%, ${midRimAlpha})`);
-        rimGrad.addColorStop(0.70, `hsla(${gem.h}, 80%, 40%, 0.30)`);
-        rimGrad.addColorStop(1.0, 'rgba(0, 0, 0, 0.75)');
+        rimGrad.addColorStop(0.30, `hsla(${gem.h}, 100%, 82%, ${midRimAlpha})`);
+        rimGrad.addColorStop(0.70, `hsla(${gem.h}, 90%, 50%, 0.45)`);
+        rimGrad.addColorStop(1.0, `hsla(${gem.h}, 95%, 26%, 0.75)`);
       }
       ctx.strokeStyle = rimGrad;
       ctx.stroke();
@@ -847,11 +847,11 @@ export class Renderer {
 
     const EMISSIONS = {
       white:  { glow: '#38bdf8', glowRgb: '56, 189, 248', stroke: 'rgba(3, 7, 18, 0.92)', core: '#ffffff' },
-      cyan:   { glow: '#38bdf8', glowRgb: '56, 189, 248', stroke: 'rgba(2, 6, 23, 0.90)',  core: '#ffffff' },
-      green:  { glow: '#34d399', glowRgb: '52, 211, 153', stroke: 'rgba(2, 20, 12, 0.90)', core: '#ffffff' },
-      red:    { glow: '#fb7185', glowRgb: '251, 113, 133', stroke: 'rgba(24, 2, 8, 0.90)', core: '#ffffff' },
-      orange: { glow: '#fbbf24', glowRgb: '251, 191, 36',  stroke: 'rgba(26, 14, 2, 0.90)', core: '#ffffff' },
-      purple: { glow: '#c084fc', glowRgb: '192, 132, 252', stroke: 'rgba(20, 4, 32, 0.90)', core: '#ffffff' }
+      cyan:   { glow: '#0ea5e9', glowRgb: '14, 165, 233', stroke: 'rgba(2, 6, 23, 0.90)',  core: '#ffffff' },
+      green:  { glow: '#10b981', glowRgb: '16, 185, 129', stroke: 'rgba(2, 20, 12, 0.90)', core: '#ffffff' },
+      red:    { glow: '#f43f5e', glowRgb: '244, 63, 94',  stroke: 'rgba(24, 2, 8, 0.90)',  core: '#ffffff' },
+      orange: { glow: '#f59e0b', glowRgb: '245, 158, 11', stroke: 'rgba(26, 14, 2, 0.90)', core: '#ffffff' },
+      purple: { glow: '#a855f7', glowRgb: '168, 85, 247', stroke: 'rgba(20, 4, 32, 0.90)', core: '#ffffff' }
     };
 
     ctx.save();
