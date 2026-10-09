@@ -265,7 +265,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
       if (objLevelBadge) objLevelBadge.textContent = `LEVEL ${levelConfig.level}`;
       if (objGoalNum) objGoalNum.textContent = levelConfig.targetDiameter;
-      if (objGoalText) objGoalText.textContent = `Grow to ${levelConfig.targetDiameter}px`;
+      if (objGoalText) objGoalText.textContent = `${levelConfig.targetDiameter}px per color`;
 
       renderObjectivePreviewCanvas(levelConfig.colors);
     } else if (state === GameState.PHASE2_MERGE) {

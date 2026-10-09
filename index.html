@@ -51,37 +51,25 @@
       </button>
     </div>
 
-    <!-- Sleek Glass Objective Modal -->
+    <!-- Minimalist Glass Objective Modal -->
     <div class="modal-overlay hidden" id="modalObjective">
       <div class="modal-card modal-card-objective">
         <div class="modal-eyebrow" id="objLevelBadge">LEVEL 1</div>
-        <div class="modal-goal-hero">
-          <div class="goal-hero-eyebrow">
-            <span class="goal-hero-icon">🎯</span>
-            <span>TARGET DIAMETER</span>
+
+        <div class="objective-hero">
+          <div class="objective-num-row">
+            <span class="objective-num" id="objGoalNum">140</span>
+            <span class="objective-unit">px</span>
           </div>
-          <div class="goal-hero-val-row">
-            <span class="goal-hero-num" id="objGoalNum">140</span>
-            <span class="goal-hero-unit">px</span>
-          </div>
-          <div class="goal-hero-hint">Grow any gem to reach goal</div>
+          <div class="objective-subtitle">per color</div>
         </div>
-        <h2 class="sr-only" id="objGoalText">Grow to 140px</h2>
+        <h2 class="sr-only" id="objGoalText">140px per color</h2>
 
         <div class="modal-color-preview" id="objColorsGrid">
           <canvas id="modalColorsCanvas" class="modal-colors-canvas" width="220" height="36"></canvas>
         </div>
 
-        <div class="modal-guidance-card">
-          <span class="guidance-icon">💡</span>
-          <div class="guidance-body">
-            <span class="guidance-title">Unblock Anytime</span>
-            <span class="guidance-desc">Tap empty gaps between bubbles to spawn new gems and unlock tight clusters!</span>
-          </div>
-        </div>
-
         <button id="btnStartLevel" class="btn-hero-primary">
-          <span class="btn-play-glyph">▶</span>
           <span>Play</span>
         </button>
       </div>
