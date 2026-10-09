@@ -582,18 +582,17 @@ export class Renderer {
       });
     }
 
-    // Outer ambient lantern light bloom (casts warm light into surrounding foam when goal met)
+    // Outer ambient lantern light bloom (casts soft luminous light matching gem color into surrounding foam)
     if (isGoalReached) {
-      const pulse = 0.88 + 0.12 * Math.sin(this.time * 3.5);
-      const outerAuraRadius = radius * 1.50;
+      const pulse = 0.92 + 0.08 * Math.sin(this.time * 2.5);
+      const outerAuraRadius = radius * 1.40;
       const isWhite = b.isWhite || b.colorId === 'white' || (b.colorIndex === 0 && b.hue === 0);
       const gem = this.getGemColorInfo(isWhite ? 'white' : (b.colorId || 'red'), b);
 
       ctx.save();
       const lampGlow = ctx.createRadialGradient(0, 0, radius * 0.35, 0, 0, outerAuraRadius);
-      lampGlow.addColorStop(0, `rgba(254, 240, 138, ${0.48 * pulse})`);
-      lampGlow.addColorStop(0.35, isWhite ? `rgba(255, 255, 255, ${0.38 * pulse})` : `hsla(${gem.h}, 100%, 65%, ${0.38 * pulse})`);
-      lampGlow.addColorStop(0.70, `rgba(251, 191, 36, ${0.18 * pulse})`);
+      lampGlow.addColorStop(0, isWhite ? `rgba(255, 255, 255, ${0.32 * pulse})` : `hsla(${gem.h}, 100%, 75%, ${0.32 * pulse})`);
+      lampGlow.addColorStop(0.40, isWhite ? `rgba(224, 242, 254, ${0.20 * pulse})` : `hsla(${gem.h}, 100%, 60%, ${0.20 * pulse})`);
       lampGlow.addColorStop(1.0, 'rgba(0, 0, 0, 0)');
       ctx.fillStyle = lampGlow;
       ctx.beginPath();
@@ -651,94 +650,94 @@ export class Renderer {
   /**
    * Renders the volumetric illuminated lamp effect inside a goal-met bubble
    */
+  /**
+   * Renders realistic volumetric transillumination inside a goal-met bubble
+   * (Physical subsurface scattering, glowing incandescent filament core, fluid caustics, and Fresnel edge emission)
+   */
   renderLampInterior(ctx, b, radius, gem, traceContour) {
-    const pulse = 0.88 + 0.12 * Math.sin(this.time * 3.5);
+    const pulse = 0.94 + 0.06 * Math.sin(this.time * 2.5);
     const isWhite = gem.isWhite;
 
     ctx.save();
     traceContour();
     ctx.clip();
 
-    // 1. Warm Incandescent Lamp Internal Fill (Volumetric light flooding the interior)
-    const lampGrad = ctx.createRadialGradient(0, 0, radius * 0.04, 0, 0, radius * 0.98);
-    lampGrad.addColorStop(0, `rgba(255, 255, 255, ${0.98 * pulse})`);
-    lampGrad.addColorStop(0.18, `rgba(254, 240, 138, ${0.92 * pulse})`);
-    lampGrad.addColorStop(0.42, isWhite ? `rgba(224, 242, 254, ${0.78 * pulse})` : `hsla(${gem.h}, 100%, 75%, ${0.82 * pulse})`);
-    lampGrad.addColorStop(0.72, isWhite ? `rgba(186, 230, 253, ${0.58 * pulse})` : `hsla(${gem.h}, 100%, 60%, ${0.65 * pulse})`);
-    lampGrad.addColorStop(1.0, `rgba(254, 240, 138, ${0.40 * pulse})`);
+    // 1. Volumetric Subsurface Transillumination
+    // Soft radiant light that permeates the entire volume from within, matching the gem's true wavelength
+    const lampGrad = ctx.createRadialGradient(0, 0, radius * 0.02, 0, 0, radius * 0.96);
+    lampGrad.addColorStop(0, `rgba(255, 255, 255, ${0.92 * pulse})`);
+    lampGrad.addColorStop(0.12, isWhite ? `rgba(255, 255, 255, ${0.85 * pulse})` : `hsla(${gem.h}, 90%, 90%, ${0.85 * pulse})`);
+    lampGrad.addColorStop(0.38, isWhite ? `rgba(224, 242, 254, ${0.60 * pulse})` : `hsla(${gem.h}, 95%, 68%, ${0.65 * pulse})`);
+    lampGrad.addColorStop(0.72, isWhite ? `rgba(186, 230, 253, ${0.40 * pulse})` : `hsla(${gem.h}, 100%, 52%, ${0.45 * pulse})`);
+    lampGrad.addColorStop(1.0, isWhite ? `rgba(147, 197, 253, ${0.20 * pulse})` : `hsla(${gem.h}, 100%, 42%, ${0.25 * pulse})`);
     ctx.fillStyle = lampGrad;
     ctx.fill();
 
-    // 2. Rotating Lamp Flare Rays (Internal Caustic Light Beams radiating through the glass)
-    ctx.save();
-    ctx.rotate(this.time * 0.35);
-    const numRays = 8;
-    for (let i = 0; i < numRays; i++) {
-      const angle = (i / numRays) * Math.PI * 2;
-      const rayWidth = 0.20;
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.arc(0, 0, radius * 0.96, angle - rayWidth, angle + rayWidth);
-      ctx.closePath();
-      const rayGrad = ctx.createRadialGradient(0, 0, radius * 0.1, 0, 0, radius * 0.96);
-      rayGrad.addColorStop(0, `rgba(255, 255, 255, ${0.48 * pulse})`);
-      rayGrad.addColorStop(0.45, `rgba(254, 240, 138, ${0.30 * pulse})`);
-      rayGrad.addColorStop(1.0, 'rgba(255, 255, 255, 0)');
-      ctx.fillStyle = rayGrad;
-      ctx.fill();
-    }
-    ctx.restore();
+    // 2. Organic Fluid Subsurface Caustics
+    // Soft, undulating internal focal caustic pool (gently breathing with bubble wobble, no rigid mechanical spokes)
+    const causticOffset = radius * 0.12;
+    const causticWobbleX = Math.cos(this.time * 1.5) * (radius * 0.04);
+    const causticWobbleY = Math.sin(this.time * 1.8) * (radius * 0.04);
+    const causticRadius = radius * 0.70;
 
-    // 3. Central Glowing Lamp Filament Bulb (The incandescent bulb core)
-    const bulbR = Math.max(9, radius * 0.22);
-    ctx.save();
-    ctx.shadowColor = '#fef08a';
-    ctx.shadowBlur = Math.max(18, bulbR * 2.0);
-    const bulbGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, bulbR);
+    const fluidCaustic = ctx.createRadialGradient(
+      causticOffset + causticWobbleX, 
+      causticOffset + causticWobbleY, 
+      0, 
+      causticOffset + causticWobbleX, 
+      causticOffset + causticWobbleY, 
+      causticRadius
+    );
+    const causticAlpha = isWhite ? 0.35 : 0.42;
+    fluidCaustic.addColorStop(0, isWhite ? `rgba(255, 255, 255, ${causticAlpha * pulse})` : `hsla(${gem.h}, 100%, 82%, ${causticAlpha * pulse})`);
+    fluidCaustic.addColorStop(0.50, isWhite ? `rgba(224, 242, 254, ${(causticAlpha * 0.45 * pulse).toFixed(2)})` : `hsla(${gem.h}, 100%, 65%, ${(causticAlpha * 0.45 * pulse).toFixed(2)})`);
+    fluidCaustic.addColorStop(1.0, 'rgba(255, 255, 255, 0)');
+    ctx.fillStyle = fluidCaustic;
+    ctx.beginPath();
+    ctx.arc(causticOffset + causticWobbleX, causticOffset + causticWobbleY, causticRadius, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 3. Incandescent Filament Light Core
+    // Realistic spherical light-emitter core with soft natural Gaussian decay
+    const bulbR = Math.max(6, radius * 0.18);
+    const bulbGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, bulbR * 2.2);
     bulbGrad.addColorStop(0, '#ffffff');
-    bulbGrad.addColorStop(0.40, 'rgba(255, 255, 255, 0.98)');
-    bulbGrad.addColorStop(0.70, 'rgba(254, 240, 138, 0.88)');
-    bulbGrad.addColorStop(1.0, 'rgba(251, 191, 36, 0)');
+    bulbGrad.addColorStop(0.20, 'rgba(255, 255, 255, 0.95)');
+    bulbGrad.addColorStop(0.50, isWhite ? 'rgba(240, 249, 255, 0.65)' : `hsla(${gem.h}, 100%, 85%, 0.70)`);
+    bulbGrad.addColorStop(1.0, isWhite ? 'rgba(255, 255, 255, 0)' : `hsla(${gem.h}, 100%, 70%, 0)`);
+
+    ctx.save();
     ctx.fillStyle = bulbGrad;
     ctx.beginPath();
-    ctx.arc(0, 0, bulbR, 0, Math.PI * 2);
+    ctx.arc(0, 0, bulbR * 2.2, 0, Math.PI * 2);
     ctx.fill();
 
-    // Intense 4-point star flare on filament
-    ctx.fillStyle = '#ffffff';
-    const starR = bulbR * 1.5;
-    const starThin = bulbR * 0.18;
-    ctx.beginPath();
-    ctx.moveTo(0, -starR);
-    ctx.quadraticCurveTo(0, 0, starThin, 0);
-    ctx.quadraticCurveTo(0, 0, 0, starR);
-    ctx.quadraticCurveTo(0, 0, -starThin, 0);
-    ctx.quadraticCurveTo(0, 0, 0, -starR);
-    ctx.fill();
-
-    ctx.beginPath();
-    ctx.moveTo(-starR, 0);
-    ctx.quadraticCurveTo(0, 0, 0, starThin);
-    ctx.quadraticCurveTo(0, 0, starR, 0);
-    ctx.quadraticCurveTo(0, 0, 0, -starThin);
-    ctx.quadraticCurveTo(0, 0, -starR, 0);
-    ctx.fill();
+    // Subtle horizontal optical lens glint through curved glass
+    const glintW = radius * 0.65;
+    const glintH = Math.max(2, radius * 0.04);
+    const glintGrad = ctx.createLinearGradient(-glintW * 0.5, 0, glintW * 0.5, 0);
+    glintGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+    glintGrad.addColorStop(0.5, `rgba(255, 255, 255, ${0.40 * pulse})`);
+    glintGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    ctx.fillStyle = glintGrad;
+    ctx.fillRect(-glintW * 0.5, -glintH * 0.5, glintW, glintH);
     ctx.restore();
 
-    ctx.restore(); // Ends clip
+    ctx.restore(); // Ends clipping to contour
 
-    // 4. Brilliant Radiant Lamp Corona Rim (Golden/White illuminated perimeter)
+    // 4. Total Internal Reflection & Fresnel Luminous Rim
+    // Glass boundary lights up where internal rays strike the surface
     ctx.save();
     traceContour();
-    ctx.lineWidth = Math.max(3.5, radius * 0.05);
-    ctx.strokeStyle = `rgba(254, 240, 138, ${0.95 * pulse})`;
-    ctx.shadowColor = '#fbbf24';
-    ctx.shadowBlur = Math.max(14, radius * 0.24);
+    ctx.lineWidth = Math.max(2.0, radius * 0.035);
+    ctx.strokeStyle = isWhite ? `rgba(255, 255, 255, ${0.90 * pulse})` : `hsla(${gem.h}, 100%, 82%, ${0.88 * pulse})`;
+    ctx.shadowColor = isWhite ? 'rgba(224, 242, 254, 0.75)' : `hsla(${gem.h}, 100%, 65%, 0.75)`;
+    ctx.shadowBlur = Math.max(8, radius * 0.18);
     ctx.stroke();
 
-    // Crisp inner high-voltage rim
-    ctx.lineWidth = Math.max(1.6, radius * 0.024);
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.96)';
+    // Crisp pure white specular highlight edge
+    ctx.lineWidth = Math.max(1.0, radius * 0.015);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.92)';
     ctx.shadowBlur = 0;
     ctx.stroke();
     ctx.restore();
@@ -1047,14 +1046,14 @@ export class Renderer {
 
       const diameter = Math.round(b.radius * 2);
       const isGoalReached = targetDiameter > 0 && diameter >= targetDiameter;
-      const text = `${diameter}`;
+      const text = isGoalReached ? `${diameter} ✓` : `${diameter}`;
       const em = EMISSIONS[key] || EMISSIONS.cyan;
 
       ctx.save();
       ctx.translate(b.x, b.y);
 
       // Scale font size to fit comfortably inside the gem
-      let fontSize = Math.floor(b.radius * 0.88);
+      let fontSize = Math.floor(b.radius * 0.86);
       ctx.font = `800 ${fontSize}px Outfit, Inter, system-ui, sans-serif`;
       let textWidth = ctx.measureText(text).width;
       const maxAllowedWidth = b.radius * 1.35;
@@ -1067,12 +1066,12 @@ export class Renderer {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
 
-      // 1. Soft radial vignette & light emission aura behind number
-      // Guarantees 100% contrast over specular highlights, pearls, and internal caustics
-      const auraRadius = Math.max(textWidth * 0.70, fontSize * 0.85);
+      // 1. Soft radial vignette behind number
+      // Keeps text crisp while allowing internal lantern light to shine through naturally
+      const auraRadius = Math.max(textWidth * 0.65, fontSize * 0.80);
       const auraGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, auraRadius);
-      auraGrad.addColorStop(0, 'rgba(3, 7, 18, 0.58)');
-      auraGrad.addColorStop(0.55, isGoalReached ? 'rgba(251, 191, 36, 0.28)' : `rgba(${em.glowRgb}, 0.24)`);
+      auraGrad.addColorStop(0, isGoalReached ? 'rgba(0, 0, 0, 0.22)' : 'rgba(3, 7, 18, 0.58)');
+      auraGrad.addColorStop(0.55, isGoalReached ? 'rgba(255, 255, 255, 0.08)' : `rgba(${em.glowRgb}, 0.24)`);
       auraGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
 
       ctx.beginPath();
@@ -1082,18 +1081,18 @@ export class Renderer {
 
       // 2. Outer Light Emission Bloom
       ctx.save();
-      ctx.shadowColor = isGoalReached ? '#fbbf24' : em.glow;
-      ctx.shadowBlur = Math.max(12, fontSize * 0.45);
+      ctx.shadowColor = isGoalReached ? '#fef08a' : em.glow;
+      ctx.shadowBlur = Math.max(10, fontSize * 0.38);
       ctx.lineWidth = Math.max(2, fontSize * 0.06);
-      ctx.strokeStyle = isGoalReached ? 'rgba(251, 191, 36, 0.75)' : `rgba(${em.glowRgb}, 0.75)`;
+      ctx.strokeStyle = isGoalReached ? 'rgba(254, 240, 138, 0.70)' : `rgba(${em.glowRgb}, 0.75)`;
       ctx.lineJoin = 'round';
       ctx.strokeText(text, 0, 0);
       ctx.restore();
 
       // 3. Crisp Dark Outline Halo (Detaches text cleanly from glossy reflections)
       ctx.save();
-      ctx.strokeStyle = isGoalReached ? 'rgba(15, 23, 42, 0.95)' : em.stroke;
-      ctx.lineWidth = Math.max(3.2, fontSize * 0.12);
+      ctx.strokeStyle = isGoalReached ? 'rgba(10, 15, 28, 0.90)' : em.stroke;
+      ctx.lineWidth = Math.max(3.0, fontSize * 0.11);
       ctx.lineJoin = 'round';
       ctx.lineCap = 'round';
       ctx.shadowColor = 'rgba(0, 0, 0, 0.65)';
@@ -1109,46 +1108,6 @@ export class Renderer {
       ctx.shadowBlur = Math.max(4, fontSize * 0.16);
       ctx.fillText(text, 0, 0);
       ctx.restore();
-
-      // 5. Goal Reached Radiant Crown Sparkle & Beacon Badge
-      if (isGoalReached) {
-        ctx.save();
-        const pulse = 0.90 + 0.10 * Math.sin(this.time * 4);
-        const badgeY = -fontSize * 0.60;
-        const badgeText = '✦ GOAL MET ✦';
-        const badgeFontSize = Math.max(10, Math.floor(fontSize * 0.28));
-        ctx.font = `800 ${badgeFontSize}px Outfit, -apple-system, sans-serif`;
-        const textMetrics = ctx.measureText(badgeText);
-        const badgeW = textMetrics.width + 16;
-        const badgeH = Math.max(16, fontSize * 0.36);
-
-        // Glass badge background with golden illumination
-        ctx.beginPath();
-        const bx = -badgeW * 0.5;
-        const by = badgeY - badgeH * 0.5;
-        const br = badgeH * 0.5;
-        if (ctx.roundRect) {
-          ctx.roundRect(bx, by, badgeW, badgeH, br);
-        } else {
-          ctx.rect(bx, by, badgeW, badgeH);
-        }
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.90)';
-        ctx.shadowColor = '#fbbf24';
-        ctx.shadowBlur = 14 * pulse;
-        ctx.fill();
-
-        ctx.strokeStyle = `rgba(251, 191, 36, ${0.95 * pulse})`;
-        ctx.lineWidth = 1.6;
-        ctx.stroke();
-
-        ctx.fillStyle = '#fef08a';
-        ctx.shadowColor = '#fbbf24';
-        ctx.shadowBlur = 8;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(badgeText, 0, badgeY);
-        ctx.restore();
-      }
 
       ctx.restore();
     }
