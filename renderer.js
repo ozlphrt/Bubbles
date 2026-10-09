@@ -7,9 +7,9 @@
 import { BUBBLE_COLORS, getColorById } from './palette.js';
 
 export class Renderer {
-  constructor(canvas) {
+  constructor(canvas = null) {
     this.canvas = canvas;
-    this.ctx = canvas.getContext('2d');
+    this.ctx = canvas ? canvas.getContext('2d') : null;
     this.theme = 'soap'; // 'soap', 'neon', 'biolum', 'lava', 'mercury'
     this.bgParticles = [];
     this.time = 0;
@@ -1455,3 +1455,5 @@ export class Renderer {
     ctx.restore();
   }
 }
+
+export { Renderer as BubbleRenderer };
