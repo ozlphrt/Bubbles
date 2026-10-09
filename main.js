@@ -243,7 +243,7 @@ window.addEventListener('DOMContentLoaded', () => {
       modalFail.classList.add('hidden');
       modalObjective.classList.remove('hidden');
 
-      if (objLevelBadge) objLevelBadge.textContent = `LEVEL ${levelConfig.level}`;
+      if (objLevelBadge) objLevelBadge.innerHTML = `<span class="level-lbl">LEVEL</span> <span class="level-num">${levelConfig.level}</span>`;
       if (objGoalNum) objGoalNum.textContent = levelConfig.targetDiameter;
       if (objGoalText) objGoalText.textContent = `${levelConfig.targetDiameter}px per color`;
 
