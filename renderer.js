@@ -972,6 +972,68 @@ export class Renderer {
   }
 
   /**
+   * Calculates the absolute maximum font size for a bubble's diameter label
+   * so that the number fills the bubble as big as possible without any pixel or stroke
+   * crossing or touching outside the bubble's boundary.
+   */
+  calculateMaxFontSize(ctx, text, b, isGoalReached = false) {
+    const radius = b.radius || 20;
+    const effR = b.minRadius ? Math.min(radius, b.minRadius) : radius;
+    if (effR < 8) return 10;
+
+    // 1. Measure text dimensions at reference 100px font
+    ctx.font = `${isGoalReached ? '600' : '800'} 100px Outfit, Inter, system-ui, sans-serif`;
+    const m = ctx.measureText(text);
+    const w100 = m.width || 180;
+    const maxHalfW = (m.actualBoundingBoxLeft !== undefined && m.actualBoundingBoxRight !== undefined && m.actualBoundingBoxLeft > 0)
+      ? Math.max(m.actualBoundingBoxLeft, m.actualBoundingBoxRight)
+      : (w100 / 2);
+    const maxHalfH = (m.actualBoundingBoxAscent !== undefined && m.actualBoundingBoxDescent !== undefined && m.actualBoundingBoxAscent > 0)
+      ? Math.max(m.actualBoundingBoxAscent, m.actualBoundingBoxDescent)
+      : 36;
+
+    // Stroke outline allowance per font px (stroke width is ~0.12 * fontSize, outer expansion is ~0.06)
+    const strokeAllowance = isGoalReached ? 0.03 : 0.07;
+    const halfUnitW = (maxHalfW / 100) + strokeAllowance;
+    const halfUnitH = (maxHalfH / 100) + strokeAllowance;
+
+    // Safety margin to guarantee zero boundary contact
+    const margin = isGoalReached ? 0.90 : 0.94;
+
+    const numPoints = (b.contourPoints && b.contourPoints.length >= 16) ? b.contourPoints.length : 0;
+    let minAllowedFont = 999;
+
+    if (numPoints > 0) {
+      for (let i = 0; i < numPoints; i++) {
+        const pt = b.contourPoints[i];
+        const r_i = Math.hypot(pt.x, pt.y) * margin;
+        const angle = (i / numPoints) * Math.PI * 2;
+        const cosA = Math.abs(Math.cos(angle));
+        const sinA = Math.abs(Math.sin(angle));
+
+        // Exact distance from center to bounding box boundary along ray at this angle
+        const distPerPx = Math.min(
+          cosA > 1e-4 ? halfUnitW / cosA : 1e9,
+          sinA > 1e-4 ? halfUnitH / sinA : 1e9
+        );
+
+        if (distPerPx > 0) {
+          const maxF_i = r_i / distPerPx;
+          if (maxF_i < minAllowedFont) {
+            minAllowedFont = maxF_i;
+          }
+        }
+      }
+    } else {
+      const cornerDist = Math.hypot(halfUnitW, halfUnitH);
+      minAllowedFont = (effR * margin) / cornerDist;
+    }
+
+    const maxFont = Math.floor(minAllowedFont);
+    return Math.max(12, Math.min(140, maxFont));
+  }
+
+  /**
    * Identifies the largest bubble for each color and renders a sleek size label
    */
   renderMaxLabels(ctx, bubbles, targetDiameter = 0) {
@@ -1054,25 +1116,10 @@ export class Renderer {
         ctx.clip();
       }
 
-      // Responsive font sizing based on actual compressed surface radius
-      const effR = b.minRadius ? Math.min(b.radius, b.minRadius) : b.radius;
-      let fontScale = isGoalReached ? 0.36 : 0.48;
-      let fontSize = Math.max(10, Math.floor(effR * fontScale));
-
-      // Strictly bound width and height to preserve generous internal padding
-      const maxAllowedWidth = effR * 1.30;
-      const maxAllowedHeight = effR * 0.68;
-      if (fontSize > maxAllowedHeight) {
-        fontSize = Math.floor(maxAllowedHeight);
-      }
-
+      // Maximize font size dynamically to fill the bubble as much as possible without crossing any boundary
+      const fontSize = this.calculateMaxFontSize(ctx, text, b, isGoalReached);
       ctx.font = `${isGoalReached ? '600' : '800'} ${fontSize}px Outfit, Inter, system-ui, sans-serif`;
-      let textWidth = ctx.measureText(text).width;
-      if (textWidth > maxAllowedWidth) {
-        fontSize = Math.floor(fontSize * (maxAllowedWidth / textWidth));
-        ctx.font = `${isGoalReached ? '600' : '800'} ${fontSize}px Outfit, Inter, system-ui, sans-serif`;
-        textWidth = ctx.measureText(text).width;
-      }
+      const textWidth = ctx.measureText(text).width;
 
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
