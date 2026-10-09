@@ -334,7 +334,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const currentLvl = scoreData.level;
     const nextLvl = currentLvl + 1;
-    const nextConfig = getLevelConfig(nextLvl);
+    const nextConfig = getLevelConfig(nextLvl, window.innerWidth);
     pendingNextLevel = nextLvl;
 
     // Show win summary section

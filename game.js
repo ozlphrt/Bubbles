@@ -84,7 +84,7 @@ export class GameEngine {
   startLevel(levelNum = 1, width = window.innerWidth, height = window.innerHeight) {
     const num = Math.max(1, Math.floor(levelNum));
     this.currentLevelIndex = num - 1;
-    this.levelConfig = getLevelConfig(num);
+    this.levelConfig = getLevelConfig(num, width);
 
     // Save current level to persistent storage
     GameStorage.saveCurrentLevel(num);

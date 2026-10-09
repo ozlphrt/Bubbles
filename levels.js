@@ -129,22 +129,22 @@ function toRoman(n) {
  * Levels 1-10 use curated LEVEL_DEFINITIONS;
  * Levels 11+ dynamically scale into endless procedural mastery tiers sampling from the 50-color palette.
  */
-export function getLevelConfig(levelNum = 1) {
+export function getLevelConfig(levelNum = 1, viewportWidth = 0) {
   const num = Math.max(1, Math.floor(levelNum));
+  
+  // Calculate responsive target diameter cap for narrow mobile viewports (< 460px)
+  const mobileWidth = viewportWidth || (typeof window !== 'undefined' ? window.innerWidth : 800);
+  const mobileCap = (mobileWidth > 0 && mobileWidth < 460) ? Math.max(148, Math.floor(mobileWidth * 0.44)) : 999;
+
   if (num <= LEVEL_DEFINITIONS.length) {
     const base = LEVEL_DEFINITIONS[num - 1];
-    const colorCount = (base.colors && base.colors.length) || 4;
-
-    // Dynamically select diverse, contrasting gemstones at the start of every level run
-    const selectedGems = selectDiverseLevelColors(colorCount);
-    const colors = selectedGems.map(g => g.id);
-    const gemNames = selectedGems.map(g => g.name).join(', ');
+    const selectedGems = base.colors.map(getColorById).filter(Boolean);
+    const targetDiameter = Math.min(base.targetDiameter, mobileCap);
 
     return {
       ...base,
-      colors,
-      gemstones: selectedGems,
-      description: `Coalesce ${colors.length} rare minerals (${gemNames}) to Ø${base.targetDiameter}px before the clock expires.`
+      targetDiameter,
+      gemstones: selectedGems
     };
   }
 
@@ -163,7 +163,8 @@ export function getLevelConfig(levelNum = 1) {
 
   // Target diameter scales between 188 and 196px (under the 200px burst ceiling)
   const targetDiameters = [188, 190, 192, 194, 196];
-  const targetDiameter = targetDiameters[cycle];
+  const baseTarget = targetDiameters[cycle];
+  const targetDiameter = Math.min(baseTarget, mobileCap);
 
   // Timer remains engaging (140s - 180s)
   const timerSeconds = Math.max(140, 185 - cycleCount * 5 - cycle * 3);
