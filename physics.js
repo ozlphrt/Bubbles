@@ -48,50 +48,8 @@ export class BurstParticle {
   }
 }
 
-export const BUBBLE_COLORS = [
-  { 
-    id: 'white',  name: 'Pearl',    hue: 210, isWhite: true,
-    density: 0.35, massFactor: 0.35, gravityScale: 0.45, buoyancy: 0.14,
-    elasticity: 0.92, friction: 0.008, wobbleFreq: 0.24,
-    shininess: 1.00, reflectivity: 0.95, smoothness: 0.96,
-    densityLabel: 'Ultra-Light'
-  },
-  { 
-    id: 'cyan',   name: 'Sapphire', hue: 205, isWhite: false,
-    density: 0.65, massFactor: 0.65, gravityScale: 0.70, buoyancy: 0.06,
-    elasticity: 0.86, friction: 0.011, wobbleFreq: 0.19,
-    shininess: 0.94, reflectivity: 0.88, smoothness: 0.92,
-    densityLabel: 'Light'
-  },
-  { 
-    id: 'green',  name: 'Emerald',  hue: 156, isWhite: false,
-    density: 0.95, massFactor: 0.95, gravityScale: 0.95, buoyancy: 0.00,
-    elasticity: 0.78, friction: 0.015, wobbleFreq: 0.16,
-    shininess: 0.72, reflectivity: 0.66, smoothness: 0.68,
-    densityLabel: 'Medium'
-  },
-  { 
-    id: 'orange', name: 'Amber',    hue: 42,  isWhite: false,
-    density: 1.35, massFactor: 1.35, gravityScale: 1.20, buoyancy: -0.05,
-    elasticity: 0.68, friction: 0.019, wobbleFreq: 0.13,
-    shininess: 0.78, reflectivity: 0.72, smoothness: 0.72,
-    densityLabel: 'Dense'
-  },
-  { 
-    id: 'red',    name: 'Ruby',     hue: 350, isWhite: false,
-    density: 1.75, massFactor: 1.75, gravityScale: 1.45, buoyancy: -0.10,
-    elasticity: 0.62, friction: 0.022, wobbleFreq: 0.11,
-    shininess: 0.90, reflectivity: 0.92, smoothness: 0.86,
-    densityLabel: 'Heavy'
-  },
-  { 
-    id: 'purple', name: 'Amethyst', hue: 275, isWhite: false,
-    density: 2.30, massFactor: 2.30, gravityScale: 1.75, buoyancy: -0.16,
-    elasticity: 0.55, friction: 0.026, wobbleFreq: 0.08,
-    shininess: 0.85, reflectivity: 0.80, smoothness: 0.82,
-    densityLabel: 'Super-Heavy'
-  }
-];
+export { BUBBLE_COLORS, getColorById, getColorDisplayName, samplePaletteColors } from './palette.js';
+import { BUBBLE_COLORS, getColorById } from './palette.js';
 
 export class Bubble {
   constructor(x, y, radius = 20, vx = 0, vy = 0, colorOption, activeColorList = null) {
@@ -103,15 +61,15 @@ export class Bubble {
     this.radius = radius;
     this.targetRadius = radius;
 
-    // Color Resolution (supports ID string, number index, or active color list)
+    // Color Resolution (supports ID string, alias, number index, or active color list)
     let c = null;
     if (typeof colorOption === 'string') {
-      c = BUBBLE_COLORS.find(item => item.id === colorOption);
+      c = getColorById(colorOption);
     } else if (typeof colorOption === 'number' && BUBBLE_COLORS[colorOption]) {
       c = BUBBLE_COLORS[colorOption];
     } else if (Array.isArray(activeColorList) && activeColorList.length > 0) {
       const chosenId = activeColorList[Math.floor(Math.random() * activeColorList.length)];
-      c = BUBBLE_COLORS.find(item => item.id === chosenId);
+      c = getColorById(chosenId);
     }
 
     if (!c) {

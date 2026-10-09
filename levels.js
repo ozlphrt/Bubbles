@@ -1,14 +1,16 @@
 /**
  * Bubble Sim - Level Configurations
- * 10 Progressive levels with expanding color palette, increasing target diameters,
- * timer constraints, and drop budgets.
+ * Progressive levels with expanding color and material choices sampled from
+ * the 50-color gemstone and mineral palette with distinct densities and elasticities.
  */
+
+import { BUBBLE_COLORS, getColorById } from './palette.js';
 
 export const LEVEL_DEFINITIONS = [
   {
     level: 1,
     name: "First Steps",
-    description: "Merge 4 matching colors to Ø172px before the clock expires. Careful not to exceed Ø200px or they pop!",
+    description: "Merge 4 classic gemstones (Pearl, Emerald, Ruby, Amber) to Ø172px before the clock expires.",
     colors: ['white', 'green', 'red', 'orange'],
     dropBudget: 20,
     targetDiameter: 172,
@@ -18,9 +20,9 @@ export const LEVEL_DEFINITIONS = [
   },
   {
     level: 2,
-    name: "Fluid Flow",
-    description: "Master 4-color routing to merge dense clusters up to Ø176px.",
-    colors: ['white', 'green', 'red', 'orange'],
+    name: "Oceanic Drift",
+    description: "Navigate buoyant ocean crystals (Aquamarine, Larimar, Sapphire, Pearl) up to Ø176px.",
+    colors: ['aquamarine', 'larimar', 'cyan', 'white'],
     dropBudget: 22,
     targetDiameter: 176,
     timerSeconds: 230,
@@ -29,9 +31,9 @@ export const LEVEL_DEFINITIONS = [
   },
   {
     level: 3,
-    name: "Cluster Dynamics",
-    description: "Merge 4 colors to Ø180px. Maintain open pathways through the foam.",
-    colors: ['white', 'green', 'red', 'orange'],
+    name: "Thermal Strata",
+    description: "Balance springy Citrine and Topaz against dense Garnet and volcanic Obsidian to Ø180px.",
+    colors: ['citrine', 'topaz', 'garnet', 'obsidian'],
     dropBudget: 24,
     targetDiameter: 180,
     timerSeconds: 220,
@@ -40,9 +42,9 @@ export const LEVEL_DEFINITIONS = [
   },
   {
     level: 4,
-    name: "Tension Boundary",
-    description: "High-yield merges reaching Ø184px across 4 colors before expanding the palette.",
-    colors: ['white', 'green', 'red', 'orange'],
+    name: "Verdant Canopy",
+    description: "High-yield merges across jadeite and beryl minerals (Peridot, Jade, Malachite, Tsavorite) to Ø184px.",
+    colors: ['peridot', 'jade', 'malachite', 'tsavorite'],
     dropBudget: 25,
     targetDiameter: 184,
     timerSeconds: 210,
@@ -51,9 +53,9 @@ export const LEVEL_DEFINITIONS = [
   },
   {
     level: 5,
-    name: "Violet Harmony",
-    description: "5th color unlocked (Purple)! Increased variety requires strategic navigation to Ø176px.",
-    colors: ['white', 'green', 'red', 'orange', 'purple'],
+    name: "Twilight Aurora",
+    description: "5th material unlocked! Harmonize Moonstone, Rose Quartz, Amethyst, Tanzanite, and Kunzite to Ø176px.",
+    colors: ['moonstone', 'rose_quartz', 'purple', 'tanzanite', 'kunzite'],
     dropBudget: 26,
     targetDiameter: 176,
     timerSeconds: 200,
@@ -62,9 +64,9 @@ export const LEVEL_DEFINITIONS = [
   },
   {
     level: 6,
-    name: "Chromatic Cascade",
-    description: "5 colors to Ø182px. Clear obstacles quickly to merge distant bubbles.",
-    colors: ['white', 'green', 'red', 'orange', 'purple'],
+    name: "Solar Forge",
+    description: "Harness high-energy materials (Sunstone, Carnelian, Spinel, Pyrite, Amber) to Ø182px.",
+    colors: ['sunstone', 'carnelian', 'spinel', 'pyrite', 'orange'],
     dropBudget: 28,
     targetDiameter: 182,
     timerSeconds: 195,
@@ -73,9 +75,9 @@ export const LEVEL_DEFINITIONS = [
   },
   {
     level: 7,
-    name: "Surface Tension Peak",
-    description: "5 colors to Ø186px - entering dangerous territory near the 200px pop limit!",
-    colors: ['white', 'green', 'red', 'orange', 'purple'],
+    name: "Deep Earth Geode",
+    description: "5 heavy metamorphic crystals (Alexandrite, Fluorite, Charoite, Tourmaline, Hematite) to Ø186px.",
+    colors: ['alexandrite', 'fluorite', 'charoite', 'tourmaline', 'hematite'],
     dropBudget: 30,
     targetDiameter: 186,
     timerSeconds: 190,
@@ -84,9 +86,9 @@ export const LEVEL_DEFINITIONS = [
   },
   {
     level: 8,
-    name: "Prism Realm",
-    description: "6th color unlocked (Cyan)! Full color spectrum active to Ø178px across the board.",
-    colors: ['white', 'green', 'red', 'orange', 'purple', 'cyan'],
+    name: "Prismatic Crown",
+    description: "6 royal spectrum gemstones (Diamond, Sapphire, Emerald, Ruby, Topaz, Amethyst) to Ø178px.",
+    colors: ['diamond', 'cyan', 'green', 'red', 'topaz', 'purple'],
     dropBudget: 30,
     targetDiameter: 178,
     timerSeconds: 185,
@@ -95,9 +97,9 @@ export const LEVEL_DEFINITIONS = [
   },
   {
     level: 9,
-    name: "Critical Mass",
-    description: "Target Ø186px across all 6 colors. Precision and spatial awareness required.",
-    colors: ['white', 'green', 'red', 'orange', 'purple', 'cyan'],
+    name: "Density Extremes",
+    description: "Master 6 materials with dramatic density contrasts (0.42x Opal floaters to 2.68x Pyrite weights) to Ø186px.",
+    colors: ['opal', 'aquamarine', 'jade', 'rhodolite', 'obsidian', 'pyrite'],
     dropBudget: 32,
     targetDiameter: 186,
     timerSeconds: 180,
@@ -107,8 +109,8 @@ export const LEVEL_DEFINITIONS = [
   {
     level: 10,
     name: "Master of Coalescence",
-    description: "Final Challenge: 6 colors simultaneously at Ø192px. Pure mastery.",
-    colors: ['white', 'green', 'red', 'orange', 'purple', 'cyan'],
+    description: "Final Challenge: 6 apex minerals coalesced simultaneously to Ø192px.",
+    colors: ['diamond', 'cyan', 'green', 'red', 'orange', 'purple'],
     dropBudget: 35,
     targetDiameter: 192,
     timerSeconds: 180,
@@ -125,7 +127,7 @@ function toRoman(n) {
 /**
  * Returns level config for any level index >= 1.
  * Levels 1-10 use curated LEVEL_DEFINITIONS;
- * Levels 11+ dynamically scale into endless procedural mastery tiers.
+ * Levels 11+ dynamically scale into endless procedural mastery tiers sampling from the 50-color palette.
  */
 export function getLevelConfig(levelNum = 1) {
   const num = Math.max(1, Math.floor(levelNum));
@@ -153,20 +155,24 @@ export function getLevelConfig(levelNum = 1) {
   // Timer remains engaging (140s - 180s)
   const timerSeconds = Math.max(140, 185 - cycleCount * 5 - cycle * 3);
 
-  const allColors = ['white', 'green', 'red', 'orange', 'purple', 'cyan'];
-  let colors;
-  if (cycle === 0 && cycleCount % 2 === 1) {
-    colors = ['white', 'green', 'red', 'purple', 'cyan'];
-  } else if (cycle === 2 && cycleCount % 2 === 0) {
-    colors = ['green', 'red', 'orange', 'purple', 'cyan'];
-  } else {
-    colors = allColors;
+  // Procedurally sample 5-6 harmonious, contrasting materials from the 50-color palette
+  const allPaletteIds = BUBBLE_COLORS.map(c => c.id);
+  const colorCount = cycle >= 3 ? 6 : 5;
+  const step = 7;
+  const startIdx = ((num - 1) * step) % allPaletteIds.length;
+  const colors = [];
+  for (let i = 0; i < colorCount * 2; i++) {
+    const cid = allPaletteIds[(startIdx + i * 9) % allPaletteIds.length];
+    if (!colors.includes(cid)) {
+      colors.push(cid);
+    }
+    if (colors.length >= colorCount) break;
   }
 
   return {
     level: num,
     name: `${TITLES[cycle]} ${toRoman(cycleCount)}`,
-    description: `Endless Mastery Tier: Coalesce ${colors.length} gem colors to Ø${targetDiameter}px under intense surface tension.`,
+    description: `Endless Mastery Tier: Coalesce ${colors.length} rare mineral materials to Ø${targetDiameter}px under intense surface tension.`,
     colors,
     dropBudget: Math.min(42, 32 + cycle * 2 + cycleCount),
     targetDiameter,

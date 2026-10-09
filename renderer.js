@@ -4,6 +4,8 @@
  * specular reflections, theme shaders, and particle shockwaves.
  */
 
+import { BUBBLE_COLORS, getColorById } from './palette.js';
+
 export class Renderer {
   constructor(canvas) {
     this.canvas = canvas;
@@ -12,26 +14,22 @@ export class Renderer {
     this.bgParticles = [];
     this.time = 0;
 
-    this.baseColors = {
-      white:  '#f8fafc', // Ethereal Diamond Pearl (bright, clean, luminous)
-      green:  '#10b981', // Radiant Emerald (vivid, lush green)
-      red:    '#f43f5e', // Vivid Ruby Rose (bright, fiery, unmistakable red)
-      orange: '#f59e0b', // Glowing Amber Gold (warm rich honey topaz)
-      purple: '#a855f7', // Royal Amethyst (vibrant neon violet)
-      cyan:   '#0ea5e9'  // Electric Sapphire (brilliant crystal azure)
-    };
+    // Dynamically initialize all 50 gemstone/mineral materials from palette
+    this.baseColors = {};
+    for (let c of BUBBLE_COLORS) {
+      this.baseColors[c.id] = c.hex;
+      if (c.alias) this.baseColors[c.alias] = c.hex;
+    }
 
     this.defaultBaseColors = { ...this.baseColors };
 
     this.colorAdjustments = {
-      all:    { saturation: 1.0, hueShift: 0, exposure: 1.0 },
-      white:  { saturation: 1.0, hueShift: 0, exposure: 1.0 },
-      green:  { saturation: 1.0, hueShift: 0, exposure: 1.0 },
-      red:    { saturation: 1.0, hueShift: 0, exposure: 1.0 },
-      orange: { saturation: 1.0, hueShift: 0, exposure: 1.0 },
-      purple: { saturation: 1.0, hueShift: 0, exposure: 0.75 },
-      cyan:   { saturation: 1.0, hueShift: 0, exposure: 1.0 }
+      all: { saturation: 1.0, hueShift: 0, exposure: 1.0 }
     };
+    for (let c of BUBBLE_COLORS) {
+      this.colorAdjustments[c.id] = { saturation: 1.0, hueShift: 0, exposure: 1.0 };
+      if (c.alias) this.colorAdjustments[c.alias] = { saturation: 1.0, hueShift: 0, exposure: 1.0 };
+    }
 
     this.defaultColorAdjustments = JSON.parse(JSON.stringify(this.colorAdjustments));
     this.floatingTexts = [];
@@ -51,7 +49,11 @@ export class Renderer {
   }
 
   getBaseColor(colorKey) {
-    return (this.baseColors && this.baseColors[colorKey]) || '#38bdf8';
+    if (this.baseColors && this.baseColors[colorKey]) {
+      return this.baseColors[colorKey];
+    }
+    const c = getColorById(colorKey);
+    return c ? c.hex : '#38bdf8';
   }
 
   setBaseColor(colorKey, hex) {
@@ -669,7 +671,8 @@ export class Renderer {
   }
 
   getGemColorInfo(colorKey, b = null) {
-    const isWhite = colorKey === 'white';
+    const colorObj = getColorById(colorKey);
+    const isWhite = (colorObj && colorObj.isWhite) || (b && b.isWhite) || colorKey === 'white' || colorKey === 'diamond' || colorKey === 'moonstone' || colorKey === 'opal';
     const baseHex = this.getBaseColor(colorKey);
     const master = (this.colorAdjustments && this.colorAdjustments.all) || { saturation: 1.0, hueShift: 0, exposure: 1.0 };
     const spec = (this.colorAdjustments && this.colorAdjustments[colorKey]) || { saturation: 1.0, hueShift: 0, exposure: 1.0 };
@@ -697,23 +700,11 @@ export class Renderer {
     const totalHue = isWhite ? 212 : ((h + master.hueShift + spec.hueShift + 3600) % 360);
     const totalExp = Math.max(0.2, Math.min(2.0, l * master.exposure * spec.exposure));
 
-    // Per-color material optical properties:
-    // shininess: intensity of specular light glints
-    // reflectivity: strength of Fresnel rim and internal caustics
-    // smoothness: sharpness and polish of reflections vs soft velvety dispersion
-    const GEM_OPTICS = {
-      white:  { shininess: 1.00, reflectivity: 0.95, smoothness: 0.96 }, // Diamond / Pearl: Mirror-smooth, high refractive index, intense glints
-      cyan:   { shininess: 0.94, reflectivity: 0.88, smoothness: 0.92 }, // Sapphire: High polish, sharp icy glints, bright rim
-      red:    { shininess: 0.90, reflectivity: 0.92, smoothness: 0.86 }, // Ruby: Fiery gloss, radiant glowing caustic pool
-      purple: { shininess: 0.85, reflectivity: 0.80, smoothness: 0.82 }, // Amethyst: Crystalline sheen, silky polished luster
-      orange: { shininess: 0.78, reflectivity: 0.72, smoothness: 0.72 }, // Amber: Warm honey luster, softer specular spread
-      green:  { shininess: 0.72, reflectivity: 0.66, smoothness: 0.68 }  // Emerald / Jade: Velvety stone luster, softer diffuse highlights
-    };
-
-    const def = GEM_OPTICS[colorKey] || { shininess: 0.85, reflectivity: 0.80, smoothness: 0.80 };
-    const shininess = (b && b.shininess !== undefined) ? b.shininess : def.shininess;
-    const reflectivity = (b && b.reflectivity !== undefined) ? b.reflectivity : def.reflectivity;
-    const smoothness = (b && b.smoothness !== undefined) ? b.smoothness : def.smoothness;
+    // Per-color material optical properties from palette definition:
+    const def = colorObj || { shininess: 0.85, reflectivity: 0.80, smoothness: 0.80 };
+    const shininess = (b && b.shininess !== undefined) ? b.shininess : (def.shininess || 0.85);
+    const reflectivity = (b && b.reflectivity !== undefined) ? b.reflectivity : (def.reflectivity || 0.80);
+    const smoothness = (b && b.smoothness !== undefined) ? b.smoothness : (def.smoothness || 0.80);
 
     return { isWhite, h: totalHue, s: totalSat, l: totalExp, shininess, reflectivity, smoothness };
   }
@@ -972,7 +963,22 @@ export class Renderer {
       const diameter = Math.round(b.radius * 2);
       const isGoalReached = targetDiameter > 0 && diameter >= targetDiameter;
       const text = isGoalReached ? `${diameter} ✓` : `${diameter}`;
-      const em = EMISSIONS[key] || EMISSIONS.cyan;
+      let em = EMISSIONS[key];
+      if (!em) {
+        const cObj = getColorById(key);
+        const hex = cObj ? cObj.hex : this.getBaseColor(key);
+        let h = hex.replace('#', '');
+        if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+        const r = parseInt(h.substring(0, 2), 16) || 56;
+        const g = parseInt(h.substring(2, 4), 16) || 189;
+        const bVal = parseInt(h.substring(4, 6), 16) || 248;
+        em = {
+          glow: hex,
+          glowRgb: `${r}, ${g}, ${bVal}`,
+          stroke: 'rgba(3, 7, 18, 0.92)',
+          core: '#ffffff'
+        };
+      }
 
       ctx.save();
       ctx.translate(b.x, b.y);

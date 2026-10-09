@@ -178,7 +178,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   function getColorName(cid) {
-    const c = BUBBLE_COLORS.find(item => item.id === cid);
+    const c = BUBBLE_COLORS.find(item => item.id === cid || item.alias === cid);
     return c ? c.name : cid;
   }
 
@@ -364,7 +364,7 @@ window.addEventListener('DOMContentLoaded', () => {
         cCtx.scale(dpr, dpr);
         renderer.renderStandaloneBubble(cCtx, 14, 14, 11.5, item.colorId);
 
-        const cObj = BUBBLE_COLORS.find(c => c.id === item.colorId);
+        const cObj = BUBBLE_COLORS.find(c => c.id === item.colorId || c.alias === item.colorId);
         const densityLabel = (cObj && cObj.densityLabel) ? cObj.densityLabel : 'Medium';
         const gemName = getColorName(item.colorId);
         const pct = Math.round(item.progress * 100);
@@ -581,11 +581,11 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const valDensity = document.getElementById('valDensity');
     if (valDensity) {
-      const c = BUBBLE_COLORS.find(item => item.id === colorKey);
+      const c = BUBBLE_COLORS.find(item => item.id === colorKey || item.alias === colorKey);
       if (c) {
         valDensity.textContent = `${c.density.toFixed(2)}x • ${c.densityLabel}`;
       } else {
-        valDensity.textContent = '0.35x (Pearl) → 2.30x (Amethyst)';
+        valDensity.textContent = '0.28x (Diamond) → 2.80x (Hematite)';
       }
     }
   }
