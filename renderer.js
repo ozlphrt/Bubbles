@@ -1125,21 +1125,31 @@ export class Renderer {
       ctx.textBaseline = 'middle';
 
       if (isGoalReached) {
-        // Style 5: Translucent Glass Watermark - Lowlight (35% Frosted ambient wash)
+        // Style 14: Frosted Opal Well - Lowlight (Muted Frosted Well)
         ctx.save();
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.50)';
-        ctx.shadowBlur = Math.max(2, Math.round(fontSize * 0.08));
-        ctx.shadowOffsetY = Math.max(1, Math.round(fontSize * 0.04));
-        ctx.fillStyle = `hsla(${h}, 20%, 65%, 0.35)`;
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.40)';
+        ctx.lineWidth = Math.max(1.4, Math.round(fontSize * 0.065));
+        ctx.lineJoin = 'round';
+        ctx.strokeText(text, 0, 0);
+
+        ctx.fillStyle = `hsla(${h}, 15%, 75%, 0.24)`;
         ctx.fillText(text, 0, 0);
         ctx.restore();
       } else {
-        // Style 5: Translucent Glass Watermark - Highlight (75% Caustic Alpha)
+        // Style 14: Frosted Opal Well - Highlight (Milky Diffusion in Dark Carve)
+        // 1. Deep dark perimeter trench outlining the carved well
         ctx.save();
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
+        ctx.strokeStyle = `hsla(${h}, ${s}%, 12%, 0.85)`;
+        ctx.lineWidth = Math.max(2.4, Math.round(fontSize * 0.09));
+        ctx.lineJoin = 'round';
+        ctx.strokeText(text, 0, 0);
+        ctx.restore();
+
+        // 2. Soft milky translucent caustic core (58% alpha) with ambient inner glow
+        ctx.save();
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.65)';
         ctx.shadowBlur = Math.max(3, Math.round(fontSize * 0.12));
-        ctx.shadowOffsetY = Math.max(1.2, Math.round(fontSize * 0.045));
-        ctx.fillStyle = `hsla(${h}, ${s}%, 86%, 0.78)`;
+        ctx.fillStyle = `hsla(${h}, 25%, 92%, 0.58)`;
         ctx.fillText(text, 0, 0);
         ctx.restore();
       }
