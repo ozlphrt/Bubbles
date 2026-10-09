@@ -248,7 +248,8 @@
     </div>
 
     <div class="tab-switcher">
-      <button class="tab-btn active" id="tabClose">🎨 Close Tone-on-Tone (15 Styles)</button>
+      <button class="tab-btn active" id="tabCarved">🗿 Carved & Etched Glass (15 Styles)</button>
+      <button class="tab-btn" id="tabClose">🎨 Close Tone-on-Tone (15 Styles)</button>
       <button class="tab-btn" id="tabTonal">🌈 Harmonic Tonal (15 Styles)</button>
       <button class="tab-btn" id="tabThemed">💎 Themed & Materials (15 Styles)</button>
     </div>
@@ -267,6 +268,581 @@
       { color: 'blue', num: '162', name: 'Sapphire' },
       { color: 'red', num: '85', name: 'Ruby' },
       { color: 'white', num: '196', name: 'Diamond' }
+    ];
+
+    // ========================================================
+    // SET 0: CARVED & ETCHED GLASS (15 STYLES)
+    // High translucency, intaglio, engraved, chiseled & etched
+    // ========================================================
+    const carvedStyles = [
+      {
+        id: 1,
+        title: "Sunken Glass Intaglio (Specular Rim + Cavity Well)",
+        desc: "Highlight: top specular catchlight on upper carved bevel, deep cavity shadow, 52% translucent body exposing the bubble fluid. Lowlight: calm 22% translucent wash with soft depth.",
+        specs: ["Carve: Upper Specular / Lower Shadow", "Alpha: 52% Translucent", "Vibe: True Sunken Intaglio"],
+        renderHighlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.92);
+          ctx.font = `800 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const h = gem.isWhite ? 210 : gem.h;
+          const s = gem.isWhite ? 10 : Math.round(gem.s * 100);
+
+          // 1. Top rim specular catchlight
+          ctx.fillStyle = `hsla(${h}, ${Math.max(20, s * 0.7)}%, 94%, 0.85)`;
+          ctx.fillText(num, x, y - 1.4);
+
+          // 2. Cavity drop shadow
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+          ctx.fillText(num, x, y + 1.4);
+
+          // 3. Translucent interior (52% alpha)
+          ctx.fillStyle = `hsla(${h}, ${s}%, 84%, 0.52)`;
+          ctx.fillText(num, x, y);
+        },
+        renderLowlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.84);
+          ctx.font = `600 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const h = gem.isWhite ? 210 : gem.h;
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+          ctx.fillText(num, x, y - 1.0);
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+          ctx.fillText(num, x, y + 1.0);
+          ctx.fillStyle = `hsla(${h}, 20%, 65%, 0.22)`;
+          ctx.fillText(num, x, y);
+        }
+      },
+      {
+        id: 2,
+        title: "Laser-Etched Frosted Groove (Micro-Chamfer Cut)",
+        desc: "Highlight: subtle dark groove trench, bright top specular chamfer, and diffuse frosted core at 48% alpha. Lowlight: faint etched glass line with 20% frosted wash.",
+        specs: ["Trench: Micro-Chamfer Stroke", "Alpha: 48% Diffuse Frosted", "Vibe: Laser-Etched Crystal"],
+        renderHighlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.92);
+          ctx.font = `800 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const h = gem.isWhite ? 210 : gem.h;
+          const s = gem.isWhite ? 10 : Math.round(gem.s * 100);
+
+          ctx.strokeStyle = 'rgba(0, 0, 0, 0.65)';
+          ctx.lineWidth = Math.max(2.4, fs * 0.10);
+          ctx.strokeText(num, x, y + 0.6);
+
+          ctx.strokeStyle = `hsla(${h}, 30%, 96%, 0.75)`;
+          ctx.lineWidth = Math.max(1.2, fs * 0.05);
+          ctx.strokeText(num, x, y - 1.2);
+
+          ctx.save();
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+          ctx.shadowBlur = 3;
+          ctx.fillStyle = `hsla(${h}, ${Math.round(s * 0.45)}%, 90%, 0.48)`;
+          ctx.fillText(num, x, y);
+          ctx.restore();
+        },
+        renderLowlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.84);
+          ctx.font = `600 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const h = gem.isWhite ? 210 : gem.h;
+          ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
+          ctx.lineWidth = 1.6;
+          ctx.strokeText(num, x, y + 0.5);
+          ctx.fillStyle = `hsla(${h}, 15%, 70%, 0.20)`;
+          ctx.fillText(num, x, y);
+        }
+      },
+      {
+        id: 3,
+        title: "Beveled Bas-Relief (3D Concave Chisel)",
+        desc: "Highlight: 45° angled chisel facets with upper-left specular rim, bottom-right deep shade, and 45% translucent face. Lowlight: calm chiseled relief.",
+        specs: ["Bevel: 45° Dual Specular", "Alpha: 45% Translucent Face", "Vibe: Sculptured Bas-Relief"],
+        renderHighlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.92);
+          ctx.font = `900 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const h = gem.isWhite ? 210 : gem.h;
+          const s = gem.isWhite ? 10 : Math.round(gem.s * 100);
+
+          ctx.fillStyle = `hsla(${h}, ${Math.max(20, s * 0.6)}%, 95%, 0.82)`;
+          ctx.fillText(num, x - 1.3, y - 1.3);
+
+          ctx.fillStyle = `hsla(${h}, ${s}%, 10%, 0.75)`;
+          ctx.fillText(num, x + 1.4, y + 1.4);
+
+          ctx.fillStyle = `hsla(${h}, ${s}%, 80%, 0.45)`;
+          ctx.fillText(num, x, y);
+        },
+        renderLowlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.84);
+          ctx.font = `600 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const h = gem.isWhite ? 210 : gem.h;
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+          ctx.fillText(num, x - 1.0, y - 1.0);
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.40)';
+          ctx.fillText(num, x + 1.0, y + 1.0);
+          ctx.fillStyle = `hsla(${h}, 20%, 65%, 0.20)`;
+          ctx.fillText(num, x, y);
+        }
+      },
+      {
+        id: 4,
+        title: "Prismatic V-Groove (Gem-Cutter Facet Cut)",
+        desc: "Highlight: sharp V-shaped cuts catching outer specular glint with dark interior incision and 40% translucent core. Lowlight: subtle prismatic V-cut.",
+        specs: ["Cut: Dual V-Angle Facets", "Alpha: 40% Translucent", "Vibe: Crystal Glassware"],
+        renderHighlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.92);
+          ctx.font = `800 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const h = gem.isWhite ? 210 : gem.h;
+          const s = gem.isWhite ? 10 : Math.round(gem.s * 100);
+
+          ctx.save();
+          ctx.shadowColor = 'rgba(0,0,0,0.7)';
+          ctx.shadowBlur = 3;
+          ctx.strokeStyle = `hsla(${h}, ${s}%, 94%, 0.75)`;
+          ctx.lineWidth = Math.max(3.0, fs * 0.12);
+          ctx.strokeText(num, x, y - 0.6);
+          ctx.restore();
+
+          ctx.strokeStyle = 'rgba(3, 7, 18, 0.88)';
+          ctx.lineWidth = Math.max(1.8, fs * 0.07);
+          ctx.strokeText(num, x, y + 0.8);
+
+          ctx.fillStyle = `hsla(${h}, ${s}%, 86%, 0.40)`;
+          ctx.fillText(num, x, y);
+        },
+        renderLowlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.84);
+          ctx.font = `600 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const h = gem.isWhite ? 210 : gem.h;
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+          ctx.lineWidth = 2;
+          ctx.strokeText(num, x, y - 0.5);
+          ctx.strokeStyle = 'rgba(0, 0, 0, 0.45)';
+          ctx.lineWidth = 1.2;
+          ctx.strokeText(num, x, y + 0.6);
+          ctx.fillStyle = `hsla(${h}, 20%, 65%, 0.18)`;
+          ctx.fillText(num, x, y);
+        }
+      },
+      {
+        id: 5,
+        title: "Concave Caustic Lens (Spherical Dip Refraction)",
+        desc: "Highlight: spherical curved dip with top cavity shadow transitioning into luminous bottom caustic bounce. Lowlight: calm concave lens wash.",
+        specs: ["Optics: Concave Gradient Dip", "Alpha: 45% Translucent", "Vibe: Polished Lens Indentation"],
+        renderHighlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.92);
+          ctx.font = `800 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const h = gem.isWhite ? 210 : gem.h;
+          const s = gem.isWhite ? 10 : Math.round(gem.s * 100);
+
+          ctx.fillStyle = `hsla(${h}, 30%, 96%, 0.75)`;
+          ctx.fillText(num, x, y - 1.2);
+
+          const grad = ctx.createLinearGradient(x, y - fs * 0.45, x, y + fs * 0.45);
+          grad.addColorStop(0, 'rgba(0, 0, 0, 0.75)');
+          grad.addColorStop(0.40, `hsla(${h}, ${s}%, 45%, 0.45)`);
+          grad.addColorStop(1, `hsla(${h}, ${s}%, 90%, 0.70)`);
+          ctx.fillStyle = grad;
+          ctx.fillText(num, x, y);
+        },
+        renderLowlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.84);
+          ctx.font = `600 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const h = gem.isWhite ? 210 : gem.h;
+          const grad = ctx.createLinearGradient(x, y - fs * 0.4, x, y + fs * 0.4);
+          grad.addColorStop(0, 'rgba(0, 0, 0, 0.45)');
+          grad.addColorStop(1, `hsla(${h}, 20%, 75%, 0.28)`);
+          ctx.fillStyle = grad;
+          ctx.fillText(num, x, y);
+        }
+      },
+      {
+        id: 6,
+        title: "Acid-Etched Matte Silhouette (Micro-Frost Watermark)",
+        desc: "Highlight: diffuse matte frosted finish with soft ambient cavity occlusion and 50% opacity. Lowlight: whisper-quiet etched ghost.",
+        specs: ["Texture: Acid-Etched Matte", "Alpha: 50% Frosted", "Vibe: Subtle Glass Frost"],
+        renderHighlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.92);
+          ctx.font = `800 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const h = gem.isWhite ? 210 : gem.h;
+          const s = gem.isWhite ? 10 : Math.round(gem.s * 100);
+
+          ctx.save();
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.70)';
+          ctx.shadowBlur = 4;
+          ctx.shadowOffsetY = 1.2;
+          ctx.fillStyle = `hsla(${h}, ${Math.max(10, Math.round(s * 0.4))}%, 90%, 0.50)`;
+          ctx.fillText(num, x, y);
+          ctx.restore();
+
+          ctx.strokeStyle = `hsla(${h}, ${s}%, 96%, 0.40)`;
+          ctx.lineWidth = 1;
+          ctx.strokeText(num, x, y);
+        },
+        renderLowlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.84);
+          ctx.font = `600 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const h = gem.isWhite ? 210 : gem.h;
+          ctx.save();
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
+          ctx.shadowBlur = 2;
+          ctx.fillStyle = `hsla(${h}, 15%, 70%, 0.22)`;
+          ctx.fillText(num, x, y);
+          ctx.restore();
+        }
+      },
+      {
+        id: 7,
+        title: "Deep Crystal Intaglio (-30% Dark Cavity Void)",
+        desc: "Highlight: deeply chiseled dark void revealing thick glass refraction, topped by brilliant specular reflection lip. Lowlight: muted dark intaglio.",
+        specs: ["Core: Deep Dark Void (-30% L)", "Lip: Specular Caustic Edge", "Vibe: Heavy Carved Crystal"],
+        renderHighlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.92);
+          ctx.font = `900 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const h = gem.isWhite ? 210 : gem.h;
+          const s = gem.isWhite ? 10 : Math.round(gem.s * 100);
+
+          ctx.fillStyle = `hsla(${h}, ${Math.max(20, s * 0.6)}%, 96%, 0.90)`;
+          ctx.fillText(num, x, y - 1.6);
+
+          ctx.save();
+          ctx.shadowColor = 'rgba(0,0,0,0.85)';
+          ctx.shadowBlur = 3;
+          ctx.fillStyle = `hsla(${h}, ${Math.max(50, s)}%, 12%, 0.85)`;
+          ctx.fillText(num, x, y);
+          ctx.restore();
+
+          ctx.fillStyle = `hsla(${h}, ${s}%, 80%, 0.35)`;
+          ctx.fillText(num, x, y + 0.6);
+        },
+        renderLowlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.84);
+          ctx.font = `600 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const h = gem.isWhite ? 210 : gem.h;
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+          ctx.fillText(num, x, y - 1.0);
+          ctx.fillStyle = `hsla(${h}, 30%, 16%, 0.50)`;
+          ctx.fillText(num, x, y);
+        }
+      },
+      {
+        id: 8,
+        title: "Hollow Watermark (Negative Space Glass Cutout)",
+        desc: "Highlight: nearly transparent interior (28% alpha) framed by a crisp refractive dark rim and upper specular edge. Lowlight: subtle cut outline.",
+        specs: ["Alpha: 28% Ultra-Translucent", "Rim: Refractive Dual Edge", "Vibe: Negative Space Stencil"],
+        renderHighlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.92);
+          ctx.font = `800 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const h = gem.isWhite ? 210 : gem.h;
+          const s = gem.isWhite ? 10 : Math.round(gem.s * 100);
+
+          ctx.strokeStyle = 'rgba(0, 0, 0, 0.80)';
+          ctx.lineWidth = Math.max(2.4, fs * 0.09);
+          ctx.strokeText(num, x, y + 0.6);
+
+          ctx.strokeStyle = `hsla(${h}, 30%, 96%, 0.82)`;
+          ctx.lineWidth = Math.max(1.2, fs * 0.045);
+          ctx.strokeText(num, x, y - 1.2);
+
+          ctx.fillStyle = `hsla(${h}, ${s}%, 86%, 0.28)`;
+          ctx.fillText(num, x, y);
+        },
+        renderLowlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.84);
+          ctx.font = `600 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const h = gem.isWhite ? 210 : gem.h;
+          ctx.strokeStyle = 'rgba(0, 0, 0, 0.40)';
+          ctx.lineWidth = 1.6;
+          ctx.strokeText(num, x, y + 0.4);
+          ctx.fillStyle = `hsla(${h}, 20%, 65%, 0.12)`;
+          ctx.fillText(num, x, y);
+        }
+      },
+      {
+        id: 9,
+        title: "Specular Lip & Caustic Well (Dual Refraction Basin)",
+        desc: "Highlight: upper specular glint bar at 90% opacity, deep shadow trench, and 46% translucent rich tone core. Lowlight: calm basin tint.",
+        specs: ["Upper: Specular Glint Bar", "Lower: Ambient Shadow Basin", "Alpha: 46% Core"],
+        renderHighlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.92);
+          ctx.font = `800 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const h = gem.isWhite ? 210 : gem.h;
+          const s = gem.isWhite ? 10 : Math.round(gem.s * 100);
+
+          ctx.fillStyle = `hsla(${h}, 30%, 98%, 0.90)`;
+          ctx.fillText(num, x, y - 1.5);
+
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.80)';
+          ctx.fillText(num, x, y + 1.3);
+
+          ctx.fillStyle = `hsla(${h}, ${s}%, 78%, 0.46)`;
+          ctx.fillText(num, x, y);
+        },
+        renderLowlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.84);
+          ctx.font = `600 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const h = gem.isWhite ? 210 : gem.h;
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.30)';
+          ctx.fillText(num, x, y - 0.8);
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.40)';
+          ctx.fillText(num, x, y + 0.8);
+          ctx.fillStyle = `hsla(${h}, 20%, 65%, 0.20)`;
+          ctx.fillText(num, x, y);
+        }
+      },
+      {
+        id: 10,
+        title: "Cameo Deboss (Flush Sunken Stamp)",
+        desc: "Highlight: perpendicular sunken walls with strong top shadow stamp and lower specular bounce, floor at 48% alpha. Lowlight: subtle deboss mark.",
+        specs: ["Form: Perpendicular Deboss", "Alpha: 48% Floor", "Vibe: Hot Wax Stamp on Glass"],
+        renderHighlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.92);
+          ctx.font = `900 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const h = gem.isWhite ? 210 : gem.h;
+          const s = gem.isWhite ? 10 : Math.round(gem.s * 100);
+
+          ctx.fillStyle = `hsla(${h}, ${s}%, 94%, 0.70)`;
+          ctx.fillText(num, x, y + 1.4);
+
+          ctx.save();
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
+          ctx.shadowOffsetY = 1.8;
+          ctx.shadowBlur = 2;
+          ctx.fillStyle = `hsla(${h}, ${s}%, 15%, 0.70)`;
+          ctx.fillText(num, x, y);
+          ctx.restore();
+
+          ctx.fillStyle = `hsla(${h}, ${s}%, 80%, 0.48)`;
+          ctx.fillText(num, x, y);
+        },
+        renderLowlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.84);
+          ctx.font = `600 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const h = gem.isWhite ? 210 : gem.h;
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+          ctx.fillText(num, x, y - 0.8);
+          ctx.fillStyle = `hsla(${h}, 20%, 65%, 0.20)`;
+          ctx.fillText(num, x, y);
+        }
+      },
+      {
+        id: 11,
+        title: "Fluted Channel Engraving (Vertical Light Ribs)",
+        desc: "Highlight: architectural fluted channels catching vertical left specular reflections and right shadow trenches, 48% body. Lowlight: quiet vertical flute.",
+        specs: ["Lighting: Vertical Dual Bevel", "Alpha: 48% Translucent", "Vibe: Architectural Cut Glass"],
+        renderHighlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.92);
+          ctx.font = `800 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const h = gem.isWhite ? 210 : gem.h;
+          const s = gem.isWhite ? 10 : Math.round(gem.s * 100);
+
+          ctx.fillStyle = `hsla(${h}, 30%, 96%, 0.80)`;
+          ctx.fillText(num, x - 1.2, y);
+
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+          ctx.fillText(num, x + 1.3, y);
+
+          ctx.fillStyle = `hsla(${h}, ${s}%, 82%, 0.48)`;
+          ctx.fillText(num, x, y);
+        },
+        renderLowlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.84);
+          ctx.font = `600 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const h = gem.isWhite ? 210 : gem.h;
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+          ctx.fillText(num, x - 0.8, y);
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.40)';
+          ctx.fillText(num, x + 0.8, y);
+          ctx.fillStyle = `hsla(${h}, 20%, 65%, 0.20)`;
+          ctx.fillText(num, x, y);
+        }
+      },
+      {
+        id: 12,
+        title: "Liquid Glass Melt (Organic Depressed Valley)",
+        desc: "Highlight: rounded depression with soft ambient occlusion blur and warm upper caustic glow, 54% watery translucent body. Lowlight: calm molten valley.",
+        specs: ["Edges: Smooth Curved Melt", "Alpha: 54% Watery", "Vibe: Molten Glass Valley"],
+        renderHighlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.92);
+          ctx.font = `800 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const h = gem.isWhite ? 210 : gem.h;
+          const s = gem.isWhite ? 10 : Math.round(gem.s * 100);
+
+          ctx.save();
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.65)';
+          ctx.shadowBlur = 5;
+          ctx.shadowOffsetY = 1.6;
+          ctx.fillStyle = `hsla(${h}, ${s}%, 86%, 0.54)`;
+          ctx.fillText(num, x, y);
+          ctx.restore();
+
+          ctx.fillStyle = `hsla(${h}, ${s}%, 94%, 0.65)`;
+          ctx.fillText(num, x, y - 1.0);
+        },
+        renderLowlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.84);
+          ctx.font = `600 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const h = gem.isWhite ? 210 : gem.h;
+          ctx.save();
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.40)';
+          ctx.shadowBlur = 3;
+          ctx.fillStyle = `hsla(${h}, 20%, 65%, 0.25)`;
+          ctx.fillText(num, x, y);
+          ctx.restore();
+        }
+      },
+      {
+        id: 13,
+        title: "Micron Hairline Chisel (Jeweler's Razor Incision)",
+        desc: "Highlight: ultra-sharp 1px razor specular top line, 1px razor shadow bottom line, and pristine 38% translucent glass center. Lowlight: 1px whisper incision.",
+        specs: ["Detail: 1px Razor Bevels", "Alpha: 38% Pure Translucent", "Vibe: Jeweler's Diamond Scalpel"],
+        renderHighlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.92);
+          ctx.font = `800 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const h = gem.isWhite ? 210 : gem.h;
+          const s = gem.isWhite ? 10 : Math.round(gem.s * 100);
+
+          ctx.fillStyle = `hsla(${h}, ${s}%, 96%, 0.92)`;
+          ctx.fillText(num, x, y - 1.0);
+
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.88)';
+          ctx.fillText(num, x, y + 1.0);
+
+          ctx.fillStyle = `hsla(${h}, ${s}%, 84%, 0.38)`;
+          ctx.fillText(num, x, y);
+        },
+        renderLowlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.84);
+          ctx.font = `600 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const h = gem.isWhite ? 210 : gem.h;
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.30)';
+          ctx.fillText(num, x, y - 0.7);
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+          ctx.fillText(num, x, y + 0.7);
+          ctx.fillStyle = `hsla(${h}, 20%, 65%, 0.18)`;
+          ctx.fillText(num, x, y);
+        }
+      },
+      {
+        id: 14,
+        title: "Frosted Opal Well (Milky Diffusion in Dark Carve)",
+        desc: "Highlight: deep dark perimeter trench containing a soft milky/opalescent translucent mist (58% alpha) that catches ambient light. Lowlight: muted frosted well.",
+        specs: ["Cavity: Dark Perimeter Trench", "Interior: 58% Milky Opal", "Vibe: Opalescent Carved Slot"],
+        renderHighlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.92);
+          ctx.font = `800 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const h = gem.isWhite ? 210 : gem.h;
+          const s = gem.isWhite ? 10 : Math.round(gem.s * 100);
+
+          ctx.strokeStyle = `hsla(${h}, ${s}%, 12%, 0.85)`;
+          ctx.lineWidth = Math.max(2.4, fs * 0.09);
+          ctx.strokeText(num, x, y);
+
+          ctx.save();
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.65)';
+          ctx.shadowBlur = 4;
+          ctx.fillStyle = `hsla(${h}, 25%, 92%, 0.58)`;
+          ctx.fillText(num, x, y);
+          ctx.restore();
+        },
+        renderLowlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.84);
+          ctx.font = `600 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const h = gem.isWhite ? 210 : gem.h;
+          ctx.strokeStyle = 'rgba(0, 0, 0, 0.40)';
+          ctx.lineWidth = 1.6;
+          ctx.strokeText(num, x, y);
+          ctx.fillStyle = `hsla(${h}, 15%, 75%, 0.24)`;
+          ctx.fillText(num, x, y);
+        }
+      },
+      {
+        id: 15,
+        title: "Prismatic Edge Reflection (Optical Dispersion Carve)",
+        desc: "Highlight: top-left cyan specular refraction, bottom-right deep shade, and 48% translucent body showing iridescent bubbles behind it. Lowlight: subtle prismatic trace.",
+        specs: ["Dispersion: Cyan Top / Deep Shade Bottom", "Alpha: 48% Translucent", "Vibe: Full Refractive Dispersion"],
+        renderHighlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.92);
+          ctx.font = `900 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const h = gem.isWhite ? 210 : gem.h;
+          const s = gem.isWhite ? 10 : Math.round(gem.s * 100);
+
+          ctx.fillStyle = 'rgba(224, 242, 254, 0.88)';
+          ctx.fillText(num, x - 1.2, y - 1.2);
+
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.82)';
+          ctx.fillText(num, x + 1.3, y + 1.3);
+
+          ctx.fillStyle = `hsla(${h}, ${s}%, 84%, 0.48)`;
+          ctx.fillText(num, x, y);
+        },
+        renderLowlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.84);
+          ctx.font = `600 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const h = gem.isWhite ? 210 : gem.h;
+          ctx.fillStyle = 'rgba(224, 242, 254, 0.30)';
+          ctx.fillText(num, x - 0.8, y - 0.8);
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.40)';
+          ctx.fillText(num, x + 0.8, y + 0.8);
+          ctx.fillStyle = `hsla(${h}, 20%, 65%, 0.20)`;
+          ctx.fillText(num, x, y);
+        }
+      }
     ];
 
     // ========================================================
@@ -1996,6 +2572,7 @@
     ];
 
     const container = document.getElementById('mockupGrid');
+    const tabCarved = document.getElementById('tabCarved');
     const tabClose = document.getElementById('tabClose');
     const tabTonal = document.getElementById('tabTonal');
     const tabThemed = document.getElementById('tabThemed');
@@ -2098,11 +2675,20 @@
       });
     }
 
-    // Default to the new Close Tone-on-Tone Variations!
-    renderCollection(closeToneStyles, 'close');
+    // Default to the new Carved & Etched Glass Variations!
+    renderCollection(carvedStyles, 'carved');
+
+    tabCarved.addEventListener('click', () => {
+      tabCarved.classList.add('active');
+      tabClose.classList.remove('active');
+      tabTonal.classList.remove('active');
+      tabThemed.classList.remove('active');
+      renderCollection(carvedStyles, 'carved');
+    });
 
     tabClose.addEventListener('click', () => {
       tabClose.classList.add('active');
+      tabCarved.classList.remove('active');
       tabTonal.classList.remove('active');
       tabThemed.classList.remove('active');
       renderCollection(closeToneStyles, 'close');
@@ -2110,6 +2696,7 @@
 
     tabTonal.addEventListener('click', () => {
       tabTonal.classList.add('active');
+      tabCarved.classList.remove('active');
       tabClose.classList.remove('active');
       tabThemed.classList.remove('active');
       renderCollection(tonalStyles, 'tonal');
@@ -2117,6 +2704,7 @@
 
     tabThemed.addEventListener('click', () => {
       tabThemed.classList.add('active');
+      tabCarved.classList.remove('active');
       tabClose.classList.remove('active');
       tabTonal.classList.remove('active');
       renderCollection(themedStyles, 'themed');
