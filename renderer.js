@@ -186,7 +186,6 @@ export class Renderer {
     ctx.clip();
 
     this.renderBackground(ctx, width, height);
-    this.renderGrid(ctx, width, height);
     this.renderAmbientParticles(ctx, width, height);
     // Render all bubbles with Plateau foam partition boundary geometry
     for (let i = 0; i < physics.bubbles.length; i++) {
@@ -262,42 +261,6 @@ export class Renderer {
 
       ctx.restore();
     }
-    ctx.restore();
-  }
-
-  renderGrid(ctx, width, height) {
-    ctx.save();
-    const minorSize = 16;
-    const majorSize = 80;
-
-    // Ultra-fine micro grid
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.065)';
-    ctx.lineWidth = 0.75;
-    ctx.beginPath();
-    for (let x = 0; x <= width; x += minorSize) {
-      ctx.moveTo(Math.floor(x) + 0.5, 0);
-      ctx.lineTo(Math.floor(x) + 0.5, height);
-    }
-    for (let y = 0; y <= height; y += minorSize) {
-      ctx.moveTo(0, Math.floor(y) + 0.5);
-      ctx.lineTo(width, Math.floor(y) + 0.5);
-    }
-    ctx.stroke();
-
-    // Major grid reference lines
-    ctx.strokeStyle = 'rgba(56, 189, 248, 0.12)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    for (let x = 0; x <= width; x += majorSize) {
-      ctx.moveTo(Math.floor(x) + 0.5, 0);
-      ctx.lineTo(Math.floor(x) + 0.5, height);
-    }
-    for (let y = 0; y <= height; y += majorSize) {
-      ctx.moveTo(0, Math.floor(y) + 0.5);
-      ctx.lineTo(width, Math.floor(y) + 0.5);
-    }
-    ctx.stroke();
-
     ctx.restore();
   }
 
