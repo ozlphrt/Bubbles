@@ -34,6 +34,13 @@ export class Renderer {
     this.defaultColorAdjustments = JSON.parse(JSON.stringify(this.colorAdjustments));
     this.floatingTexts = [];
 
+    // Animated in-game locked guidance state
+    this.lockedHintActive = false;
+    this.lockedHintAlpha = 0;
+    this.lockedHintPos = null;
+    this.targetHintPos = null;
+    this.lastGapSearchTime = 0;
+
     this.initBackgroundStars();
   }
 
@@ -196,6 +203,7 @@ export class Renderer {
     this.renderFloatingTexts(ctx);
 
     this.renderMouseFX(ctx, mouseState);
+    this.renderLockedHint(ctx, physics, width, height);
 
     // Sleek dual-layer glass bottom border accent along rounded corners
     ctx.save();
@@ -1159,6 +1167,195 @@ export class Renderer {
       ctx.lineWidth = 2;
       ctx.stroke();
     }
+    ctx.restore();
+  }
+
+  /**
+   * Toggles the animated locked/unblock guidance
+   */
+  setLockedHint(active) {
+    this.lockedHintActive = active;
+    if (active && !this.lockedHintPos) {
+      this.lastGapSearchTime = 0; // Trigger immediate gap scan
+    }
+  }
+
+  /**
+   * Scans the active board geometry to locate the most spacious open gap between bubbles
+   */
+  findBestEmptyGap(physics, width, height) {
+    if (!physics || !physics.bubbles || physics.bubbles.length === 0) {
+      return { x: width * 0.5, y: height * 0.45 };
+    }
+
+    let bestX = width * 0.5;
+    let bestY = height * 0.45;
+    let maxClearance = -Infinity;
+
+    const startX = 60;
+    const endX = width - 60;
+    const startY = 120;
+    const endY = height - 90;
+
+    const stepX = Math.max(30, Math.floor((endX - startX) / 14));
+    const stepY = Math.max(30, Math.floor((endY - startY) / 18));
+
+    for (let x = startX; x <= endX; x += stepX) {
+      for (let y = startY; y <= endY; y += stepY) {
+        let minSurfaceDist = Infinity;
+        for (let i = 0; i < physics.bubbles.length; i++) {
+          const b = physics.bubbles[i];
+          const d = Math.hypot(x - b.x, y - b.y) - b.radius;
+          if (d < minSurfaceDist) {
+            minSurfaceDist = d;
+          }
+        }
+        if (minSurfaceDist > maxClearance) {
+          maxClearance = minSurfaceDist;
+          bestX = x;
+          bestY = y;
+        }
+      }
+    }
+
+    return { x: bestX, y: bestY };
+  }
+
+  /**
+   * Renders high-visibility animated guidance when the player is locked or idle:
+   * Concentric sonar ripples, breathing dashed gem reticle, bouncing pointer hand, and frosted glass pill.
+   */
+  renderLockedHint(ctx, physics, width, height) {
+    if (this.lockedHintActive) {
+      this.lockedHintAlpha = Math.min(1.0, this.lockedHintAlpha + 0.045);
+    } else {
+      this.lockedHintAlpha = Math.max(0.0, this.lockedHintAlpha - 0.075);
+    }
+
+    if (this.lockedHintAlpha <= 0.005) {
+      this.lockedHintPos = null;
+      return;
+    }
+
+    const now = performance.now();
+    if (!this.targetHintPos || now - this.lastGapSearchTime > 1200) {
+      this.lastGapSearchTime = now;
+      this.targetHintPos = this.findBestEmptyGap(physics, width, height);
+      if (!this.lockedHintPos) {
+        this.lockedHintPos = { ...this.targetHintPos };
+      }
+    }
+
+    if (!this.lockedHintPos) return;
+
+    // Smoothly glide position if target moves
+    this.lockedHintPos.x += (this.targetHintPos.x - this.lockedHintPos.x) * 0.08;
+    this.lockedHintPos.y += (this.targetHintPos.y - this.lockedHintPos.y) * 0.08;
+
+    const gx = this.lockedHintPos.x;
+    const gy = this.lockedHintPos.y;
+    const alpha = this.lockedHintAlpha;
+
+    ctx.save();
+
+    // 1. Soft radial cyan-indigo back-glow aura
+    const aura = ctx.createRadialGradient(gx, gy, 0, gx, gy, 70);
+    aura.addColorStop(0, `rgba(56, 189, 248, ${0.30 * alpha})`);
+    aura.addColorStop(0.55, `rgba(99, 102, 241, ${0.12 * alpha})`);
+    aura.addColorStop(1, 'rgba(56, 189, 248, 0)');
+    ctx.fillStyle = aura;
+    ctx.beginPath();
+    ctx.arc(gx, gy, 70, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2. Expanding Sonar Pulse Rings
+    for (let rIdx = 0; rIdx < 2; rIdx++) {
+      const phase = ((this.time * 1.5 + rIdx * 0.5) % 1.0);
+      const ringR = 14 + phase * 46;
+      const ringAlpha = Math.max(0, (1.0 - phase) * 0.80 * alpha);
+      ctx.beginPath();
+      ctx.arc(gx, gy, ringR, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(56, 189, 248, ${ringAlpha})`;
+      ctx.lineWidth = Math.max(1.0, 2.5 * (1.0 - phase * 0.5));
+      ctx.shadowColor = '#38bdf8';
+      ctx.shadowBlur = 10 * ringAlpha;
+      ctx.stroke();
+    }
+
+    // 3. Spawning Gem Target Silhouette (breathing dashed ring)
+    const targetR = 24 + Math.sin(this.time * 4) * 2.5;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(gx, gy, targetR, 0, Math.PI * 2);
+    ctx.setLineDash([5, 4]);
+    ctx.lineDashOffset = -this.time * 16;
+    ctx.strokeStyle = `rgba(255, 255, 255, ${0.85 * alpha})`;
+    ctx.lineWidth = 1.8;
+    ctx.shadowColor = 'rgba(56, 189, 248, 0.5)';
+    ctx.shadowBlur = 6;
+    ctx.stroke();
+    ctx.restore();
+
+    // 4. Center Glowing Sparkle Symbol
+    ctx.save();
+    ctx.fillStyle = `rgba(255, 255, 255, ${0.95 * alpha})`;
+    ctx.font = '700 18px "JetBrains Mono", monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = '#38bdf8';
+    ctx.shadowBlur = 12 * alpha;
+    ctx.fillText('+', gx, gy);
+    ctx.restore();
+
+    // 5. Animated Bouncing Hand Pointer
+    const tapCycle = (this.time * 3.4) % (Math.PI * 2);
+    const tapOffset = Math.max(0, Math.sin(tapCycle)) * 14;
+    const handX = gx + 10;
+    const handY = gy + 22 + (14 - tapOffset);
+    ctx.save();
+    ctx.font = '24px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
+    ctx.shadowBlur = 10;
+    ctx.globalAlpha = alpha;
+    ctx.fillText('👆', handX, handY);
+    ctx.restore();
+
+    // 6. Floating Frosted Glass Capsule Badge
+    const labelText = 'TAP GAP TO UNLOCK';
+    ctx.save();
+    ctx.font = '700 11px "JetBrains Mono", monospace';
+    const textW = ctx.measureText(labelText).width;
+    const pillW = textW + 24;
+    const pillH = 22;
+    const pillX = gx - pillW / 2;
+    const pillY = gy - 44;
+    const pillR = pillH / 2;
+
+    // Pill background
+    ctx.beginPath();
+    if (ctx.roundRect) {
+      ctx.roundRect(pillX, pillY, pillW, pillH, pillR);
+    } else {
+      ctx.rect(pillX, pillY, pillW, pillH);
+    }
+    ctx.fillStyle = `rgba(11, 17, 32, ${0.90 * alpha})`;
+    ctx.fill();
+    ctx.strokeStyle = `rgba(56, 189, 248, ${0.65 * alpha})`;
+    ctx.lineWidth = 1.2;
+    ctx.shadowColor = 'rgba(56, 189, 248, 0.45)';
+    ctx.shadowBlur = 10;
+    ctx.stroke();
+
+    // Pill text
+    ctx.fillStyle = `rgba(255, 255, 255, ${0.98 * alpha})`;
+    ctx.shadowColor = 'transparent';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(labelText, gx, pillY + pillH / 2);
+    ctx.restore();
+
     ctx.restore();
   }
 }

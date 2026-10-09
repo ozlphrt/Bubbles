@@ -296,12 +296,7 @@ window.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // If player hasn't merged or spawned in 14s, gently suggest tapping empty gaps to unlock
-    if (gameEngine.state === GameState.PHASE2_MERGE) {
-      if (performance.now() - lastActivityTime > 14000) {
-        showInGameHint(5000);
-      }
-    }
+    // Timer styling handled above; locked guidance handled in loop
   };
 
   gameEngine.onBonusTime = (seconds, x, y) => {
@@ -318,6 +313,8 @@ window.addEventListener('DOMContentLoaded', () => {
   let lastBonusTimeMs = 0;
   physics.onMerge = (x, y, newRadius, sizeRatio, colorId) => {
     lastActivityTime = performance.now();
+    renderer.setLockedHint(false);
+    hideInGameHint();
     if (gameEngine.state === GameState.PHASE2_MERGE) {
       const now = performance.now();
       if (now - lastBonusTimeMs < 3000) return;
@@ -756,6 +753,9 @@ window.addEventListener('DOMContentLoaded', () => {
     mouseState.y = coords.y;
     mouseState.isDown = true;
     mouseState.active = true;
+    lastActivityTime = performance.now();
+    renderer.setLockedHint(false);
+    hideInGameHint();
 
     if (e.button === 2) {
       physics.applyForceField(coords.x, coords.y, 50, 1, 'pop');
@@ -796,6 +796,8 @@ window.addEventListener('DOMContentLoaded', () => {
     mouseState.active = true;
 
     if (mouseState.isDown) {
+      lastActivityTime = performance.now();
+      renderer.setLockedHint(false);
       if (currentTool === 'pop') {
         physics.applyForceField(coords.x, coords.y, 55, 1, 'pop');
       } else if (currentTool === 'spawn') {
@@ -903,6 +905,32 @@ window.addEventListener('DOMContentLoaded', () => {
 
       gameEngine.update(dt, window.innerWidth, window.innerHeight);
       physics.update(window.innerWidth, window.innerHeight);
+
+      // Dynamic Locked / Stall Detection:
+      // If in merge phase and player hasn't merged/interacted in 6s, or bubbles have settled with no moves
+      if (gameEngine.state === GameState.PHASE2_MERGE) {
+        const now = performance.now();
+        const inactiveTime = now - lastActivityTime;
+        let isSettled = false;
+        if (physics.bubbles.length > 0 && inactiveTime > 3800) {
+          let totalSpeed = 0;
+          for (let i = 0; i < physics.bubbles.length; i++) {
+            const b = physics.bubbles[i];
+            totalSpeed += Math.hypot(b.vx, b.vy);
+          }
+          if (totalSpeed / physics.bubbles.length < 0.35) {
+            isSettled = true;
+          }
+        }
+
+        if (inactiveTime > 5500 || isSettled) {
+          renderer.setLockedHint(true);
+        }
+      } else {
+        renderer.setLockedHint(false);
+      }
+    } else {
+      renderer.setLockedHint(false);
     }
 
     const targetDiameter = gameEngine.getCurrentLevel() ? gameEngine.getCurrentLevel().targetDiameter : 0;
