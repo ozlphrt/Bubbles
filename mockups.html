@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bubble Number Style Mockups - Highlight & Lowlight</title>
+  <title>Bubble Number Style Mockups - Tonal & Themed</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
@@ -31,7 +31,7 @@
     }
     .header {
       max-width: 1200px;
-      margin: 0 auto 36px;
+      margin: 0 auto 30px;
       text-align: center;
     }
     .eyebrow {
@@ -67,7 +67,7 @@
       display: flex;
       justify-content: center;
       gap: 16px;
-      margin-bottom: 32px;
+      margin-bottom: 22px;
     }
     .btn-nav {
       display: inline-flex;
@@ -76,7 +76,7 @@
       background: rgba(245, 208, 140, 0.15);
       border: 1px solid rgba(245, 208, 140, 0.35);
       color: var(--accent-gold);
-      padding: 10px 20px;
+      padding: 9px 20px;
       border-radius: 999px;
       text-decoration: none;
       font-weight: 700;
@@ -86,6 +86,36 @@
     .btn-nav:hover {
       background: rgba(245, 208, 140, 0.25);
       transform: translateY(-2px);
+    }
+    .tab-switcher {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+    .tab-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(245, 208, 140, 0.22);
+      color: #94a3b8;
+      padding: 10px 22px;
+      border-radius: 999px;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .tab-btn:hover {
+      color: #f8fafc;
+      border-color: rgba(245, 208, 140, 0.40);
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .tab-btn.active {
+      color: #1a1003;
+      background: linear-gradient(180deg, #fef08a 0%, #f59e0b 100%);
+      border-color: #fef08a;
+      box-shadow: 0 4px 20px rgba(245, 158, 11, 0.35);
     }
     .grid {
       display: grid;
@@ -210,10 +240,16 @@
 
   <div class="header">
     <div class="eyebrow">Design Showcase</div>
-    <h1>15 Bubble Number Style Mockups</h1>
-    <p class="sub">Side-by-side comparison of <strong>Highlight (Active in-play)</strong> and <strong>Lowlight (Completed goal-met)</strong> versions across 5 gemstone colors (Emerald Green, Amber, Chalcedony Blue, Ruby, Diamond White).</p>
+    <h1>Bubble Number Style Mockups</h1>
+    <p class="sub">Compare <strong>Highlight (Active in-play)</strong> and <strong>Lowlight (Completed goal-met)</strong> versions across 5 gemstone colors (Emerald Green, Amber, Chalcedony Blue, Ruby, Diamond White).</p>
+    
     <div class="actions-bar">
       <a href="/" class="btn-nav">← Back to Game</a>
+    </div>
+
+    <div class="tab-switcher">
+      <button class="tab-btn active" id="tabTonal">🎨 Bubble-Color Variations (15 Styles)</button>
+      <button class="tab-btn" id="tabThemed">💎 Themed & Material Styles (15 Styles)</button>
     </div>
   </div>
 
@@ -224,7 +260,597 @@
 
     const renderer = new Renderer();
 
-    const styles = [
+    const sampleGems = [
+      { color: 'green', num: '140', name: 'Emerald' },
+      { color: 'amber', num: '98', name: 'Amber' },
+      { color: 'blue', num: '162', name: 'Sapphire' },
+      { color: 'red', num: '85', name: 'Ruby' },
+      { color: 'white', num: '196', name: 'Diamond' }
+    ];
+
+    // ==========================================
+    // SET 1: TONAL BUBBLE-COLOR VARIATIONS (15)
+    // Numbers derived adaptively from bubble color
+    // ==========================================
+    const tonalStyles = [
+      {
+        id: 1,
+        title: "Ultra-Luminous Pastel Tint",
+        desc: "Highlight: 93% high-lightness pastel tint of the bubble hue with a deep tone-matched razor halo. Lowlight: calm desaturated pastel at 50% opacity.",
+        specs: ["Highlight: Tint (L: 93%) + Dark Halo (L: 12%)", "Lowlight: Muted Tint (50%)", "Vibe: Clean Jewel Crystal"],
+        renderHighlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.95);
+          ctx.font = `800 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          const h = gem.isWhite ? 210 : gem.h;
+          ctx.save();
+          ctx.shadowColor = 'rgba(0,0,0,0.85)';
+          ctx.shadowBlur = Math.round(fs * 0.16);
+          ctx.strokeStyle = `hsla(${h}, 90%, 12%, 0.95)`;
+          ctx.lineWidth = Math.max(3.2, fs * 0.12);
+          ctx.strokeText(num, x, y);
+          ctx.restore();
+
+          ctx.fillStyle = gem.isWhite ? '#ffffff' : `hsla(${h}, 70%, 93%, 1)`;
+          ctx.fillText(num, x, y);
+        },
+        renderLowlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.88);
+          ctx.font = `600 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          const h = gem.isWhite ? 210 : gem.h;
+          ctx.save();
+          ctx.shadowColor = 'rgba(0,0,0,0.7)';
+          ctx.shadowBlur = 2;
+          ctx.fillStyle = `hsla(${h}, 25%, 72%, 0.50)`;
+          ctx.fillText(num, x, y);
+          ctx.restore();
+        }
+      },
+      {
+        id: 2,
+        title: "Deep Tonal Intaglio (Shade Core + Light Rim)",
+        desc: "Highlight: rich dark saturated gemstone core (L: 16%) encased in a luminous pastel rim (L: 82%). Lowlight: calm frosted engraving.",
+        specs: ["Highlight: Core (L: 16%) + Rim (L: 82%)", "Lowlight: Slate Engraving (55%)", "Vibe: Carved Gemstone"],
+        renderHighlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.95);
+          ctx.font = `900 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          const h = gem.isWhite ? 210 : gem.h;
+          ctx.save();
+          ctx.strokeStyle = gem.isWhite ? '#ffffff' : `hsla(${h}, 80%, 82%, 0.95)`;
+          ctx.lineWidth = Math.max(3.5, fs * 0.14);
+          ctx.shadowColor = gem.glow;
+          ctx.shadowBlur = 8;
+          ctx.strokeText(num, x, y);
+          ctx.restore();
+
+          ctx.fillStyle = `hsla(${h}, 85%, 16%, 0.98)`;
+          ctx.fillText(num, x, y);
+        },
+        renderLowlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.88);
+          ctx.font = `700 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          const h = gem.isWhite ? 210 : gem.h;
+          ctx.strokeStyle = `hsla(${h}, 30%, 65%, 0.35)`;
+          ctx.lineWidth = 2;
+          ctx.strokeText(num, x, y);
+
+          ctx.fillStyle = `hsla(${h}, 40%, 25%, 0.55)`;
+          ctx.fillText(num, x, y);
+        }
+      },
+      {
+        id: 3,
+        title: "Harmonic Analogous Shift (+25° Hue)",
+        desc: "Highlight: number hue shifted +25° (green->teal, amber->gold-yellow, blue->indigo, red->orange). Lowlight: desaturated analogous tint.",
+        specs: ["Highlight: +25° Harmonic Shift", "Lowlight: Analogous Wash (50%)", "Vibe: Chromatic Vibrance"],
+        renderHighlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.95);
+          ctx.font = `800 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          const h = gem.isWhite ? 45 : (gem.h + 25) % 360;
+          ctx.save();
+          ctx.shadowColor = 'rgba(0,0,0,0.85)';
+          ctx.shadowBlur = Math.round(fs * 0.16);
+          ctx.strokeStyle = `hsla(${h}, 90%, 14%, 0.95)`;
+          ctx.lineWidth = Math.max(3.2, fs * 0.12);
+          ctx.strokeText(num, x, y);
+          ctx.restore();
+
+          ctx.fillStyle = `hsla(${h}, 85%, 88%, 1)`;
+          ctx.fillText(num, x, y);
+        },
+        renderLowlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.88);
+          ctx.font = `600 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          const h = gem.isWhite ? 45 : (gem.h + 25) % 360;
+          ctx.save();
+          ctx.shadowColor = 'rgba(0,0,0,0.7)';
+          ctx.shadowBlur = 2;
+          ctx.fillStyle = `hsla(${h}, 40%, 65%, 0.50)`;
+          ctx.fillText(num, x, y);
+          ctx.restore();
+        }
+      },
+      {
+        id: 4,
+        title: "Complementary Polar Contrast (180° Flip)",
+        desc: "Highlight: exact color wheel opposite (green->rose, amber->sky blue, blue->warm peach). Lowlight: muted pastel complement at 50%.",
+        specs: ["Highlight: 180° Polar Flip", "Lowlight: Pastel Complement", "Vibe: High Chromatic Pop"],
+        renderHighlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.95);
+          ctx.font = `800 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          const h = gem.isWhite ? 40 : (gem.h + 180) % 360;
+          ctx.save();
+          ctx.shadowColor = 'rgba(0,0,0,0.85)';
+          ctx.shadowBlur = Math.round(fs * 0.16);
+          ctx.strokeStyle = `hsla(${h}, 85%, 15%, 0.95)`;
+          ctx.lineWidth = Math.max(3.2, fs * 0.12);
+          ctx.strokeText(num, x, y);
+          ctx.restore();
+
+          ctx.fillStyle = `hsla(${h}, 75%, 88%, 1)`;
+          ctx.fillText(num, x, y);
+        },
+        renderLowlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.88);
+          ctx.font = `600 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          const h = gem.isWhite ? 40 : (gem.h + 180) % 360;
+          ctx.save();
+          ctx.shadowColor = 'rgba(0,0,0,0.7)';
+          ctx.shadowBlur = 2;
+          ctx.fillStyle = `hsla(${h}, 35%, 65%, 0.50)`;
+          ctx.fillText(num, x, y);
+          ctx.restore();
+        }
+      },
+      {
+        id: 5,
+        title: "Phosphorescent Neon Plasma Core",
+        desc: "Highlight: 100% saturation electric neon core with intense double bloom in bubble hue. Lowlight: extinguished trace at 45% glow.",
+        specs: ["Highlight: 100% Saturation Bloom", "Lowlight: Dormant Glow (45%)", "Vibe: Bioluminescent Energy"],
+        renderHighlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.94);
+          ctx.font = `800 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          const h = gem.isWhite ? 200 : gem.h;
+          ctx.strokeStyle = `hsla(${h}, 95%, 8%, 0.95)`;
+          ctx.lineWidth = Math.max(4, fs * 0.16);
+          ctx.strokeText(num, x, y);
+
+          ctx.save();
+          ctx.shadowColor = gem.glow;
+          ctx.shadowBlur = 12;
+          ctx.strokeStyle = `hsla(${h}, 100%, 75%, 0.85)`;
+          ctx.lineWidth = Math.max(2, fs * 0.08);
+          ctx.strokeText(num, x, y);
+          ctx.restore();
+
+          ctx.fillStyle = gem.isWhite ? '#ffffff' : `hsla(${h}, 100%, 78%, 1)`;
+          ctx.fillText(num, x, y);
+        },
+        renderLowlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.88);
+          ctx.font = `600 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          const h = gem.isWhite ? 200 : gem.h;
+          ctx.save();
+          ctx.shadowColor = 'rgba(0,0,0,0.8)';
+          ctx.shadowBlur = 3;
+          ctx.fillStyle = `hsla(${h}, 50%, 55%, 0.45)`;
+          ctx.fillText(num, x, y);
+          ctx.restore();
+        }
+      },
+      {
+        id: 6,
+        title: "Soft Desaturated Mist (Powdery Tint)",
+        desc: "Highlight: low saturation (25%) powdery tint with soft diffuse shadow. Lowlight: calm chalk-wash at 45% opacity.",
+        specs: ["Highlight: Low Saturation (25%)", "Lowlight: Powdery Chalk Wash", "Vibe: Nordic Minimalist"],
+        renderHighlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.95);
+          ctx.font = `800 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          const h = gem.isWhite ? 210 : gem.h;
+          ctx.save();
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
+          ctx.shadowBlur = 2;
+          ctx.shadowOffsetX = 1;
+          ctx.shadowOffsetY = 2;
+          ctx.fillStyle = `hsla(${h}, 25%, 90%, 0.95)`;
+          ctx.fillText(num, x, y);
+          ctx.restore();
+        },
+        renderLowlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.88);
+          ctx.font = `600 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          const h = gem.isWhite ? 210 : gem.h;
+          ctx.save();
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
+          ctx.shadowBlur = 1;
+          ctx.shadowOffsetY = 1;
+          ctx.fillStyle = `hsla(${h}, 15%, 70%, 0.45)`;
+          ctx.fillText(num, x, y);
+          ctx.restore();
+        }
+      },
+      {
+        id: 7,
+        title: "Monochromatic Vertical Gradient",
+        desc: "Highlight: vertical tonal sweep from top tint (L: 94%) to bottom deep shade (L: 48%). Lowlight: desaturated gradient at 50% opacity.",
+        specs: ["Highlight: Top Tint -> Bottom Shade", "Lowlight: Subdued Gradient (50%)", "Vibe: Polished Mineral"],
+        renderHighlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.95);
+          ctx.font = `900 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          const h = gem.isWhite ? 210 : gem.h;
+          ctx.strokeStyle = `hsla(${h}, 90%, 10%, 0.95)`;
+          ctx.lineWidth = Math.max(3.2, fs * 0.12);
+          ctx.strokeText(num, x, y);
+
+          const grad = ctx.createLinearGradient(x, y - fs * 0.5, x, y + fs * 0.5);
+          grad.addColorStop(0, `hsla(${h}, 60%, 94%, 1)`);
+          grad.addColorStop(1, `hsla(${h}, 85%, 48%, 1)`);
+          ctx.fillStyle = grad;
+          ctx.fillText(num, x, y);
+        },
+        renderLowlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.88);
+          ctx.font = `600 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          const h = gem.isWhite ? 210 : gem.h;
+          ctx.save();
+          ctx.shadowColor = 'rgba(0,0,0,0.7)';
+          ctx.shadowBlur = 2;
+          ctx.fillStyle = `hsla(${h}, 30%, 65%, 0.50)`;
+          ctx.fillText(num, x, y);
+          ctx.restore();
+        }
+      },
+      {
+        id: 8,
+        title: "Radial Core Radiance (Inside-Out Bloom)",
+        desc: "Highlight: pure white center fading outward into saturated gem plasma. Lowlight: calm desaturated radial bloom at 45%.",
+        specs: ["Highlight: White Core -> Gem Plasma", "Lowlight: Faint Radial Halo", "Vibe: Laser Focused"],
+        renderHighlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.95);
+          ctx.font = `800 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          const h = gem.isWhite ? 210 : gem.h;
+          ctx.strokeStyle = `hsla(${h}, 95%, 8%, 0.95)`;
+          ctx.lineWidth = Math.max(3.2, fs * 0.13);
+          ctx.strokeText(num, x, y);
+
+          ctx.save();
+          ctx.shadowColor = gem.glow;
+          ctx.shadowBlur = 6;
+          ctx.fillStyle = '#ffffff';
+          ctx.fillText(num, x, y);
+          ctx.restore();
+        },
+        renderLowlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.88);
+          ctx.font = `600 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          const h = gem.isWhite ? 210 : gem.h;
+          ctx.save();
+          ctx.shadowColor = 'rgba(0,0,0,0.7)';
+          ctx.shadowBlur = 2;
+          ctx.fillStyle = `hsla(${h}, 25%, 75%, 0.45)`;
+          ctx.fillText(num, x, y);
+          ctx.restore();
+        }
+      },
+      {
+        id: 9,
+        title: "Dark Silhouette Velvet (Carved Intaglio)",
+        desc: "Highlight: deep velvet core (L: 10%) with top specular light reflection bevel (L: 85%). Lowlight: faint engraved line.",
+        specs: ["Highlight: Velvet Core + Top Bevel", "Lowlight: Hairline Engraving", "Vibe: Classical Seal"],
+        renderHighlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.92);
+          ctx.font = `800 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          const h = gem.isWhite ? 210 : gem.h;
+          ctx.fillStyle = `hsla(${h}, 60%, 85%, 0.70)`;
+          ctx.fillText(num, x, y + 1.8);
+
+          ctx.fillStyle = `hsla(${h}, 85%, 10%, 0.95)`;
+          ctx.fillText(num, x, y);
+        },
+        renderLowlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.86);
+          ctx.font = `600 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          const h = gem.isWhite ? 210 : gem.h;
+          ctx.fillStyle = `hsla(${h}, 40%, 75%, 0.20)`;
+          ctx.fillText(num, x, y + 1);
+
+          ctx.fillStyle = `hsla(${h}, 50%, 15%, 0.50)`;
+          ctx.fillText(num, x, y);
+        }
+      },
+      {
+        id: 10,
+        title: "Split-Complementary Accent (Triadic Chord)",
+        desc: "Highlight: +30° hue fill with -30° hue outer glow (e.g. emerald body with lime core & cyan glow). Lowlight: muted triadic blend.",
+        specs: ["Highlight: Dual Split Hue (+/-30°)", "Lowlight: Triadic Wash (50%)", "Vibe: Prismatic Crystal"],
+        renderHighlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.95);
+          ctx.font = `800 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          const hFill = (gem.h + 30) % 360;
+          const hGlow = (gem.h - 30 + 360) % 360;
+
+          ctx.save();
+          ctx.strokeStyle = `hsla(${hGlow}, 90%, 12%, 0.95)`;
+          ctx.lineWidth = Math.max(3.5, fs * 0.14);
+          ctx.strokeText(num, x, y);
+          ctx.restore();
+
+          ctx.save();
+          ctx.shadowColor = `hsla(${hGlow}, 90%, 55%, 0.85)`;
+          ctx.shadowBlur = 8;
+          ctx.fillStyle = `hsla(${hFill}, 85%, 88%, 1)`;
+          ctx.fillText(num, x, y);
+          ctx.restore();
+        },
+        renderLowlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.88);
+          ctx.font = `600 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          const hFill = (gem.h + 30) % 360;
+          ctx.save();
+          ctx.shadowColor = 'rgba(0,0,0,0.7)';
+          ctx.shadowBlur = 2;
+          ctx.fillStyle = `hsla(${hFill}, 35%, 65%, 0.50)`;
+          ctx.fillText(num, x, y);
+          ctx.restore();
+        }
+      },
+      {
+        id: 11,
+        title: "Duotone Bevel (Light & Dark Tonal Relief)",
+        desc: "Highlight: top-left bevel in high-light tint (L: 95%), bottom-right in deep shade (L: 15%), face in rich midtone. Lowlight: muted soft relief.",
+        specs: ["Highlight: Dual Light/Dark Facets", "Lowlight: Muted Soft Relief", "Vibe: 3D Faceted Jewel"],
+        renderHighlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.94);
+          ctx.font = `900 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          const h = gem.isWhite ? 45 : gem.h;
+          ctx.fillStyle = `hsla(${h}, 90%, 15%, 0.9)`;
+          ctx.fillText(num, x + 1.8, y + 1.8);
+
+          ctx.fillStyle = `hsla(${h}, 60%, 95%, 0.9)`;
+          ctx.fillText(num, x - 1.2, y - 1.2);
+
+          ctx.fillStyle = `hsla(${h}, 80%, 65%, 1)`;
+          ctx.fillText(num, x, y);
+        },
+        renderLowlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.86);
+          ctx.font = `600 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          const h = gem.isWhite ? 45 : gem.h;
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.20)';
+          ctx.fillText(num, x - 1, y - 1);
+
+          ctx.fillStyle = `hsla(${h}, 40%, 45%, 0.45)`;
+          ctx.fillText(num, x, y);
+        }
+      },
+      {
+        id: 12,
+        title: "Frosted Opal Tone-on-Tone",
+        desc: "Highlight: 85% translucent frosted tint floating naturally inside the gem dome. Lowlight: 35% frosted ambient wash.",
+        specs: ["Highlight: 85% Frosted Tone", "Lowlight: 35% Ambient Wash", "Vibe: Seamless Silk-Screen"],
+        renderHighlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.92);
+          ctx.font = `700 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          const h = gem.isWhite ? 210 : gem.h;
+          ctx.save();
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
+          ctx.shadowBlur = 4;
+          ctx.shadowOffsetY = 1.5;
+          ctx.fillStyle = `hsla(${h}, 35%, 88%, 0.85)`;
+          ctx.fillText(num, x, y);
+          ctx.restore();
+        },
+        renderLowlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.84);
+          ctx.font = `500 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          const h = gem.isWhite ? 210 : gem.h;
+          ctx.save();
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+          ctx.shadowBlur = 2;
+          ctx.fillStyle = `hsla(${h}, 20%, 65%, 0.35)`;
+          ctx.fillText(num, x, y);
+          ctx.restore();
+        }
+      },
+      {
+        id: 13,
+        title: "High-Key Cyber Luma (Pastel Neon)",
+        desc: "Highlight: high-key pastel core (L: 95%) with intense 100% saturated color-glow outline. Lowlight: dormant readout at 45%.",
+        specs: ["Highlight: Pastel (L: 95%) + Neon Rim", "Lowlight: Dormant Readout (45%)", "Vibe: Futuristic Luminescence"],
+        renderHighlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.94);
+          ctx.font = `800 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          const h = gem.isWhite ? 200 : gem.h;
+          ctx.strokeStyle = `hsla(${h}, 95%, 8%, 0.95)`;
+          ctx.lineWidth = Math.max(3.8, fs * 0.14);
+          ctx.strokeText(num, x, y);
+
+          ctx.save();
+          ctx.shadowColor = `hsla(${h}, 100%, 55%, 0.9)`;
+          ctx.shadowBlur = 10;
+          ctx.fillStyle = `hsla(${h}, 80%, 95%, 1)`;
+          ctx.fillText(num, x, y);
+          ctx.restore();
+        },
+        renderLowlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.88);
+          ctx.font = `600 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          const h = gem.isWhite ? 200 : gem.h;
+          ctx.save();
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+          ctx.shadowBlur = 2;
+          ctx.fillStyle = `hsla(${h}, 45%, 65%, 0.45)`;
+          ctx.fillText(num, x, y);
+          ctx.restore();
+        }
+      },
+      {
+        id: 14,
+        title: "Warm Ambient Shift (Sunlit Gemstone)",
+        desc: "Highlight: bubble hue shifted 35% towards warm sunlight yellow (45°). Lowlight: warm golden-amber trace at 50% opacity.",
+        specs: ["Highlight: 35% Sunlight Amber Shift", "Lowlight: Warm Amber Wash (50%)", "Vibe: Sunlit Translucence"],
+        renderHighlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.95);
+          ctx.font = `800 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          const baseH = gem.isWhite ? 45 : gem.h;
+          const h = (baseH * 0.65 + 45 * 0.35) % 360;
+
+          ctx.save();
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+          ctx.shadowBlur = 6;
+          ctx.strokeStyle = `hsla(${h}, 90%, 12%, 0.95)`;
+          ctx.lineWidth = Math.max(3.2, fs * 0.12);
+          ctx.strokeText(num, x, y);
+          ctx.restore();
+
+          ctx.save();
+          ctx.shadowColor = 'rgba(251, 191, 36, 0.55)';
+          ctx.shadowBlur = 8;
+          ctx.fillStyle = `hsla(${h}, 85%, 88%, 1)`;
+          ctx.fillText(num, x, y);
+          ctx.restore();
+        },
+        renderLowlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.88);
+          ctx.font = `600 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          const baseH = gem.isWhite ? 45 : gem.h;
+          const h = (baseH * 0.65 + 45 * 0.35) % 360;
+          ctx.save();
+          ctx.shadowColor = 'rgba(0,0,0,0.8)';
+          ctx.shadowBlur = 2;
+          ctx.fillStyle = `hsla(${h}, 45%, 65%, 0.50)`;
+          ctx.fillText(num, x, y);
+          ctx.restore();
+        }
+      },
+      {
+        id: 15,
+        title: "Velvet Duochrome Rim (Dark Core + Neon Shell)",
+        desc: "Highlight: velvet obsidian core (#0B0F17) enclosed in a thick, ultra-vibrant gem-hued colored neon border. Lowlight: dark slate core with muted colored rim.",
+        specs: ["Highlight: Dark Core + Neon Shell", "Lowlight: Slate Core + Muted Rim", "Vibe: Negative Space Neon"],
+        renderHighlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.95);
+          ctx.font = `900 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          const h = gem.isWhite ? 200 : gem.h;
+          ctx.save();
+          ctx.strokeStyle = `hsla(${h}, 95%, 65%, 1)`;
+          ctx.lineWidth = Math.max(3.8, fs * 0.14);
+          ctx.shadowColor = gem.glow;
+          ctx.shadowBlur = 10;
+          ctx.strokeText(num, x, y);
+          ctx.restore();
+
+          ctx.fillStyle = '#0b0f17';
+          ctx.fillText(num, x, y);
+        },
+        renderLowlight: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.88);
+          ctx.font = `700 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          const h = gem.isWhite ? 200 : gem.h;
+          ctx.strokeStyle = `hsla(${h}, 40%, 65%, 0.40)`;
+          ctx.lineWidth = 2;
+          ctx.strokeText(num, x, y);
+
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.65)';
+          ctx.fillText(num, x, y);
+        }
+      }
+    ];
+
+    // ==========================================
+    // SET 2: THEMED & MATERIAL STYLES (15)
+    // White, Gold, Chrome, Glass, Debossed, etc.
+    // ==========================================
+    const themedStyles = [
       {
         id: 1,
         title: "Pure Porcelain White",
@@ -700,7 +1326,7 @@
       {
         id: 14,
         title: "Ice Cyan Sci-Fi",
-        desc: "Highlight: electric ice-cyan (#E0F2FE) with #38BDF8 plasma rim. Lowlight: dormant ice-grey (#7DD3FC at 45%) readout.",
+        desc: "Highlight: electric ice-cyan (#E0F2FE) with #38BDF8 plasma rim. Lowlight: dormant HUD cyan-grey (#7DD3FC at 45%) readout.",
         specs: ["Highlight: Ice Cyan + Plasma Rim", "Lowlight: Dormant Cyan (#7DD3FC at 45%)", "Vibe: Sci-Fi / Cyber"],
         renderHighlight: (ctx, x, y, r, num, gem) => {
           const fs = Math.round(r * 0.94);
@@ -768,108 +1394,120 @@
     ];
 
     const container = document.getElementById('mockupGrid');
+    const tabTonal = document.getElementById('tabTonal');
+    const tabThemed = document.getElementById('tabThemed');
 
-    const sampleGems = [
-      { color: 'green', num: '140', name: 'Emerald' },
-      { color: 'amber', num: '98', name: 'Amber' },
-      { color: 'blue', num: '162', name: 'Sapphire' },
-      { color: 'red', num: '85', name: 'Ruby' },
-      { color: 'white', num: '196', name: 'Diamond' }
-    ];
-
-    styles.forEach(style => {
-      const card = document.createElement('div');
-      card.className = 'card';
-
-      card.innerHTML = `
-        <div class="card-top">
-          <span class="card-id">STYLE ${style.id}</span>
-          <h2 class="card-title">${style.title}</h2>
-        </div>
-        <p class="card-desc">${style.desc}</p>
-        
-        <div class="comparison-section">
-          <!-- Row 1: Highlight / Active State -->
-          <div class="state-row">
-            <div class="state-label-bar">
-              <span class="state-badge active">● ACTIVE / IN-PLAY (HIGHLIGHT)</span>
-              <span class="state-desc">Unfinished, high focus</span>
-            </div>
-            <div class="preview-canvas-wrap">
-              <canvas id="canvas_hl_${style.id}" width="380" height="68"></canvas>
-            </div>
-          </div>
-
-          <!-- Row 2: Lowlight / Goal Reached State -->
-          <div class="state-row">
-            <div class="state-label-bar">
-              <span class="state-badge completed">✓ GOAL REACHED (LOWLIGHT)</span>
-              <span class="state-desc">Finished, calm & frosted</span>
-            </div>
-            <div class="preview-canvas-wrap">
-              <canvas id="canvas_ll_${style.id}" width="380" height="68"></canvas>
-            </div>
-          </div>
-        </div>
-
-        <div class="specs">
-          ${style.specs.map(s => `<span class="spec-pill">${s}</span>`).join('')}
-        </div>
-      `;
-
-      container.appendChild(card);
-
+    function renderCollection(stylesList, prefix) {
+      container.innerHTML = '';
       const dpr = window.devicePixelRatio || 1;
       const bubbleR = 26;
       const spacing = 72;
       const startX = 46;
       const centerY = 34;
 
-      // 1. Render Highlight Canvas
-      const canvasHl = card.querySelector(`#canvas_hl_${style.id}`);
-      const ctxHl = canvasHl.getContext('2d');
-      canvasHl.width = 380 * dpr;
-      canvasHl.height = 68 * dpr;
-      canvasHl.style.width = '380px';
-      canvasHl.style.height = '68px';
-      ctxHl.scale(dpr, dpr);
+      stylesList.forEach(style => {
+        const card = document.createElement('div');
+        card.className = 'card';
 
-      sampleGems.forEach((gem, idx) => {
-        const bx = startX + idx * spacing;
-        const by = centerY;
+        card.innerHTML = `
+          <div class="card-top">
+            <span class="card-id">STYLE ${style.id}</span>
+            <h2 class="card-title">${style.title}</h2>
+          </div>
+          <p class="card-desc">${style.desc}</p>
+          
+          <div class="comparison-section">
+            <!-- Row 1: Highlight / Active State -->
+            <div class="state-row">
+              <div class="state-label-bar">
+                <span class="state-badge active">● ACTIVE / IN-PLAY (HIGHLIGHT)</span>
+                <span class="state-desc">Unfinished, high focus</span>
+              </div>
+              <div class="preview-canvas-wrap">
+                <canvas id="canvas_hl_${prefix}_${style.id}" width="380" height="68"></canvas>
+              </div>
+            </div>
 
-        ctxHl.save();
-        renderer.renderStandaloneBubble(ctxHl, bx, by, bubbleR, gem.color, false);
-        ctxHl.restore();
+            <!-- Row 2: Lowlight / Goal Reached State -->
+            <div class="state-row">
+              <div class="state-label-bar">
+                <span class="state-badge completed">✓ GOAL REACHED (LOWLIGHT)</span>
+                <span class="state-desc">Finished, calm & frosted</span>
+              </div>
+              <div class="preview-canvas-wrap">
+                <canvas id="canvas_ll_${prefix}_${style.id}" width="380" height="68"></canvas>
+              </div>
+            </div>
+          </div>
 
-        ctxHl.save();
-        const gemInfo = renderer.getGemColorInfo(gem.color);
-        style.renderHighlight(ctxHl, bx, by, bubbleR, gem.num, gemInfo);
-        ctxHl.restore();
+          <div class="specs">
+            ${style.specs.map(s => `<span class="spec-pill">${s}</span>`).join('')}
+          </div>
+        `;
+
+        container.appendChild(card);
+
+        // 1. Render Highlight Canvas
+        const canvasHl = card.querySelector(`#canvas_hl_${prefix}_${style.id}`);
+        const ctxHl = canvasHl.getContext('2d');
+        canvasHl.width = 380 * dpr;
+        canvasHl.height = 68 * dpr;
+        canvasHl.style.width = '380px';
+        canvasHl.style.height = '68px';
+        ctxHl.scale(dpr, dpr);
+
+        sampleGems.forEach((gem, idx) => {
+          const bx = startX + idx * spacing;
+          const by = centerY;
+
+          ctxHl.save();
+          renderer.renderStandaloneBubble(ctxHl, bx, by, bubbleR, gem.color, false);
+          ctxHl.restore();
+
+          ctxHl.save();
+          const gemInfo = renderer.getGemColorInfo(gem.color);
+          style.renderHighlight(ctxHl, bx, by, bubbleR, gem.num, gemInfo);
+          ctxHl.restore();
+        });
+
+        // 2. Render Lowlight Canvas
+        const canvasLl = card.querySelector(`#canvas_ll_${prefix}_${style.id}`);
+        const ctxLl = canvasLl.getContext('2d');
+        canvasLl.width = 380 * dpr;
+        canvasLl.height = 68 * dpr;
+        canvasLl.style.width = '380px';
+        canvasLl.style.height = '68px';
+        ctxLl.scale(dpr, dpr);
+
+        sampleGems.forEach((gem, idx) => {
+          const bx = startX + idx * spacing;
+          const by = centerY;
+
+          ctxLl.save();
+          renderer.renderStandaloneBubble(ctxLl, bx, by, bubbleR, gem.color, true);
+          ctxLl.restore();
+
+          ctxLl.save();
+          const gemInfo = renderer.getGemColorInfo(gem.color);
+          style.renderLowlight(ctxLl, bx, by, bubbleR, gem.num, gemInfo);
+          ctxLl.restore();
+        });
       });
+    }
 
-      // 2. Render Lowlight Canvas
-      const canvasLl = card.querySelector(`#canvas_ll_${style.id}`);
-      const ctxLl = canvasLl.getContext('2d');
-      canvasLl.width = 380 * dpr;
-      canvasLl.height = 68 * dpr;
-      canvasLl.style.width = '380px';
-      canvasLl.style.height = '68px';
-      ctxLl.scale(dpr, dpr);
+    // Default to Tonal Variations
+    renderCollection(tonalStyles, 'tonal');
 
-      sampleGems.forEach((gem, idx) => {
-        const bx = startX + idx * spacing;
-        const by = centerY;
+    tabTonal.addEventListener('click', () => {
+      tabTonal.classList.add('active');
+      tabThemed.classList.remove('active');
+      renderCollection(tonalStyles, 'tonal');
+    });
 
-        ctxLl.save();
-        renderer.renderStandaloneBubble(ctxLl, bx, by, bubbleR, gem.color, true);
-        ctxLl.restore();
-
-        ctxLl.save();
-        const gemInfo = renderer.getGemColorInfo(gem.color);
-        style.renderLowlight(ctxLl, bx, by, bubbleR, gem.num, gemInfo);
-        ctxLl.restore();
-      });
+    tabThemed.addEventListener('click', () => {
+      tabThemed.classList.add('active');
+      tabTonal.classList.remove('active');
+      renderCollection(themedStyles, 'themed');
     });
   </script>
 </body>
