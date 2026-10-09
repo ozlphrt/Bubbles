@@ -147,12 +147,12 @@ html, body {
   transition: transform 0.15s ease-out, filter 0.15s ease-out;
 }
 
-/* Top Right Controls (Settings Button) */
+/* Top Right Controls (Settings Button - Hidden) */
 .top-controls-container {
+  display: none !important;
   position: absolute;
   top: 22px;
   right: 26px;
-  display: flex;
   align-items: center;
   gap: 10px;
   z-index: 20;
