@@ -54,8 +54,7 @@ html, body {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  border-bottom-left-radius: 40px;
-  border-bottom-right-radius: 40px;
+  border-radius: 40px;
 }
 
 #simCanvas {
@@ -67,8 +66,7 @@ html, body {
   z-index: 1;
   touch-action: none;
   cursor: crosshair;
-  border-bottom-left-radius: 40px;
-  border-bottom-right-radius: 40px;
+  border-radius: 40px;
 }
 
 /* Compact Top Header HUD (Level, Goal, Time) */

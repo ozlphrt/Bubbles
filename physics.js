@@ -225,6 +225,16 @@ export class Bubble {
       this.vx = -Math.abs(this.vx) * 0.50;
     }
 
+    // Top container ceiling boundary
+    if (this.y - this.radius < 0) {
+      this.y = this.radius;
+      if (this.vy < -0.30) {
+        this.vy = -this.vy * 0.30;
+      } else {
+        this.vy = 0;
+      }
+    }
+
     // Bottom container boundary (Stable, firm resting contact on floor without micro-jitter)
     if (this.y + this.radius >= height) {
       this.y = height - this.radius;
@@ -239,8 +249,9 @@ export class Bubble {
       if (Math.abs(this.vx) < 0.04) this.vx = 0;
     }
 
-    // Rounded bottom corners containment (radius = 40px)
+    // Rounded corners containment (radius = 40px)
     const cornerR = 40;
+    // Bottom corners
     if (this.y > height - cornerR) {
       if (this.x < cornerR) {
         const cx = cornerR;
@@ -274,6 +285,46 @@ export class Bubble {
           this.y = cy + ny * maxAllowed;
           const vDot = this.vx * nx + this.vy * ny;
           if (vDot > 0) {
+            this.vx -= (1 + (this.elasticity || 0.72)) * vDot * nx * 0.7;
+            this.vy -= (1 + (this.elasticity || 0.72)) * vDot * ny * 0.7;
+          }
+        }
+      }
+    }
+    // Top corners
+    if (this.y < cornerR) {
+      if (this.x < cornerR) {
+        const cx = cornerR;
+        const cy = cornerR;
+        const dx = this.x - cx;
+        const dy = this.y - cy;
+        const dist = Math.hypot(dx, dy);
+        const maxAllowed = Math.max(2, cornerR - this.radius);
+        if (dist > maxAllowed && dist > 0.001) {
+          const nx = dx / dist;
+          const ny = dy / dist;
+          this.x = cx + nx * maxAllowed;
+          this.y = cy + ny * maxAllowed;
+          const vDot = this.vx * nx + this.vy * ny;
+          if (vDot < 0) {
+            this.vx -= (1 + (this.elasticity || 0.72)) * vDot * nx * 0.7;
+            this.vy -= (1 + (this.elasticity || 0.72)) * vDot * ny * 0.7;
+          }
+        }
+      } else if (this.x > width - cornerR) {
+        const cx = width - cornerR;
+        const cy = cornerR;
+        const dx = this.x - cx;
+        const dy = this.y - cy;
+        const dist = Math.hypot(dx, dy);
+        const maxAllowed = Math.max(2, cornerR - this.radius);
+        if (dist > maxAllowed && dist > 0.001) {
+          const nx = dx / dist;
+          const ny = dy / dist;
+          this.x = cx + nx * maxAllowed;
+          this.y = cy + ny * maxAllowed;
+          const vDot = this.vx * nx + this.vy * ny;
+          if (vDot < 0) {
             this.vx -= (1 + (this.elasticity || 0.72)) * vDot * nx * 0.7;
             this.vy -= (1 + (this.elasticity || 0.72)) * vDot * ny * 0.7;
           }
