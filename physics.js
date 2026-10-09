@@ -205,7 +205,7 @@ export class Bubble {
     // Soft fluid wobble decay (resting bubbles settle completely without jitter)
     const naturalFreq = Math.max(0.08, 0.26 - (this.radius * 0.0012));
     this.wobblePhase += naturalFreq;
-    this.wobble *= 0.92;
+    this.wobble *= 0.88;
     if (this.wobble < 0.004) {
       this.wobble = 0;
     }
@@ -213,13 +213,13 @@ export class Bubble {
     // Boundary constraints (Soft, springy boundary cushion)
     if (this.x - this.radius < 0) {
       this.x = this.radius;
-      if (this.vx < -0.30) {
+      if (this.vx < -0.35) {
         this.exciteWobble(0.25 * this.flexibility, 0);
       }
       this.vx = Math.abs(this.vx) * 0.50;
     } else if (this.x + this.radius > width) {
       this.x = width - this.radius;
-      if (this.vx > 0.30) {
+      if (this.vx > 0.35) {
         this.exciteWobble(0.25 * this.flexibility, Math.PI);
       }
       this.vx = -Math.abs(this.vx) * 0.50;
@@ -229,8 +229,7 @@ export class Bubble {
     if (this.y + this.radius >= height) {
       this.y = height - this.radius;
       
-      if (this.vy > 0.35) {
-        this.exciteWobble(Math.min(0.35, this.vy * 0.16 * this.flexibility), Math.PI / 2);
+      if (this.vy > 0.50) {
         this.vy = -this.vy * (config.elasticity || 0.7) * 0.30;
       } else {
         this.vy = 0;
@@ -238,7 +237,6 @@ export class Bubble {
 
       this.vx *= 0.85; // Natural floor friction
       if (Math.abs(this.vx) < 0.04) this.vx = 0;
-      if (Math.abs(this.vy) < 0.04) this.vy = 0;
     }
 
     // Rounded bottom corners containment (radius = 40px)
@@ -257,12 +255,9 @@ export class Bubble {
           this.x = cx + nx * maxAllowed;
           this.y = cy + ny * maxAllowed;
           const vDot = this.vx * nx + this.vy * ny;
-          if (vDot > 0.45) {
+          if (vDot > 0) {
             this.vx -= (1 + (this.elasticity || 0.72)) * vDot * nx * 0.7;
             this.vy -= (1 + (this.elasticity || 0.72)) * vDot * ny * 0.7;
-          } else if (vDot > 0) {
-            this.vx -= vDot * nx;
-            this.vy -= vDot * ny;
           }
         }
       } else if (this.x > width - cornerR) {
@@ -278,12 +273,9 @@ export class Bubble {
           this.x = cx + nx * maxAllowed;
           this.y = cy + ny * maxAllowed;
           const vDot = this.vx * nx + this.vy * ny;
-          if (vDot > 0.45) {
+          if (vDot > 0) {
             this.vx -= (1 + (this.elasticity || 0.72)) * vDot * nx * 0.7;
             this.vy -= (1 + (this.elasticity || 0.72)) * vDot * ny * 0.7;
-          } else if (vDot > 0) {
-            this.vx -= vDot * nx;
-            this.vy -= vDot * ny;
           }
         }
       }
@@ -657,35 +649,45 @@ export class PhysicsEngine {
 
         if (distSq < minDist * minDist) {
           const dist = Math.max(0.001, Math.sqrt(distSq));
-          const nx = dist > 0.001 ? dx / dist : 0;
-          const ny = dist > 0.001 ? dy / dist : -1;
+          const nx = dist > 0.001 ? dx / dist : (Math.random() - 0.5);
+          const ny = dist > 0.001 ? dy / dist : (Math.random() - 0.5);
           const overlap = minDist - dist;
 
-          if (overlap > 0.001) {
-            // Directional support from bottom to top:
-            // ny points from b1 to b2 (dy = b2.y - b1.y).
-            // If ny < -0.20, b2 is ABOVE b1 in the stack.
-            let w1 = b2.mass / (b1.mass + b2.mass);
-            let w2 = 1.0 - w1;
-            w1 = Math.max(0.20, Math.min(0.80, w1));
-            w2 = 1.0 - w1;
+          const totalMass = b1.mass + b2.mass;
+          // Clamp mass displacement ratio so massive bubbles cannot unyieldingly crush tiny bubbles into walls
+          const rawRatio1 = b2.mass / totalMass;
+          const ratio1 = Math.max(0.20, Math.min(0.80, rawRatio1));
+          const ratio2 = 1.0 - ratio1;
 
-            if (ny < -0.20) {
-              // Upper bubble b2 absorbs displacement upward into free air
-              w1 = 0.12;
-              w2 = 0.88;
-            } else if (ny > 0.20) {
-              // Upper bubble b1 absorbs displacement upward into free air
-              w1 = 0.88;
-              w2 = 0.12;
+          // Firm non-penetration position correction (bubbles cannot overlap)
+          b1.x -= nx * overlap * ratio1 * 0.90;
+          b1.y -= ny * overlap * ratio1 * 0.90;
+          b2.x += nx * overlap * ratio2 * 0.90;
+          b2.y += ny * overlap * ratio2 * 0.90;
+
+          // Archimedes density buoyancy stratification: lighter bubbles float upward, denser bubbles sink
+          const dDiff = (b2.density || 1.0) - (b1.density || 1.0);
+          if (Math.abs(dDiff) > 0.25) {
+            const verticalAlignment = Math.abs(ny);
+            if (verticalAlignment > 0.35 && dDiff * ny < 0) {
+              // Heavier bubble is higher up: facilitate natural buoyant fluid swap
+              const lift = Math.min(0.38, Math.abs(dDiff) * 0.09 * verticalAlignment);
+              const dir = dDiff > 0 ? 1 : -1;
+              b1.y -= lift * dir;
+              b2.y += lift * dir;
             }
-
-            const sep = overlap * 0.85;
-            b1.x -= nx * sep * w1;
-            b1.y -= ny * sep * w1;
-            b2.x += nx * sep * w2;
-            b2.y += ny * sep * w2;
           }
+        } else if (distSq < minDist * 1.08 * (minDist * 1.08)) {
+          // Capillary Meniscus Cohesion (Cheerios effect): Surface tension draws adjacent bubbles into snug contact
+          const dist = Math.max(0.001, Math.sqrt(distSq));
+          const nx = dx / dist;
+          const ny = dy / dist;
+          const gap = dist - minDist;
+          const cohesion = 0.28 * (1.0 - gap / (minDist * 0.08));
+          b1.x += nx * cohesion * 0.5;
+          b1.y += ny * cohesion * 0.5;
+          b2.x -= nx * cohesion * 0.5;
+          b2.y -= ny * cohesion * 0.5;
         }
       }
 
@@ -700,15 +702,14 @@ export class PhysicsEngine {
       
       if (b1.y + b1.radius >= height) {
         b1.y = height - b1.radius;
-        if (b1.vy > 0.5) {
-          b1.vy = -b1.vy * (b1.elasticity || 0.72) * 0.25;
+        if (b1.vy > 0.8) {
+          b1.vy = -b1.vy * (b1.elasticity || 0.72) * 0.35;
           b1.exciteWobble(0.20 * b1.flexibility, Math.PI / 2);
         } else {
           b1.vy = 0;
         }
         b1.vx *= Math.max(0.70, 1 - (b1.friction || 0.016) * 8);
         if (Math.abs(b1.vx) < 0.04) b1.vx = 0;
-        if (Math.abs(b1.vy) < 0.04) b1.vy = 0;
       }
 
       // Rounded bottom corners containment (radius = 40px)
@@ -729,12 +730,9 @@ export class PhysicsEngine {
               b1.x = cx + nx * maxAllowed;
               b1.y = cy + ny * maxAllowed;
               const vDot = b1.vx * nx + b1.vy * ny;
-              if (vDot > 0.45) {
+              if (vDot > 0) {
                 b1.vx -= (1 + (b1.elasticity || 0.72)) * vDot * nx * 0.7;
                 b1.vy -= (1 + (b1.elasticity || 0.72)) * vDot * ny * 0.7;
-              } else if (vDot > 0) {
-                b1.vx -= vDot * nx;
-                b1.vy -= vDot * ny;
               }
             } else if (maxAllowed <= 0) {
               // Bubble is larger than corner radius: keep its center within safe boundaries
@@ -757,12 +755,9 @@ export class PhysicsEngine {
               b1.x = cx + nx * maxAllowed;
               b1.y = cy + ny * maxAllowed;
               const vDot = b1.vx * nx + b1.vy * ny;
-              if (vDot > 0.45) {
+              if (vDot > 0) {
                 b1.vx -= (1 + (b1.elasticity || 0.72)) * vDot * nx * 0.7;
                 b1.vy -= (1 + (b1.elasticity || 0.72)) * vDot * ny * 0.7;
-              } else if (vDot > 0) {
-                b1.vx -= vDot * nx;
-                b1.vy -= vDot * ny;
               }
             } else if (maxAllowed <= 0) {
               b1.x = Math.min(width - b1.radius, b1.x);
@@ -950,10 +945,17 @@ export class PhysicsEngine {
                 const distRatio = Math.max(0, 1 - kDist / maxRange);
                 const pushStrength = Math.pow(distRatio, 1.2) * (1.2 + (newRadius / 45) * 0.9);
 
-                // Soft outward fluid impulse scaled by mass (no direct position displacement or scale shock)
+                // Soft outward impulse scaled by mass
                 const massFactor = 1.0 / Math.sqrt(Math.max(0.25, nb.mass));
-                nb.vx += unx * pushStrength * 0.35 * massFactor;
-                nb.vy += uny * pushStrength * 0.35 * massFactor;
+                nb.vx += unx * pushStrength * 0.65 * massFactor;
+                nb.vy += uny * pushStrength * 0.65 * massFactor;
+
+                // Subtle physical displacement
+                nb.x += unx * pushStrength * 0.6;
+                nb.y += uny * pushStrength * 0.6;
+
+                // Elastic recoil shake pulse on neighbor
+                nb.scalePulse = Math.max(nb.scalePulse || 1.0, 1.0 + distRatio * 0.14);
               }
             }
 
@@ -974,12 +976,10 @@ export class PhysicsEngine {
           } else {
             // === CALM BOUNCE & PLATEAU FOAM STABILITY ===
             const overlap = Math.max(0, minDist - dist);
-            const approachSpeed = -velAlongNormal;
 
-            if (approachSpeed > 0.55) {
-              // Dynamic impact: elastic bounce with compliant bubble elasticity
+            if (velAlongNormal < -0.1) {
               const combinedElasticity = ((b1.elasticity || this.config.elasticity) + (b2.elasticity || this.config.elasticity)) * 0.5;
-              const impulse = (1 + combinedElasticity) * approachSpeed / (1 / b1.mass + 1 / b2.mass);
+              const impulse = -(1 + combinedElasticity) * velAlongNormal / (1 / b1.mass + 1 / b2.mass);
               
               b1.vx -= (impulse / b1.mass) * nx;
               b1.vy -= (impulse / b1.mass) * ny;
@@ -993,34 +993,23 @@ export class PhysicsEngine {
               b2.contactAngle = bounceAngle + Math.PI;
               b2.contactSquish = Math.min(0.25, (overlap / b2.radius) * 0.3 * b2.flexibility);
 
-              if (approachSpeed > 0.30) {
-                const squish1 = Math.min(0.35, approachSpeed * 0.16 * (b1.elasticity || 0.72)) * b1.flexibility;
-                const squish2 = Math.min(0.35, approachSpeed * 0.16 * (b2.elasticity || 0.72)) * b2.flexibility;
+              if (velAlongNormal < -0.45) {
+                const squish1 = Math.min(0.4, Math.abs(velAlongNormal) * 0.15 * (b1.elasticity || 0.72)) * b1.flexibility;
+                const squish2 = Math.min(0.4, Math.abs(velAlongNormal) * 0.15 * (b2.elasticity || 0.72)) * b2.flexibility;
                 b1.exciteWobble(squish1, bounceAngle);
                 b2.exciteWobble(squish2, bounceAngle + Math.PI);
               }
 
-              if (soundEngine && approachSpeed > 0.6) {
-                soundEngine.playBounce(Math.min(1.0, approachSpeed / 3.0), smaller.radius);
+              if (soundEngine && Math.abs(velAlongNormal) > 0.4) {
+                soundEngine.playBounce(Math.min(1.0, Math.abs(velAlongNormal) / 3.0), smaller.radius);
               }
-            } else if (approachSpeed > 0) {
-              // Resting contact under compression: completely inelastic along contact normal (e = 0)
-              // Quench normal approach velocity to stabilize stacks, while preserving 100% of tangential
-              // velocity for silky, oily, effortless fluid sliding!
-              const restingImpulse = approachSpeed / (1 / b1.mass + 1 / b2.mass);
-              b1.vx -= (restingImpulse / b1.mass) * nx;
-              b1.vy -= (restingImpulse / b1.mass) * ny;
-              b2.vx += (restingImpulse / b2.mass) * nx;
-              b2.vy += (restingImpulse / b2.mass) * ny;
-
-              if (Math.abs(b1.vx) < 0.02 && Math.abs(b1.vy) < 0.02) {
-                b1.vx = 0;
-                b1.vy = 0;
-              }
-              if (Math.abs(b2.vx) < 0.02 && Math.abs(b2.vy) < 0.02) {
-                b2.vx = 0;
-                b2.vy = 0;
-              }
+            } else {
+              // Gentle resting contact damping modulated by surface friction
+              const frictionDamping = 1 - Math.min(0.12, ((b1.friction || 0.016) + (b2.friction || 0.016)) * 2);
+              b1.vx *= frictionDamping;
+              b1.vy *= frictionDamping;
+              b2.vx *= frictionDamping;
+              b2.vy *= frictionDamping;
             }
           }
         }

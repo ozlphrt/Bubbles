@@ -435,37 +435,8 @@ export class Renderer {
    * Renders single bubble with Plateau contact flattening and interstitial gap-closing deformation
    */
   renderBubble(ctx, b, allBubbles, height, width, targetDiameter = 0) {
-    // Smooth, lag-free render follower:
-    // When the bubble is in motion (sliding, rolling, falling, speed > 0.08):
-    // Render directly at physical coordinates — 0 drag, 0 friction, 0 deadband stutter.
-    // When the bubble has physically settled (speed <= 0.08):
-    // Lock render position motionless so resting stacks never jitter.
-    const speed = Math.hypot(b.vx, b.vy);
-
-    if (b.renderX === undefined || isNaN(b.renderX) || speed > 0.08) {
-      b.renderX = b.x;
-      b.renderY = b.y;
-      b.isStationary = false;
-    } else {
-      const dX = b.x - b.renderX;
-      const dY = b.y - b.renderY;
-      const dDist = Math.hypot(dX, dY);
-
-      if (dDist < 0.25) {
-        // Firm resting lock: completely motionless
-        b.isStationary = true;
-      } else {
-        b.renderX += dX * 0.35;
-        b.renderY += dY * 0.35;
-        b.isStationary = false;
-      }
-    }
-
-    const curX = b.renderX;
-    const curY = b.renderY;
-
     ctx.save();
-    ctx.translate(curX, curY);
+    ctx.translate(b.x, b.y);
 
     const radius = Math.max(3, b.radius * (b.scalePulse || 1.0));
     const currentDiameter = Math.round(Math.max(b.radius, radius) * 2);
@@ -477,30 +448,24 @@ export class Renderer {
     for (let j = 0; j < len; j++) {
       const nb = allBubbles[j];
       if (nb === b) continue;
-      const nbX = nb.renderX !== undefined ? nb.renderX : nb.x;
-      const nbY = nb.renderY !== undefined ? nb.renderY : nb.y;
-      const dx = nbX - curX;
-      const dy = nbY - curY;
+      const dx = nb.x - b.x;
+      const dy = nb.y - b.y;
       const distSq = dx * dx + dy * dy;
       const nbRadius = Math.max(3, nb.radius * (nb.scalePulse || 1.0));
       const sumR = radius + nbRadius;
-      const overlap = sumR - Math.sqrt(distSq);
-
-      // Only form contact facets when bubbles are actually pressing together
-      if (overlap > 0.02 && distSq > 0.001) {
+      // Only form contact facets when bubbles are actually in contact / pressing together
+      if (distSq < sumR * sumR && distSq > 0.001) {
         const dist = Math.sqrt(distSq);
         const angle = Math.atan2(dy, dx);
-        const rawChordDist = (dist * dist + radius * radius - nbRadius * nbRadius) / (2 * dist);
-        // Subtle contact flattening: soft inward compliance (max 1.2px) so shared contact boundary is slightly flat
-        const compliance = ((b.flexibility || 0.7) + (nb.flexibility || 0.7)) * 0.5;
-        const contactIndent = Math.min(1.2, (overlap * 0.4 + 0.3) * compliance);
-        const chordDist = Math.max(radius * 0.85, Math.min(radius, rawChordDist - contactIndent));
+        // Radical axis interface: exact geometric plane of contact between two spheres.
+        // d1 = (D^2 + R1^2 - R2^2) / (2D), d2 = (D^2 + R2^2 - R1^2) / (2D)
+        // d1 + d2 = D identically, guaranteeing mathematically 0.000px overlap regardless of compression depth.
+        const chordDist = (dist * dist + radius * radius - nbRadius * nbRadius) / (2 * dist);
         interactingNeighbors.push({
-          neighbor: nb,
           angle,
           dist,
-          chordDist,
-          overlap
+          chordDist: Math.max(1, Math.min(radius, chordDist)),
+          overlap: sumR - dist
         });
       }
     }
@@ -508,126 +473,93 @@ export class Renderer {
     // 2. Container wall & floor boundaries (including rounded bottom corners)
     const boundaries = [];
     const cornerR = 40;
-    if (curY > height - cornerR - 10) {
-      if (curX < cornerR + 10) {
+    if (b.y > height - cornerR - 10) {
+      if (b.x < cornerR + 10) {
         const cx = cornerR;
         const cy = height - cornerR;
-        const angle = Math.atan2(curY - cy, curX - cx);
-        const dist = Math.hypot(curX - cx, curY - cy);
-        const maxDist = cornerR - radius;
-        if (dist > maxDist) {
-          const chordDist = Math.max(1, radius - (dist - maxDist));
-          boundaries.push({ angle, chordDist, overlap: dist - maxDist });
-        }
-      } else if (curX > width - cornerR - 10) {
+        const angle = Math.atan2(b.y - cy, b.x - cx);
+        const dist = Math.hypot(b.x - cx, b.y - cy);
+        const chordDist = Math.max(1, cornerR - dist);
+        boundaries.push({ angle, chordDist, overlap: Math.max(0, radius - chordDist) });
+      } else if (b.x > width - cornerR - 10) {
         const cx = width - cornerR;
         const cy = height - cornerR;
-        const angle = Math.atan2(curY - cy, curX - cx);
-        const dist = Math.hypot(curX - cx, curY - cy);
-        const maxDist = cornerR - radius;
-        if (dist > maxDist) {
-          const chordDist = Math.max(1, radius - (dist - maxDist));
-          boundaries.push({ angle, chordDist, overlap: dist - maxDist });
-        }
+        const angle = Math.atan2(b.y - cy, b.x - cx);
+        const dist = Math.hypot(b.x - cx, b.y - cy);
+        const chordDist = Math.max(1, cornerR - dist);
+        boundaries.push({ angle, chordDist, overlap: Math.max(0, radius - chordDist) });
       }
     }
 
-    if (curX - radius < 12) {
-      boundaries.push({ angle: Math.PI, chordDist: Math.max(1, curX), overlap: Math.max(0, radius - curX) });
+    if (b.x - radius < 12) {
+      boundaries.push({ angle: Math.PI, chordDist: Math.max(1, b.x), overlap: Math.max(0, radius - b.x) });
     }
-    if (width - curX - radius < 12) {
-      boundaries.push({ angle: 0, chordDist: Math.max(1, width - curX), overlap: Math.max(0, radius - (width - curX)) });
+    if (width - b.x - radius < 12) {
+      boundaries.push({ angle: 0, chordDist: Math.max(1, width - b.x), overlap: Math.max(0, radius - (width - b.x)) });
     }
-    if (height - curY - radius < 12) {
-      const distToFloor = height - curY - radius;
-      // Subtle floor contact flattening: 1.0px - 1.8px flat bottom against floor
-      const floorSquash = distToFloor <= 0.8 ? Math.min(1.8, Math.max(0.6, -distToFloor + 0.8)) : 0;
-      const chordDist = Math.max(radius * 0.85, (height - curY) - floorSquash);
-      boundaries.push({ angle: Math.PI / 2, chordDist, overlap: Math.max(0, radius - (height - curY)) });
+    if (height - b.y - radius < 12) {
+      boundaries.push({ angle: Math.PI / 2, chordDist: Math.max(1, height - b.y), overlap: Math.max(0, radius - (height - b.y)) });
     }
 
     // 3. Compute clean non-overlapping deformed contour points (strictly zero overlap)
     const numPoints = 64;
-    let points = b.contourPoints;
-    let smoothedRadii = b.smoothedRadii;
-    let needsContourUpdate = !points || !smoothedRadii || !b.isStationary || (b.wobble && b.wobble > 0.004);
-    if (!needsContourUpdate) {
+    const rawRadii = new Float32Array(numPoints);
+
+    for (let i = 0; i < numPoints; i++) {
+      const theta = (i / numPoints) * Math.PI * 2;
+      let r = radius;
+
+      // Exact chord clipping against neighboring bubbles - strictly zero overlap
       for (let n of interactingNeighbors) {
-        if (!n.neighbor.isStationary || (n.neighbor.wobble && n.neighbor.wobble > 0.004)) {
-          needsContourUpdate = true;
-          break;
-        }
-      }
-    }
-
-    if (needsContourUpdate) {
-      const rawRadii = new Float32Array(numPoints);
-      // Dynamic fluid wobble harmonics (Rayleigh quadrupole mode)
-      const wobbleVal = (b.wobble || 0) * Math.sin(b.wobblePhase || 0) * (b.flexibility || 0.7);
-      const wobbleAng = b.wobbleAngle || 0;
-
-      for (let i = 0; i < numPoints; i++) {
-        const theta = (i / numPoints) * Math.PI * 2;
-        let r = radius;
-
-        // Dynamic fluid wobble (elastic vibration when bouncing / merging / dropped)
-        if (Math.abs(wobbleVal) > 0.003) {
-          r *= (1 + wobbleVal * 0.32 * Math.cos(2 * (theta - wobbleAng)));
-        }
-
-        // Exact chord clipping against neighboring bubbles - strictly zero overlap
-        for (let n of interactingNeighbors) {
-          const cosDiff = Math.cos(theta - n.angle);
-          if (cosDiff > 0.001) {
-            const rChord = n.chordDist / cosDiff;
-            if (rChord < r) {
-              r = rChord;
-            }
+        const cosDiff = Math.cos(theta - n.angle);
+        if (cosDiff > 0.001) {
+          const rChord = n.chordDist / cosDiff;
+          if (rChord < r) {
+            r = rChord;
           }
         }
+      }
 
-        // Exact chord clipping against floor / walls - strictly zero boundary overshoot
-        for (let bd of boundaries) {
-          const cosDiff = Math.cos(theta - bd.angle);
-          if (cosDiff > 0.001) {
-            const rChord = bd.chordDist / cosDiff;
-            if (rChord < r) {
-              r = rChord;
-            }
+      // Exact chord clipping against floor / walls - strictly zero boundary overshoot
+      for (let bd of boundaries) {
+        const cosDiff = Math.cos(theta - bd.angle);
+        if (cosDiff > 0.001) {
+          const rChord = bd.chordDist / cosDiff;
+          if (rChord < r) {
+            r = rChord;
           }
         }
-
-        rawRadii[i] = r;
       }
 
-      // Smooth transition corners with inward filleting (strictly non-penetrating: never exceeds raw clipping chord)
-      smoothedRadii = new Float32Array(numPoints);
-      for (let i = 0; i < numPoints; i++) {
-        const prev = rawRadii[(i - 1 + numPoints) % numPoints];
-        const curr = rawRadii[i];
-        const next = rawRadii[(i + 1) % numPoints];
-        const smoothed = prev * 0.22 + curr * 0.56 + next * 0.22;
-        smoothedRadii[i] = Math.min(rawRadii[i], smoothed);
-      }
-
-      points = [];
-      for (let i = 0; i < numPoints; i++) {
-        const theta = (i / numPoints) * Math.PI * 2;
-        const r = smoothedRadii[i];
-        points.push({
-          x: Math.cos(theta) * r,
-          y: Math.sin(theta) * r
-        });
-      }
-
-      let minR = radius;
-      for (let i = 0; i < numPoints; i++) {
-        if (smoothedRadii[i] < minR) minR = smoothedRadii[i];
-      }
-      b.minRadius = minR;
-      b.contourPoints = points;
-      b.smoothedRadii = smoothedRadii;
+      rawRadii[i] = r;
     }
+
+    // Smooth transition corners with inward filleting (strictly non-penetrating: never exceeds raw clipping chord)
+    const smoothedRadii = new Float32Array(numPoints);
+    for (let i = 0; i < numPoints; i++) {
+      const prev = rawRadii[(i - 1 + numPoints) % numPoints];
+      const curr = rawRadii[i];
+      const next = rawRadii[(i + 1) % numPoints];
+      const smoothed = prev * 0.22 + curr * 0.56 + next * 0.22;
+      smoothedRadii[i] = Math.min(rawRadii[i], smoothed);
+    }
+
+    const points = [];
+    for (let i = 0; i < numPoints; i++) {
+      const theta = (i / numPoints) * Math.PI * 2;
+      const r = smoothedRadii[i];
+      points.push({
+        x: Math.cos(theta) * r,
+        y: Math.sin(theta) * r
+      });
+    }
+
+    let minR = radius;
+    for (let i = 0; i < numPoints; i++) {
+      if (smoothedRadii[i] < minR) minR = smoothedRadii[i];
+    }
+    b.minRadius = minR;
+    b.contourPoints = points;
 
     // 4. Define and draw bubble contour
     const traceContour = () => {
