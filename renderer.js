@@ -471,7 +471,7 @@ export class Renderer {
     const currentDiameter = Math.round(Math.max(b.radius, radius) * 2);
     const isGoalReached = targetDiameter > 0 && currentDiameter >= targetDiameter;
 
-    // 1. Collect interacting contacting neighbors
+    // 1. Collect interacting contacting neighbors (Plateau foam contact facets)
     const interactingNeighbors = [];
     const len = allBubbles.length;
     for (let j = 0; j < len; j++) {
@@ -484,27 +484,35 @@ export class Renderer {
       const distSq = dx * dx + dy * dy;
       const nbRadius = Math.max(3, nb.radius * (nb.scalePulse || 1.0));
       const sumR = radius + nbRadius;
-      const overlap = sumR - Math.sqrt(distSq);
 
-      // Only form contact facets when bubbles are actually pressing together
-      // Smoothly blend in chord flattening over 1.0px so facets never flicker on contact threshold
-      if (overlap > 0.10 && distSq > 0.001) {
+      // Contact facet forms whenever bubbles touch or are compressed in foam
+      if (distSq < sumR * sumR * 1.05 && distSq > 0.001) {
         const dist = Math.sqrt(distSq);
         const angle = Math.atan2(dy, dx);
-        const rawChordDist = (dist * dist + radius * radius - nbRadius * nbRadius) / (2 * dist);
-        const blend = Math.min(1.0, (overlap - 0.10) / 0.90);
-        const chordDist = radius * (1 - blend) + Math.max(1, Math.min(radius, rawChordDist)) * blend;
+        const baseChord = (dist * dist + radius * radius - nbRadius * nbRadius) / (2 * dist);
+        
+        // Elastic contact facet indentation depth
+        const overlap = Math.max(0, sumR - dist);
+        const compliance = ((b.flexibility || 0.7) + (nb.flexibility || 0.7)) * 0.5;
+        // Base contact facet cut so touching bubbles visibly share a flat Plateau wall
+        const baseIndent = Math.min(radius * 0.16, 2.0 + compliance * 2.5);
+        const loadIndent = ((b.smoothLoad || 0) + (nb.smoothLoad || 0)) * radius * 0.18;
+        const overlapIndent = overlap * 0.75;
+        const totalIndent = baseIndent + loadIndent + overlapIndent;
+        
+        const chordDist = Math.max(radius * 0.58, Math.min(radius - 1.2, baseChord - totalIndent * 0.45));
+
         interactingNeighbors.push({
           neighbor: nb,
           angle,
           dist,
           chordDist,
-          overlap
+          indent: totalIndent
         });
       }
     }
 
-    // 2. Container wall & floor boundaries (including rounded bottom corners)
+    // 2. Container wall & floor boundaries (visible elastic boundary flattening)
     const boundaries = [];
     const cornerR = 40;
     if (curY > height - cornerR - 10) {
@@ -514,9 +522,9 @@ export class Renderer {
         const angle = Math.atan2(curY - cy, curX - cx);
         const dist = Math.hypot(curX - cx, curY - cy);
         const maxDist = cornerR - radius;
-        if (dist > maxDist) {
-          const chordDist = Math.max(1, radius - (dist - maxDist));
-          boundaries.push({ angle, chordDist, overlap: dist - maxDist });
+        if (dist > maxDist - 4) {
+          const pen = Math.max(1.8, dist - maxDist + 2.0);
+          boundaries.push({ angle, chordDist: Math.max(radius * 0.60, radius - pen), indent: pen });
         }
       } else if (curX > width - cornerR - 10) {
         const cx = width - cornerR;
@@ -524,28 +532,42 @@ export class Renderer {
         const angle = Math.atan2(curY - cy, curX - cx);
         const dist = Math.hypot(curX - cx, curY - cy);
         const maxDist = cornerR - radius;
-        if (dist > maxDist) {
-          const chordDist = Math.max(1, radius - (dist - maxDist));
-          boundaries.push({ angle, chordDist, overlap: dist - maxDist });
+        if (dist > maxDist - 4) {
+          const pen = Math.max(1.8, dist - maxDist + 2.0);
+          boundaries.push({ angle, chordDist: Math.max(radius * 0.60, radius - pen), indent: pen });
         }
       }
     }
 
-    if (curX - radius < 12) {
-      boundaries.push({ angle: Math.PI, chordDist: Math.max(1, curX), overlap: Math.max(0, radius - curX) });
-    }
-    if (width - curX - radius < 12) {
-      boundaries.push({ angle: 0, chordDist: Math.max(1, width - curX), overlap: Math.max(0, radius - (width - curX)) });
-    }
-    if (height - curY - radius < 12) {
-      boundaries.push({ angle: Math.PI / 2, chordDist: Math.max(1, height - curY), overlap: Math.max(0, radius - (height - curY)) });
+    // Bottom floor flattening (bubble visibly squashes against the bottom container floor)
+    const distToFloor = height - (curY + radius);
+    if (distToFloor < 6) {
+      const compliance = b.flexibility || 0.7;
+      const baseFloorIndent = 2.8 * compliance;
+      const loadFloorIndent = ((b.loadSquish || 0) * radius * 0.50) + ((b.smoothLoad || 0) * 4.5);
+      const floorSquash = Math.max(baseFloorIndent, -distToFloor + baseFloorIndent) + loadFloorIndent;
+      boundaries.push({ angle: Math.PI / 2, chordDist: Math.max(radius * 0.58, radius - floorSquash), indent: floorSquash });
     }
 
-    // 3. Compute clean non-overlapping deformed contour points (strictly zero overlap)
+    // Left wall flattening
+    const distToLeft = curX - radius;
+    if (distToLeft < 5) {
+      const wallSquash = Math.max(2.0 * (b.flexibility || 0.7), -distToLeft + 2.0);
+      boundaries.push({ angle: Math.PI, chordDist: Math.max(radius * 0.60, radius - wallSquash), indent: wallSquash });
+    }
+
+    // Right wall flattening
+    const distToRight = width - (curX + radius);
+    if (distToRight < 5) {
+      const wallSquash = Math.max(2.0 * (b.flexibility || 0.7), -distToRight + 2.0);
+      boundaries.push({ angle: 0, chordDist: Math.max(radius * 0.60, radius - wallSquash), indent: wallSquash });
+    }
+
+    // 3. Compute clean non-overlapping deformed contour points with rich elasticity
     const numPoints = 64;
     let points = b.contourPoints;
     let smoothedRadii = b.smoothedRadii;
-    let needsContourUpdate = !points || !smoothedRadii || !b.isStationary;
+    let needsContourUpdate = !points || !smoothedRadii || !b.isStationary || (b.wobble && b.wobble > 0.003) || speed > 0.08 || (b.loadSquish && Math.abs(b.loadSquish - (b.lastRenderSquish || 0)) > 0.003);
     if (!needsContourUpdate) {
       for (let n of interactingNeighbors) {
         if (!n.neighbor.isStationary) {
@@ -556,11 +578,50 @@ export class Renderer {
     }
 
     if (needsContourUpdate) {
+      b.lastRenderSquish = b.loadSquish || 0;
       const rawRadii = new Float32Array(numPoints);
+
+      // A. Dynamic fluid wobble harmonics (Rayleigh quadrupole & octupole jello oscillation)
+      const wobbleVal = (b.wobble || 0) * Math.sin(b.wobblePhase || 0) * (b.flexibility || 0.75);
+      const wobbleAng = b.wobbleAngle || 0;
+      
+      // B. Dynamic velocity squash & stretch (aerodynamic elongation along motion path)
+      const moveAngle = Math.atan2(b.vy || 0, b.vx || 0);
+      const velStretch = Math.min(0.20, (speed / 18.0) * (b.flexibility || 0.75));
+
+      // C. Gravitational overburden squish (flat top/bottom, bulging lateral sides)
+      const loadSquish = Math.min(0.30, ((b.loadSquish || 0) + (b.contactSquish || 0)) * 0.95);
+
+      // D. Interstitial gap-filling bulge (volume conservation as facets press inward)
+      let totalContactIndent = 0;
+      for (let n of interactingNeighbors) totalContactIndent += (n.indent || 1.5);
+      for (let bd of boundaries) totalContactIndent += (bd.indent || 1.5);
+      const foamBulge = Math.min(0.12, (totalContactIndent / radius) * 0.16 * (b.flexibility || 0.75));
 
       for (let i = 0; i < numPoints; i++) {
         const theta = (i / numPoints) * Math.PI * 2;
         let r = radius;
+
+        // Apply volume conservation bulge into free spaces
+        if (foamBulge > 0.001) {
+          r *= (1 + foamBulge);
+        }
+
+        // Dynamic fluid wobble (elastic vibration when bouncing / merging / dropped)
+        if (Math.abs(wobbleVal) > 0.002) {
+          r *= (1 + wobbleVal * 0.75 * Math.cos(2 * (theta - wobbleAng)) + wobbleVal * 0.28 * Math.sin(3 * (theta - wobbleAng)));
+        }
+
+        // Velocity stretch along trajectory
+        if (velStretch > 0.005) {
+          r *= (1 + velStretch * Math.cos(2 * (theta - moveAngle)));
+        }
+
+        // Gravitational overburden squish (flat top/bottom, bulging sides)
+        if (loadSquish > 0.002) {
+          const squish = loadSquish * Math.cos(2 * (theta - Math.PI / 2));
+          r *= (1 - squish * (squish > 0 ? 0.95 : 0.75));
+        }
 
         // Exact chord clipping against neighboring bubbles - strictly zero overlap
         for (let n of interactingNeighbors) {
@@ -587,14 +648,17 @@ export class Renderer {
         rawRadii[i] = r;
       }
 
-      // Smooth transition corners with inward filleting (strictly non-penetrating: never exceeds raw clipping chord)
+      // Smooth transition corners with 2-pass Laplacian filleting to create natural rounded Plateau borders
       smoothedRadii = new Float32Array(numPoints);
-      for (let i = 0; i < numPoints; i++) {
-        const prev = rawRadii[(i - 1 + numPoints) % numPoints];
-        const curr = rawRadii[i];
-        const next = rawRadii[(i + 1) % numPoints];
-        const smoothed = prev * 0.22 + curr * 0.56 + next * 0.22;
-        smoothedRadii[i] = Math.min(rawRadii[i], smoothed);
+      smoothedRadii.set(rawRadii);
+      for (let pass = 0; pass < 2; pass++) {
+        const temp = new Float32Array(smoothedRadii);
+        for (let i = 0; i < numPoints; i++) {
+          const prev = temp[(i - 1 + numPoints) % numPoints];
+          const curr = temp[i];
+          const next = temp[(i + 1) % numPoints];
+          smoothedRadii[i] = prev * 0.22 + curr * 0.56 + next * 0.22;
+        }
       }
 
       points = [];
@@ -1153,8 +1217,9 @@ export class Renderer {
       const h = gem.isWhite ? 210 : gem.h;
       const s = gem.isWhite ? 10 : Math.round(gem.s * 100);
 
-      ctx.save();
-      ctx.translate(b.x, b.y);
+      const bX = b.renderX !== undefined ? b.renderX : b.x;
+      const bY = b.renderY !== undefined ? b.renderY : b.y;
+      ctx.translate(bX, bY);
 
       // Strictly clip readout to the bubble's actual boundary so text never bleeds outside
       if (b.contourPoints && b.contourPoints.length > 0) {
