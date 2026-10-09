@@ -631,12 +631,12 @@ html, body {
 }
 
 .modal-card-fail {
-  width: min(92vw, 360px);
+  width: min(88vw, 290px);
   background: 
-    radial-gradient(circle at 50% -20%, rgba(244, 63, 94, 0.18) 0%, transparent 70%),
-    linear-gradient(180deg, #1b1418 0%, #100c0f 100%);
+    radial-gradient(circle at 50% -20%, rgba(244, 63, 94, 0.16) 0%, transparent 70%),
+    linear-gradient(180deg, #191418 0%, #0e0a0d 100%);
   border: 1.5px solid rgba(244, 63, 94, 0.32);
-  border-radius: 28px;
+  border-radius: 26px;
   padding: 24px 22px 20px;
   box-shadow: 
     0 28px 70px -14px rgba(0, 0, 0, 0.90),
@@ -689,34 +689,11 @@ html, body {
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.50), inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
-.modal-fail-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 5px;
-}
-
 .modal-eyebrow.fail-eyebrow {
   color: #fecdd3;
-  background: rgba(244, 63, 94, 0.14);
-  border-color: rgba(244, 63, 94, 0.36);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.20);
-  gap: 6px;
-}
-
-.eyebrow-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #f43f5e;
-  box-shadow: 0 0 8px #f43f5e;
-  animation: pulseFailDot 1.6s infinite ease-in-out;
-}
-
-@keyframes pulseFailDot {
-  0%, 100% { transform: scale(1); opacity: 0.8; }
-  50% { transform: scale(1.4); opacity: 1; }
+  background: linear-gradient(180deg, rgba(244, 63, 94, 0.20) 0%, rgba(225, 29, 72, 0.08) 100%);
+  border-color: rgba(244, 63, 94, 0.40);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.50), inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
 .modal-headline {
@@ -879,49 +856,49 @@ html, body {
   filter: drop-shadow(0 2px 10px rgba(245, 158, 11, 0.40));
 }
 
-/* Luxurious Fail Summary & Progress Meter */
-.fail-score-meter-card {
+/* Minimalist Fail Completion Card & Chips */
+.fail-score-card {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  width: 100%;
-  padding: 10px 14px;
-  border-radius: var(--radius-md);
+  align-items: center;
+  gap: 3px;
   background: #090a0d;
   border: 1px solid rgba(244, 63, 94, 0.22);
-  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.60);
+  border-radius: 18px;
+  padding: 10px 18px 12px;
+  width: 100%;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.60), 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
-.fail-meter-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-}
-
-.meter-label {
+.fail-score-card .score-lbl {
   font-family: var(--font-sans);
   font-size: 0.70rem;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   color: #fca5a5;
   opacity: 0.90;
 }
 
-.meter-pct {
-  font-family: var(--font-mono);
-  font-size: 1.10rem;
+.fail-score-digits {
+  font-family: var(--font-sans);
+  font-size: 2.2rem;
   font-weight: 800;
-  color: #ffffff;
-  text-shadow: 0 0 10px rgba(244, 63, 94, 0.4);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  background: linear-gradient(180deg, #ffffff 25%, #fecdd3 65%, #f43f5e 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 10px rgba(244, 63, 94, 0.40));
 }
 
-.fail-progress-bar-track {
+.fail-score-card .fail-progress-bar-track {
   width: 100%;
-  height: 6px;
+  height: 5px;
   border-radius: var(--radius-full);
   background: rgba(255, 255, 255, 0.08);
   overflow: hidden;
-  position: relative;
+  margin-top: 4px;
 }
 
 .fail-progress-bar-fill {
@@ -932,162 +909,51 @@ html, body {
   transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.fail-checklist-container {
+.fail-bubbles-row {
   display: flex;
-  flex-direction: column;
-  gap: 7px;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
   width: 100%;
-  max-height: 210px;
-  overflow-y: auto;
-  padding-right: 3px;
+  padding: 8px 12px;
+  background: #090a0d;
+  border: 1px solid rgba(244, 63, 94, 0.18);
+  border-radius: 18px;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.60), 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
-.fail-checklist-container::-webkit-scrollbar {
-  width: 4px;
-}
-.fail-checklist-container::-webkit-scrollbar-track {
-  background: transparent;
-}
-.fail-checklist-container::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.18);
-  border-radius: 4px;
-}
-
-.fail-color-card {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  border-radius: var(--radius-md);
-  background: #090c12;
-  border: 1px solid rgba(245, 208, 140, 0.12);
-  transition: all var(--transition-fast);
-}
-
-.fail-color-card:hover {
-  background: #0f131a;
-  border-color: rgba(245, 208, 140, 0.25);
-}
-
-.fail-color-card.pass {
-  border-color: rgba(245, 208, 140, 0.35);
-  background: rgba(245, 208, 140, 0.07);
-}
-
-.fail-color-card.fail {
-  border-color: rgba(244, 63, 94, 0.30);
-  background: rgba(244, 63, 94, 0.08);
-}
-
-.fail-bubble-canvas {
-  width: 28px;
-  height: 28px;
-  flex-shrink: 0;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5));
-}
-
-.fail-card-info {
+.fail-bubble-chip {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  flex-grow: 1;
-  min-width: 0;
-}
-
-.fail-card-top {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 3px;
+  transition: transform var(--transition-fast);
 }
 
-.fail-gem-name {
-  font-size: 0.80rem;
-  font-weight: 700;
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.fail-bubble-chip .fail-bubble-canvas {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.6));
 }
 
-.fail-density-tag {
+.fail-bubble-chip.missed .fail-bubble-canvas {
+  filter: drop-shadow(0 0 8px rgba(244, 63, 94, 0.50)) drop-shadow(0 3px 8px rgba(0, 0, 0, 0.6));
+}
+
+.fail-chip-tag {
   font-family: var(--font-mono);
-  font-size: 0.58rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  padding: 1px 5px;
-  border-radius: 4px;
-  background: rgba(0, 0, 0, 0.40);
-  color: #fde68a;
-  border: 1px solid rgba(245, 208, 140, 0.18);
-}
-
-.fail-stat-ratio {
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  line-height: 1;
 }
 
-.fail-color-card.pass .fail-stat-ratio {
+.fail-bubble-chip.achieved .fail-chip-tag {
   color: #fde68a;
 }
 
-.fail-color-card.fail .fail-stat-ratio {
-  color: #fda4af;
-}
-
-.fail-mini-track {
-  width: 100%;
-  height: 4px;
-  border-radius: var(--radius-full);
-  background: rgba(0, 0, 0, 0.60);
-  overflow: hidden;
-}
-
-.fail-mini-fill {
-  height: 100%;
-  border-radius: var(--radius-full);
-  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.fail-color-card.pass .fail-mini-fill {
-  background: linear-gradient(90deg, #f59e0b, #fde68a);
-  box-shadow: 0 0 8px rgba(245, 158, 11, 0.45);
-}
-
-.fail-color-card.fail .fail-mini-fill {
-  background: linear-gradient(90deg, #f43f5e 0%, #fb923c 100%);
-  box-shadow: 0 0 6px rgba(244, 63, 94, 0.4);
-}
-
-.fail-tip-card {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(244, 63, 94, 0.08);
-  border: 1px solid rgba(244, 63, 94, 0.25);
-  border-radius: var(--radius-md);
-  padding: 7px 11px;
-  font-size: 0.74rem;
-  color: #fecdd3;
-  line-height: 1.35;
-  text-align: left;
-}
-
-.fail-tip-card .tip-icon {
-  font-size: 1.05rem;
-  flex-shrink: 0;
-}
-
-
-.btn-hero-secondary.btn-icon-label {
-  width: auto;
-  min-width: 95px;
-  padding: 0 16px;
-  font-size: 0.88rem;
-  gap: 8px;
+.fail-bubble-chip.missed .fail-chip-tag {
+  color: #f87171;
 }
 
 .btn-replay-glyph {

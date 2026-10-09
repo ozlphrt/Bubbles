@@ -363,45 +363,27 @@ window.addEventListener('DOMContentLoaded', () => {
       const dpr = window.devicePixelRatio || 1;
 
       failData.colorProgress.forEach(item => {
-        const card = document.createElement('div');
-        card.className = `fail-color-card ${item.achieved ? 'pass' : 'fail'}`;
+        const chip = document.createElement('div');
+        chip.className = `fail-bubble-chip ${item.achieved ? 'achieved' : 'missed'}`;
 
         const canvas = document.createElement('canvas');
         canvas.className = 'fail-bubble-canvas';
-        canvas.width = 28 * dpr;
-        canvas.height = 28 * dpr;
-        canvas.style.width = '28px';
-        canvas.style.height = '28px';
+        canvas.width = 34 * dpr;
+        canvas.height = 34 * dpr;
+        canvas.style.width = '34px';
+        canvas.style.height = '34px';
         const cCtx = canvas.getContext('2d');
         cCtx.scale(dpr, dpr);
-        renderer.renderStandaloneBubble(cCtx, 14, 14, 11.5, item.colorId);
+        renderer.renderStandaloneBubble(cCtx, 17, 17, 14, item.colorId);
 
-        const cObj = BUBBLE_COLORS.find(c => c.id === item.colorId || c.alias === item.colorId);
-        const densityLabel = (cObj && cObj.densityLabel) ? cObj.densityLabel : 'Medium';
-        const gemName = getColorName(item.colorId);
         const pct = Math.round(item.progress * 100);
+        const tag = document.createElement('span');
+        tag.className = 'fail-chip-tag';
+        tag.textContent = item.achieved ? '✓' : `${pct}%`;
 
-        const info = document.createElement('div');
-        info.className = 'fail-card-info';
-        info.innerHTML = `
-          <div class="fail-card-top">
-            <div class="fail-gem-name">
-              <span>${gemName}</span>
-              <span class="fail-density-tag">${densityLabel}</span>
-            </div>
-            <div class="fail-stat-ratio">
-              <span><strong>${item.current}px</strong> / ${item.target}px</span>
-              <span>${item.achieved ? '✓' : `(${pct}%)`}</span>
-            </div>
-          </div>
-          <div class="fail-mini-track">
-            <div class="fail-mini-fill" style="width: ${Math.min(100, pct)}%;"></div>
-          </div>
-        `;
-
-        card.appendChild(canvas);
-        card.appendChild(info);
-        failResultsGrid.appendChild(card);
+        chip.appendChild(canvas);
+        chip.appendChild(tag);
+        failResultsGrid.appendChild(chip);
       });
     }
   };
