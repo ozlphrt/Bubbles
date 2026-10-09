@@ -1085,15 +1085,6 @@ export class Renderer {
       }
     }
 
-    const EMISSIONS = {
-      white:  { glow: '#38bdf8', glowRgb: '56, 189, 248', stroke: 'rgba(3, 7, 18, 0.92)', core: '#ffffff' },
-      cyan:   { glow: '#0ea5e9', glowRgb: '14, 165, 233', stroke: 'rgba(2, 6, 23, 0.90)',  core: '#ffffff' },
-      green:  { glow: '#10b981', glowRgb: '16, 185, 129', stroke: 'rgba(2, 20, 12, 0.90)', core: '#ffffff' },
-      red:    { glow: '#f43f5e', glowRgb: '244, 63, 94',  stroke: 'rgba(24, 2, 8, 0.90)',  core: '#ffffff' },
-      orange: { glow: '#f59e0b', glowRgb: '245, 158, 11', stroke: 'rgba(26, 14, 2, 0.90)', core: '#ffffff' },
-      purple: { glow: '#a855f7', glowRgb: '168, 85, 247', stroke: 'rgba(20, 4, 32, 0.90)', core: '#ffffff' }
-    };
-
     ctx.save();
     for (let key of Object.keys(maxByColor)) {
       const b = maxByColor[key];
@@ -1102,22 +1093,10 @@ export class Renderer {
       const diameter = Math.round(b.radius * 2);
       const isGoalReached = targetDiameter > 0 && diameter >= targetDiameter;
       const text = `${diameter}`;
-      let em = EMISSIONS[key];
-      if (!em) {
-        const cObj = getColorById(key);
-        const hex = cObj ? cObj.hex : this.getBaseColor(key);
-        let h = hex.replace('#', '');
-        if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
-        const r = parseInt(h.substring(0, 2), 16) || 56;
-        const g = parseInt(h.substring(2, 4), 16) || 189;
-        const bVal = parseInt(h.substring(4, 6), 16) || 248;
-        em = {
-          glow: hex,
-          glowRgb: `${r}, ${g}, ${bVal}`,
-          stroke: 'rgba(3, 7, 18, 0.92)',
-          core: '#ffffff'
-        };
-      }
+      const colorKey = b.isWhite ? 'white' : (b.colorId || key || 'red');
+      const gem = this.getGemColorInfo(colorKey, b);
+      const h = gem.isWhite ? 210 : gem.h;
+      const s = gem.isWhite ? 10 : Math.round(gem.s * 100);
 
       ctx.save();
       ctx.translate(b.x, b.y);
@@ -1141,61 +1120,26 @@ export class Renderer {
       // Maximize font size dynamically to fill the bubble as much as possible without crossing any boundary
       const fontSize = this.calculateMaxFontSize(ctx, text, b, isGoalReached);
       ctx.font = `${isGoalReached ? '600' : '800'} ${fontSize}px Outfit, Inter, system-ui, sans-serif`;
-      const textWidth = ctx.measureText(text).width;
 
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
 
       if (isGoalReached) {
-        // Lowlighted subtle text: muted translucent slate/white, no loud neon glow
+        // Style 5: Translucent Glass Watermark - Lowlight (35% Frosted ambient wash)
         ctx.save();
-        ctx.fillStyle = 'rgba(203, 213, 225, 0.55)';
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
-        ctx.shadowBlur = 3;
-        ctx.shadowOffsetY = 1;
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.50)';
+        ctx.shadowBlur = Math.max(2, Math.round(fontSize * 0.08));
+        ctx.shadowOffsetY = Math.max(1, Math.round(fontSize * 0.04));
+        ctx.fillStyle = `hsla(${h}, 20%, 65%, 0.35)`;
         ctx.fillText(text, 0, 0);
         ctx.restore();
       } else {
-        // Active goal bubble: high-contrast vibrant glow and crisp white-hot core
-        // 1. Soft radial vignette & light emission aura behind number
-        const auraRadius = Math.max(textWidth * 0.70, fontSize * 0.85);
-        const auraGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, auraRadius);
-        auraGrad.addColorStop(0, 'rgba(3, 7, 18, 0.58)');
-        auraGrad.addColorStop(0.55, `rgba(${em.glowRgb}, 0.24)`);
-        auraGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-
-        ctx.beginPath();
-        ctx.arc(0, 0, auraRadius, 0, Math.PI * 2);
-        ctx.fillStyle = auraGrad;
-        ctx.fill();
-
-        // 2. Outer Light Emission Bloom
+        // Style 5: Translucent Glass Watermark - Highlight (75% Caustic Alpha)
         ctx.save();
-        ctx.shadowColor = em.glow;
-        ctx.shadowBlur = Math.max(12, fontSize * 0.45);
-        ctx.lineWidth = Math.max(2, fontSize * 0.06);
-        ctx.strokeStyle = `rgba(${em.glowRgb}, 0.75)`;
-        ctx.lineJoin = 'round';
-        ctx.strokeText(text, 0, 0);
-        ctx.restore();
-
-        // 3. Crisp Dark Outline Halo (Detaches text cleanly from glossy reflections)
-        ctx.save();
-        ctx.strokeStyle = em.stroke;
-        ctx.lineWidth = Math.max(3.2, fontSize * 0.12);
-        ctx.lineJoin = 'round';
-        ctx.lineCap = 'round';
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.65)';
-        ctx.shadowBlur = Math.max(4, fontSize * 0.14);
-        ctx.shadowOffsetY = Math.max(1, fontSize * 0.04);
-        ctx.strokeText(text, 0, 0);
-        ctx.restore();
-
-        // 4. White-Hot Luminous Core Fill
-        ctx.save();
-        ctx.fillStyle = '#ffffff';
-        ctx.shadowColor = em.glow;
-        ctx.shadowBlur = Math.max(4, fontSize * 0.16);
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
+        ctx.shadowBlur = Math.max(3, Math.round(fontSize * 0.12));
+        ctx.shadowOffsetY = Math.max(1.2, Math.round(fontSize * 0.045));
+        ctx.fillStyle = `hsla(${h}, ${s}%, 86%, 0.78)`;
         ctx.fillText(text, 0, 0);
         ctx.restore();
       }
