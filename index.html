@@ -55,7 +55,18 @@
     <div class="modal-overlay hidden" id="modalObjective">
       <div class="modal-card modal-card-objective">
         <div class="modal-eyebrow" id="objLevelBadge">LEVEL 1</div>
-        <h2 class="modal-headline" id="objGoalText">Grow to 140px</h2>
+        <div class="modal-goal-hero">
+          <div class="goal-hero-eyebrow">
+            <span class="goal-hero-icon">🎯</span>
+            <span>TARGET DIAMETER</span>
+          </div>
+          <div class="goal-hero-val-row">
+            <span class="goal-hero-num" id="objGoalNum">140</span>
+            <span class="goal-hero-unit">px</span>
+          </div>
+          <div class="goal-hero-hint">Grow any gem to reach goal</div>
+        </div>
+        <h2 class="sr-only" id="objGoalText">Grow to 140px</h2>
 
         <div class="modal-color-preview" id="objColorsGrid">
           <canvas id="modalColorsCanvas" class="modal-colors-canvas" width="220" height="36"></canvas>

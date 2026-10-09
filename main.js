@@ -28,6 +28,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const modalObjective = document.getElementById('modalObjective');
   const objLevelBadge = document.getElementById('objLevelBadge');
   const objGoalText = document.getElementById('objGoalText');
+  const objGoalNum = document.getElementById('objGoalNum');
   const objColorsGrid = document.getElementById('objColorsGrid');
   const btnStartLevel = document.getElementById('btnStartLevel');
 
@@ -263,6 +264,7 @@ window.addEventListener('DOMContentLoaded', () => {
       modalObjective.classList.remove('hidden');
 
       if (objLevelBadge) objLevelBadge.textContent = `LEVEL ${levelConfig.level}`;
+      if (objGoalNum) objGoalNum.textContent = levelConfig.targetDiameter;
       if (objGoalText) objGoalText.textContent = `Grow to ${levelConfig.targetDiameter}px`;
 
       renderObjectivePreviewCanvas(levelConfig.colors);
