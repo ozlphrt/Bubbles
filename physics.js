@@ -205,7 +205,7 @@ export class Bubble {
     // Soft fluid wobble decay (resting bubbles settle completely without jitter)
     const naturalFreq = Math.max(0.08, 0.26 - (this.radius * 0.0012));
     this.wobblePhase += naturalFreq;
-    this.wobble *= 0.88;
+    this.wobble *= 0.92;
     if (this.wobble < 0.004) {
       this.wobble = 0;
     }
@@ -213,13 +213,13 @@ export class Bubble {
     // Boundary constraints (Soft, springy boundary cushion)
     if (this.x - this.radius < 0) {
       this.x = this.radius;
-      if (this.vx < -0.35) {
+      if (this.vx < -0.30) {
         this.exciteWobble(0.25 * this.flexibility, 0);
       }
       this.vx = Math.abs(this.vx) * 0.50;
     } else if (this.x + this.radius > width) {
       this.x = width - this.radius;
-      if (this.vx > 0.35) {
+      if (this.vx > 0.30) {
         this.exciteWobble(0.25 * this.flexibility, Math.PI);
       }
       this.vx = -Math.abs(this.vx) * 0.50;
@@ -229,7 +229,8 @@ export class Bubble {
     if (this.y + this.radius >= height) {
       this.y = height - this.radius;
       
-      if (this.vy > 0.50) {
+      if (this.vy > 0.35) {
+        this.exciteWobble(Math.min(0.35, this.vy * 0.16 * this.flexibility), Math.PI / 2);
         this.vy = -this.vy * (config.elasticity || 0.7) * 0.30;
       } else {
         this.vy = 0;
@@ -992,9 +993,9 @@ export class PhysicsEngine {
               b2.contactAngle = bounceAngle + Math.PI;
               b2.contactSquish = Math.min(0.25, (overlap / b2.radius) * 0.3 * b2.flexibility);
 
-              if (approachSpeed > 0.85) {
-                const squish1 = Math.min(0.4, approachSpeed * 0.15 * (b1.elasticity || 0.72)) * b1.flexibility;
-                const squish2 = Math.min(0.4, approachSpeed * 0.15 * (b2.elasticity || 0.72)) * b2.flexibility;
+              if (approachSpeed > 0.30) {
+                const squish1 = Math.min(0.35, approachSpeed * 0.16 * (b1.elasticity || 0.72)) * b1.flexibility;
+                const squish2 = Math.min(0.35, approachSpeed * 0.16 * (b2.elasticity || 0.72)) * b2.flexibility;
                 b1.exciteWobble(squish1, bounceAngle);
                 b2.exciteWobble(squish2, bounceAngle + Math.PI);
               }

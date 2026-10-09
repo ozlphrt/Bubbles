@@ -487,13 +487,14 @@ export class Renderer {
       const overlap = sumR - Math.sqrt(distSq);
 
       // Only form contact facets when bubbles are actually pressing together
-      // Smoothly blend in chord flattening over 1.0px so facets never flicker on contact threshold
-      if (overlap > 0.10 && distSq > 0.001) {
+      if (overlap > 0.02 && distSq > 0.001) {
         const dist = Math.sqrt(distSq);
         const angle = Math.atan2(dy, dx);
         const rawChordDist = (dist * dist + radius * radius - nbRadius * nbRadius) / (2 * dist);
-        const blend = Math.min(1.0, (overlap - 0.10) / 0.90);
-        const chordDist = radius * (1 - blend) + Math.max(1, Math.min(radius, rawChordDist)) * blend;
+        // Subtle contact flattening: soft inward compliance (max 1.2px) so shared contact boundary is slightly flat
+        const compliance = ((b.flexibility || 0.7) + (nb.flexibility || 0.7)) * 0.5;
+        const contactIndent = Math.min(1.2, (overlap * 0.4 + 0.3) * compliance);
+        const chordDist = Math.max(radius * 0.85, Math.min(radius, rawChordDist - contactIndent));
         interactingNeighbors.push({
           neighbor: nb,
           angle,
@@ -538,17 +539,21 @@ export class Renderer {
       boundaries.push({ angle: 0, chordDist: Math.max(1, width - curX), overlap: Math.max(0, radius - (width - curX)) });
     }
     if (height - curY - radius < 12) {
-      boundaries.push({ angle: Math.PI / 2, chordDist: Math.max(1, height - curY), overlap: Math.max(0, radius - (height - curY)) });
+      const distToFloor = height - curY - radius;
+      // Subtle floor contact flattening: 1.0px - 1.8px flat bottom against floor
+      const floorSquash = distToFloor <= 0.8 ? Math.min(1.8, Math.max(0.6, -distToFloor + 0.8)) : 0;
+      const chordDist = Math.max(radius * 0.85, (height - curY) - floorSquash);
+      boundaries.push({ angle: Math.PI / 2, chordDist, overlap: Math.max(0, radius - (height - curY)) });
     }
 
     // 3. Compute clean non-overlapping deformed contour points (strictly zero overlap)
     const numPoints = 64;
     let points = b.contourPoints;
     let smoothedRadii = b.smoothedRadii;
-    let needsContourUpdate = !points || !smoothedRadii || !b.isStationary;
+    let needsContourUpdate = !points || !smoothedRadii || !b.isStationary || (b.wobble && b.wobble > 0.004);
     if (!needsContourUpdate) {
       for (let n of interactingNeighbors) {
-        if (!n.neighbor.isStationary) {
+        if (!n.neighbor.isStationary || (n.neighbor.wobble && n.neighbor.wobble > 0.004)) {
           needsContourUpdate = true;
           break;
         }
@@ -557,10 +562,18 @@ export class Renderer {
 
     if (needsContourUpdate) {
       const rawRadii = new Float32Array(numPoints);
+      // Dynamic fluid wobble harmonics (Rayleigh quadrupole mode)
+      const wobbleVal = (b.wobble || 0) * Math.sin(b.wobblePhase || 0) * (b.flexibility || 0.7);
+      const wobbleAng = b.wobbleAngle || 0;
 
       for (let i = 0; i < numPoints; i++) {
         const theta = (i / numPoints) * Math.PI * 2;
         let r = radius;
+
+        // Dynamic fluid wobble (elastic vibration when bouncing / merging / dropped)
+        if (Math.abs(wobbleVal) > 0.003) {
+          r *= (1 + wobbleVal * 0.32 * Math.cos(2 * (theta - wobbleAng)));
+        }
 
         // Exact chord clipping against neighboring bubbles - strictly zero overlap
         for (let n of interactingNeighbors) {
