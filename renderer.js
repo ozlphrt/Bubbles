@@ -730,16 +730,15 @@ export class Renderer {
       bodyGrad.addColorStop(0.70, 'rgba(203, 213, 225, 0.28)');
       bodyGrad.addColorStop(1.0, 'rgba(100, 116, 139, 0.48)');
     } else {
-      const isGreenish = gem.h >= 80 && gem.h <= 175;
-      const bSat = isGreenish ? 78 : 90;
-      const l0 = isGreenish ? Math.min(62, Math.round(gem.l * 58)) : Math.min(76, Math.round(gem.l * 75));
-      const l1 = isGreenish ? Math.min(52, Math.round(gem.l * 48)) : Math.min(66, Math.round(gem.l * 62));
-      const l2 = isGreenish ? Math.round(gem.l * 38) : Math.round(gem.l * 46);
+      const bSat = 92;
+      const l0 = Math.min(78, Math.round(gem.l * 76));
+      const l1 = Math.min(68, Math.round(gem.l * 64));
+      const l2 = Math.round(gem.l * 46);
 
       bodyGrad.addColorStop(0, `hsla(${gem.h}, ${bSat}%, ${l0}%, ${centerAlpha})`);
-      bodyGrad.addColorStop(0.35, `hsla(${gem.h}, ${bSat - 3}%, ${l1}%, ${midAlpha})`);
-      bodyGrad.addColorStop(0.70, `hsla(${gem.h}, ${bSat - 3}%, ${l2}%, 0.36)`);
-      bodyGrad.addColorStop(1.0, `hsla(${gem.h}, ${bSat}%, 26%, 0.58)`);
+      bodyGrad.addColorStop(0.35, `hsla(${gem.h}, ${bSat - 2}%, ${l1}%, ${midAlpha})`);
+      bodyGrad.addColorStop(0.70, `hsla(${gem.h}, ${bSat - 2}%, ${l2}%, 0.38)`);
+      bodyGrad.addColorStop(1.0, `hsla(${gem.h}, ${bSat}%, 30%, 0.60)`);
     }
     ctx.fillStyle = bodyGrad;
     ctx.fill();
@@ -756,14 +755,13 @@ export class Renderer {
       causticGrad.addColorStop(0.45, `rgba(224, 242, 254, ${(causticPeak * 0.45).toFixed(2)})`);
       causticGrad.addColorStop(1.0, 'rgba(255, 255, 255, 0)');
     } else {
-      const isGreenish = gem.h >= 80 && gem.h <= 175;
-      const cSat = isGreenish ? 78 : 88;
-      const cLight0 = isGreenish ? Math.min(64, Math.round(gem.l * 72)) : Math.min(76, Math.round(gem.l * 95));
-      const cLight1 = isGreenish ? Math.min(52, Math.round(gem.l * 56)) : Math.min(64, Math.round(gem.l * 72));
+      const cSat = 90;
+      const cLight0 = Math.min(78, Math.round(gem.l * 95));
+      const cLight1 = Math.min(66, Math.round(gem.l * 72));
 
       causticGrad.addColorStop(0, `hsla(${gem.h}, ${cSat}%, ${cLight0}%, ${causticPeak.toFixed(2)})`);
       causticGrad.addColorStop(0.45, `hsla(${gem.h}, ${cSat}%, ${cLight1}%, ${(causticPeak * 0.45).toFixed(2)})`);
-      causticGrad.addColorStop(1.0, `hsla(${gem.h}, ${cSat}%, 30%, 0)`);
+      causticGrad.addColorStop(1.0, `hsla(${gem.h}, ${cSat}%, 32%, 0)`);
     }
     ctx.fillStyle = causticGrad;
     ctx.beginPath();
@@ -787,12 +785,10 @@ export class Renderer {
         rimGrad.addColorStop(0.70, 'rgba(186, 230, 253, 0.25)');
         rimGrad.addColorStop(1.0, 'rgba(71, 85, 105, 0.45)');
       } else {
-        const isGreenish = gem.h >= 80 && gem.h <= 175;
-        const rimLight = isGreenish ? 60 : 74;
         rimGrad.addColorStop(0, `rgba(255, 255, 255, ${topRimAlpha})`);
-        rimGrad.addColorStop(0.30, `hsla(${gem.h}, 82%, ${rimLight}%, ${midRimAlpha})`);
-        rimGrad.addColorStop(0.70, `hsla(${gem.h}, 78%, 42%, 0.26)`);
-        rimGrad.addColorStop(1.0, `hsla(${gem.h}, 82%, 24%, 0.45)`);
+        rimGrad.addColorStop(0.30, `hsla(${gem.h}, 84%, 74%, ${midRimAlpha})`);
+        rimGrad.addColorStop(0.70, `hsla(${gem.h}, 80%, 44%, 0.28)`);
+        rimGrad.addColorStop(1.0, `hsla(${gem.h}, 84%, 26%, 0.48)`);
       }
       ctx.strokeStyle = rimGrad;
       ctx.stroke();
