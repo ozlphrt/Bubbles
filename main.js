@@ -24,19 +24,21 @@ window.addEventListener('DOMContentLoaded', () => {
   const topTimerGroup = document.getElementById('topTimerGroup');
   const topTimerVal = document.getElementById('topTimerVal');
 
-  // DOM Elements - Clean Modals
-  const modalObjective = document.getElementById('modalObjective');
+  // DOM Elements - Unified Level Modal
+  const modalLevel = document.getElementById('modalLevel');
+  const levelWinSection = document.getElementById('levelWinSection');
+  const winEyebrow = document.getElementById('winEyebrow');
+  const winStarRating = document.getElementById('winStarRating');
+  const scoreTotal = document.getElementById('scoreTotal');
   const objLevelBadge = document.getElementById('objLevelBadge');
   const objGoalText = document.getElementById('objGoalText');
   const objGoalNum = document.getElementById('objGoalNum');
   const objColorsGrid = document.getElementById('objColorsGrid');
-  const btnStartLevel = document.getElementById('btnStartLevel');
+  const btnPlayLevel = document.getElementById('btnPlayLevel');
+  const btnPlayText = document.getElementById('btnPlayText');
+  const btnReplayLevel = document.getElementById('btnReplayLevel');
 
-  const modalWin = document.getElementById('modalWin');
-  const winStarRating = document.getElementById('winStarRating');
-  const scoreTotal = document.getElementById('scoreTotal');
-  const btnNextLevel = document.getElementById('btnNextLevel');
-  const btnReplayWin = document.getElementById('btnReplayWin');
+  let pendingNextLevel = null;
 
   const modalFail = document.getElementById('modalFail');
   const failResultsGrid = document.getElementById('failResultsGrid');
@@ -239,19 +241,24 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     if (state === GameState.PREFILL || state === GameState.COUNTDOWN) {
-      modalWin.classList.add('hidden');
       modalFail.classList.add('hidden');
-      modalObjective.classList.remove('hidden');
 
-      if (objLevelBadge) objLevelBadge.innerHTML = `<span class="level-lbl">LEVEL</span> <span class="level-num">${levelConfig.level}</span>`;
-      if (objGoalNum) objGoalNum.textContent = levelConfig.targetDiameter;
-      if (objGoalText) objGoalText.textContent = `${levelConfig.targetDiameter}px per color`;
+      if (pendingNextLevel === null) {
+        modalLevel.classList.remove('hidden');
+        levelWinSection.classList.add('hidden');
+        btnReplayLevel.classList.add('hidden');
 
-      renderObjectivePreviewCanvas(levelConfig.colors);
+        if (objLevelBadge) objLevelBadge.innerHTML = `<span class="level-lbl">LEVEL</span> <span class="level-num">${levelConfig.level}</span>`;
+        if (objGoalNum) objGoalNum.textContent = levelConfig.targetDiameter;
+        if (objGoalText) objGoalText.textContent = `${levelConfig.targetDiameter}px per color`;
+        if (btnPlayText) btnPlayText.textContent = 'Play';
+
+        renderObjectivePreviewCanvas(levelConfig.colors);
+      }
     } else if (state === GameState.PHASE2_MERGE) {
-      modalObjective.classList.add('hidden');
-      modalWin.classList.add('hidden');
+      modalLevel.classList.add('hidden');
       modalFail.classList.add('hidden');
+      pendingNextLevel = null;
       lastActivityTime = performance.now();
       renderer.setLockedHint(false);
     }
@@ -321,10 +328,17 @@ window.addEventListener('DOMContentLoaded', () => {
 
   gameEngine.onLevelWin = (scoreData) => {
     renderer.setLockedHint(false);
-    modalObjective.classList.add('hidden');
     modalFail.classList.add('hidden');
-    modalWin.classList.remove('hidden');
+    modalLevel.classList.remove('hidden');
 
+    const currentLvl = scoreData.level;
+    const nextLvl = currentLvl + 1;
+    const nextConfig = getLevelConfig(nextLvl);
+    pendingNextLevel = nextLvl;
+
+    // Show win summary section
+    levelWinSection.classList.remove('hidden');
+    if (winEyebrow) winEyebrow.textContent = `LEVEL ${currentLvl} CLEARED`;
     if (scoreTotal) scoreTotal.textContent = scoreData.totalScore.toLocaleString();
 
     if (winStarRating) {
@@ -334,13 +348,22 @@ window.addEventListener('DOMContentLoaded', () => {
       });
     }
 
+    // Objective section shows next level challenge
+    if (objLevelBadge) objLevelBadge.innerHTML = `<span class="level-lbl">NEXT</span> <span class="level-num">LEVEL ${nextLvl}</span>`;
+    if (objGoalNum) objGoalNum.textContent = nextConfig.targetDiameter;
+    if (objGoalText) objGoalText.textContent = `${nextConfig.targetDiameter}px per color`;
+    renderObjectivePreviewCanvas(nextConfig.colors);
+
+    // Show Replay button alongside Next Level button
+    if (btnReplayLevel) btnReplayLevel.classList.remove('hidden');
+    if (btnPlayText) btnPlayText.textContent = 'Next Level';
+
     renderLevelSelectors(scoreData.level);
   };
 
   gameEngine.onLevelFail = (failData) => {
     renderer.setLockedHint(false);
-    modalObjective.classList.add('hidden');
-    modalWin.classList.add('hidden');
+    modalLevel.classList.add('hidden');
     modalFail.classList.remove('hidden');
 
     // Overall Completion Percentage
@@ -389,9 +412,28 @@ window.addEventListener('DOMContentLoaded', () => {
   };
 
   // Button Listeners
-  if (btnStartLevel) {
-    btnStartLevel.addEventListener('click', () => {
+  if (btnPlayLevel) {
+    btnPlayLevel.addEventListener('click', () => {
       audio.ensureAudio();
+      if (pendingNextLevel !== null) {
+        const nextLvl = pendingNextLevel;
+        pendingNextLevel = null;
+        modalLevel.classList.add('hidden');
+        gameEngine.startLevel(nextLvl, window.innerWidth, window.innerHeight);
+        gameEngine.dismissObjective();
+      } else {
+        modalLevel.classList.add('hidden');
+        gameEngine.dismissObjective();
+      }
+    });
+  }
+
+  if (btnReplayLevel) {
+    btnReplayLevel.addEventListener('click', () => {
+      audio.ensureAudio();
+      pendingNextLevel = null;
+      modalLevel.classList.add('hidden');
+      gameEngine.restartCurrentLevel(window.innerWidth, window.innerHeight);
       gameEngine.dismissObjective();
     });
   }
@@ -399,6 +441,7 @@ window.addEventListener('DOMContentLoaded', () => {
   if (btnRestartLevel) {
     btnRestartLevel.addEventListener('click', () => {
       audio.ensureAudio();
+      pendingNextLevel = null;
       gameEngine.restartCurrentLevel(window.innerWidth, window.innerHeight);
     });
   }
@@ -406,6 +449,7 @@ window.addEventListener('DOMContentLoaded', () => {
   if (btnTryAgain) {
     btnTryAgain.addEventListener('click', () => {
       audio.ensureAudio();
+      pendingNextLevel = null;
       gameEngine.restartCurrentLevel(window.innerWidth, window.innerHeight);
     });
   }
@@ -415,20 +459,6 @@ window.addEventListener('DOMContentLoaded', () => {
       audio.ensureAudio();
       modalFail.classList.add('hidden');
       if (sideDrawer) sideDrawer.classList.add('open');
-    });
-  }
-
-  if (btnReplayWin) {
-    btnReplayWin.addEventListener('click', () => {
-      audio.ensureAudio();
-      gameEngine.restartCurrentLevel(window.innerWidth, window.innerHeight);
-    });
-  }
-
-  if (btnNextLevel) {
-    btnNextLevel.addEventListener('click', () => {
-      audio.ensureAudio();
-      gameEngine.nextLevel(window.innerWidth, window.innerHeight);
     });
   }
 
@@ -800,12 +830,17 @@ window.addEventListener('DOMContentLoaded', () => {
 
     if (e.key === ' ' || e.code === 'Space') {
       e.preventDefault();
-      if (!modalObjective.classList.contains('hidden')) {
-        gameEngine.dismissObjective();
-        return;
-      }
-      if (!modalWin.classList.contains('hidden')) {
-        gameEngine.nextLevel(window.innerWidth, window.innerHeight);
+      if (!modalLevel.classList.contains('hidden')) {
+        if (pendingNextLevel !== null) {
+          const nextLvl = pendingNextLevel;
+          pendingNextLevel = null;
+          modalLevel.classList.add('hidden');
+          gameEngine.startLevel(nextLvl, window.innerWidth, window.innerHeight);
+          gameEngine.dismissObjective();
+        } else {
+          modalLevel.classList.add('hidden');
+          gameEngine.dismissObjective();
+        }
         return;
       }
       if (!modalFail.classList.contains('hidden')) {

@@ -633,6 +633,68 @@ html, body {
   filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.50));
 }
 
+/* Level Win Summary Section inside Unified Modal */
+.level-win-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.level-win-section.hidden {
+  display: none !important;
+}
+
+.modal-section-divider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(245, 208, 140, 0.28), transparent);
+  margin: 4px 0 2px;
+}
+
+.modal-card-objective .modal-buttons-grid {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.modal-card-objective .btn-hero-secondary {
+  width: 48px;
+  height: 46px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #cbd5e1;
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.modal-card-objective .btn-hero-secondary:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.28);
+  transform: translateY(-2px);
+}
+
+.modal-card-objective .btn-hero-secondary:active {
+  transform: translateY(1px) scale(0.96);
+}
+
+.modal-card-objective .btn-hero-secondary.hidden {
+  display: none !important;
+}
+
+.modal-card-objective .btn-hero-primary {
+  flex: 1;
+}
+
 .modal-card-win {
   width: min(88vw, 290px);
   background: 

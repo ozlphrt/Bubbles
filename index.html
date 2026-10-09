@@ -47,11 +47,29 @@
     </div>
 
     <!-- Minimalist Glass Objective Modal -->
-    <div class="modal-overlay hidden" id="modalObjective">
-      <div class="modal-card modal-card-objective">
+    <!-- Unified Level Transition / Objective Modal -->
+    <div class="modal-overlay hidden" id="modalLevel">
+      <div class="modal-card modal-card-objective" id="modalLevelCard">
+        
+        <!-- Win Summary Section (Shown when completing a level) -->
+        <div id="levelWinSection" class="level-win-section hidden">
+          <div class="modal-eyebrow win-eyebrow" id="winEyebrow">LEVEL 1 CLEARED</div>
+          <div class="star-rating-row" id="winStarRating">
+            <span class="star-glyph" data-star="1">✦</span>
+            <span class="star-glyph" data-star="2">✦</span>
+            <span class="star-glyph" data-star="3">✦</span>
+          </div>
+          <div class="modal-score-simple">
+            <span class="score-lbl">SCORE</span>
+            <strong class="score-digits" id="scoreTotal">0</strong>
+          </div>
+          <div class="modal-section-divider"></div>
+        </div>
+
+        <!-- Level Objective Details (Header, Target Size, Color Preview) -->
         <div class="modal-eyebrow" id="objLevelBadge">
           <span class="level-lbl">LEVEL</span>
-          <span class="level-num">1</span>
+          <span class="level-num" id="objLevelNum">1</span>
         </div>
 
         <div class="objective-hero">
@@ -67,33 +85,11 @@
           <canvas id="modalColorsCanvas" class="modal-colors-canvas" width="220" height="36"></canvas>
         </div>
 
-        <button id="btnStartLevel" class="btn-hero-primary">
-          <span>Play</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Minimalist Glass Win Modal -->
-    <div class="modal-overlay hidden" id="modalWin">
-      <div class="modal-card modal-card-win">
-        <div class="modal-eyebrow win-eyebrow">CLEARED</div>
-
-        <div class="star-rating-row" id="winStarRating">
-          <span class="star-glyph" data-star="1">✦</span>
-          <span class="star-glyph" data-star="2">✦</span>
-          <span class="star-glyph" data-star="3">✦</span>
-        </div>
-        
-        <div class="modal-score-simple">
-          <span class="score-lbl">FINAL SCORE</span>
-          <strong class="score-digits" id="scoreTotal">0</strong>
-        </div>
-
-        <div class="modal-buttons-grid">
-          <button id="btnReplayWin" class="btn-hero-secondary" title="Replay" aria-label="Replay">↺</button>
-          <button id="btnNextLevel" class="btn-hero-primary win-cta">
-            <span>Next Level</span>
-            <span class="btn-cta-glyph">→</span>
+        <div class="modal-buttons-grid" id="modalButtonsGrid">
+          <button id="btnReplayLevel" class="btn-hero-secondary hidden" title="Replay" aria-label="Replay">↺</button>
+          <button id="btnPlayLevel" class="btn-hero-primary">
+            <span id="btnPlayText">Play</span>
+            <span class="btn-cta-glyph" id="btnPlayGlyph">→</span>
           </button>
         </div>
       </div>
