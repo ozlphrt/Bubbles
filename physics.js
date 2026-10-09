@@ -310,7 +310,7 @@ export class PhysicsEngine {
       sizeAdvantage: 1.6,     // Laplace suction weight for bigger bubbles
       wobbleIntensity: 1.4,   // Soft shape oscillation intensity
       elasticity: 0.72,       // Soft, compliant, springy fluid bounce
-      gravity: 0.48,          // Fast, responsive downward gravity for brisk, natural falling
+      gravity: 1.5,           // Fast, responsive downward gravity for brisk, natural falling
       viscosity: 0.016,       // Low air drag for crisp movement
       buoyancy: 1,            // Bottom cushion (0, 1, 2)
       wind: 0.0,              // Horizontal current
