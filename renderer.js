@@ -744,38 +744,38 @@ export class Renderer {
     ctx.save();
     ctx.clip();
 
-    // 1. Luminous Optical Gem Body (Vibrant, high-contrast, crystal-clear color)
+    // 1. Translucent Optical Glass Body (Airy, see-through chromatic glass)
     const bodyGrad = ctx.createRadialGradient(-radius * 0.22, -radius * 0.22, radius * 0.05, 0, 0, radius * 1.05);
 
     if (gem.isWhite) {
-      bodyGrad.addColorStop(0, 'rgba(255, 255, 255, 0.78)');
-      bodyGrad.addColorStop(0.35, 'rgba(240, 249, 255, 0.55)');
-      bodyGrad.addColorStop(0.70, 'rgba(215, 228, 245, 0.65)');
-      bodyGrad.addColorStop(1.0, 'rgba(160, 185, 215, 0.85)');
+      bodyGrad.addColorStop(0, 'rgba(255, 255, 255, 0.36)');
+      bodyGrad.addColorStop(0.35, 'rgba(240, 249, 255, 0.22)');
+      bodyGrad.addColorStop(0.70, 'rgba(215, 228, 245, 0.30)');
+      bodyGrad.addColorStop(1.0, 'rgba(160, 185, 215, 0.52)');
     } else {
-      const bSat = 96;
-      bodyGrad.addColorStop(0, `hsla(${gem.h}, ${bSat}%, 74%, 0.72)`);
-      bodyGrad.addColorStop(0.35, `hsla(${gem.h}, ${bSat}%, 60%, 0.58)`);
-      bodyGrad.addColorStop(0.70, `hsla(${gem.h}, ${bSat}%, 48%, 0.72)`);
-      bodyGrad.addColorStop(1.0, `hsla(${gem.h}, ${bSat}%, 38%, 0.88)`);
+      const bSat = 88;
+      bodyGrad.addColorStop(0, `hsla(${gem.h}, ${bSat}%, 66%, 0.34)`);
+      bodyGrad.addColorStop(0.35, `hsla(${gem.h}, ${bSat}%, 55%, 0.22)`);
+      bodyGrad.addColorStop(0.70, `hsla(${gem.h}, ${bSat}%, 44%, 0.36)`);
+      bodyGrad.addColorStop(1.0, `hsla(${gem.h}, ${bSat}%, 30%, 0.60)`);
     }
     ctx.fillStyle = bodyGrad;
     ctx.fill();
 
     // 2. Internal Refractive Caustic Pool (Luminous colored focal heart)
-    const cx = radius * 0.25;
-    const cy = radius * 0.25;
-    const cr = radius * 0.65;
+    const cx = radius * 0.26;
+    const cy = radius * 0.26;
+    const cr = radius * 0.62;
     const causticGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, cr);
 
     if (gem.isWhite) {
-      causticGrad.addColorStop(0, 'rgba(255, 255, 255, 0.90)');
-      causticGrad.addColorStop(0.45, 'rgba(224, 242, 254, 0.50)');
+      causticGrad.addColorStop(0, 'rgba(255, 255, 255, 0.50)');
+      causticGrad.addColorStop(0.45, 'rgba(224, 242, 254, 0.22)');
       causticGrad.addColorStop(1.0, 'rgba(255, 255, 255, 0)');
     } else {
-      causticGrad.addColorStop(0, `hsla(${gem.h}, 100%, 78%, 0.88)`);
-      causticGrad.addColorStop(0.45, `hsla(${gem.h}, 96%, 64%, 0.55)`);
-      causticGrad.addColorStop(1.0, `hsla(${gem.h}, 96%, 48%, 0)`);
+      causticGrad.addColorStop(0, `hsla(${gem.h}, 92%, 68%, 0.48)`);
+      causticGrad.addColorStop(0.45, `hsla(${gem.h}, 88%, 56%, 0.22)`);
+      causticGrad.addColorStop(1.0, `hsla(${gem.h}, 88%, 40%, 0)`);
     }
     ctx.fillStyle = causticGrad;
     ctx.beginPath();
@@ -784,23 +784,23 @@ export class Renderer {
 
     ctx.restore(); // Ends clipping
 
-    // 3. Polished Glass Rim (Fresnel Rim - wraps bubble in radiant, vivid thin glass edge)
+    // 3. Polished Glass Rim (Fresnel Rim - wraps bubble in radiant, delicate glass edge)
     if (typeof traceContour === 'function') {
       ctx.save();
       traceContour();
-      ctx.lineWidth = Math.max(1.4, radius * 0.042);
+      ctx.lineWidth = Math.max(1.1, radius * 0.034);
       const rimGrad = ctx.createLinearGradient(-radius, -radius, radius, radius);
 
       if (gem.isWhite) {
-        rimGrad.addColorStop(0, 'rgba(255, 255, 255, 0.98)');
-        rimGrad.addColorStop(0.35, 'rgba(224, 242, 254, 0.80)');
-        rimGrad.addColorStop(0.70, 'rgba(186, 230, 253, 0.60)');
-        rimGrad.addColorStop(1.0, 'rgba(148, 163, 184, 0.70)');
+        rimGrad.addColorStop(0, 'rgba(255, 255, 255, 0.85)');
+        rimGrad.addColorStop(0.35, 'rgba(224, 242, 254, 0.45)');
+        rimGrad.addColorStop(0.70, 'rgba(186, 230, 253, 0.28)');
+        rimGrad.addColorStop(1.0, 'rgba(100, 116, 139, 0.45)');
       } else {
-        rimGrad.addColorStop(0, 'rgba(255, 255, 255, 0.96)');
-        rimGrad.addColorStop(0.30, `hsla(${gem.h}, 100%, 76%, 0.92)`);
-        rimGrad.addColorStop(0.70, `hsla(${gem.h}, 95%, 58%, 0.75)`);
-        rimGrad.addColorStop(1.0, `hsla(${gem.h}, 95%, 44%, 0.82)`);
+        rimGrad.addColorStop(0, 'rgba(255, 255, 255, 0.85)');
+        rimGrad.addColorStop(0.30, `hsla(${gem.h}, 90%, 70%, 0.55)`);
+        rimGrad.addColorStop(0.70, `hsla(${gem.h}, 86%, 46%, 0.30)`);
+        rimGrad.addColorStop(1.0, `hsla(${gem.h}, 90%, 28%, 0.50)`);
       }
       ctx.strokeStyle = rimGrad;
       ctx.stroke();
