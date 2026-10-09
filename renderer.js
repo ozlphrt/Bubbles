@@ -728,10 +728,16 @@ export class Renderer {
       bodyGrad.addColorStop(0.70, 'rgba(203, 213, 225, 0.28)');
       bodyGrad.addColorStop(1.0, 'rgba(100, 116, 139, 0.48)');
     } else {
-      bodyGrad.addColorStop(0, `hsla(${gem.h}, 95%, ${Math.min(88, Math.round(gem.l * 85))}%, ${centerAlpha})`);
-      bodyGrad.addColorStop(0.35, `hsla(${gem.h}, 92%, ${Math.min(76, Math.round(gem.l * 70))}%, ${midAlpha})`);
-      bodyGrad.addColorStop(0.70, `hsla(${gem.h}, 92%, ${Math.round(gem.l * 54)}%, 0.36)`);
-      bodyGrad.addColorStop(1.0, `hsla(${gem.h}, 95%, 32%, 0.58)`);
+      const isGreenish = gem.h >= 80 && gem.h <= 175;
+      const bSat = isGreenish ? 78 : 90;
+      const l0 = isGreenish ? Math.min(62, Math.round(gem.l * 58)) : Math.min(76, Math.round(gem.l * 75));
+      const l1 = isGreenish ? Math.min(52, Math.round(gem.l * 48)) : Math.min(66, Math.round(gem.l * 62));
+      const l2 = isGreenish ? Math.round(gem.l * 38) : Math.round(gem.l * 46);
+
+      bodyGrad.addColorStop(0, `hsla(${gem.h}, ${bSat}%, ${l0}%, ${centerAlpha})`);
+      bodyGrad.addColorStop(0.35, `hsla(${gem.h}, ${bSat - 3}%, ${l1}%, ${midAlpha})`);
+      bodyGrad.addColorStop(0.70, `hsla(${gem.h}, ${bSat - 3}%, ${l2}%, 0.36)`);
+      bodyGrad.addColorStop(1.0, `hsla(${gem.h}, ${bSat}%, 26%, 0.58)`);
     }
     ctx.fillStyle = bodyGrad;
     ctx.fill();
@@ -741,16 +747,21 @@ export class Renderer {
     const cy = radius * 0.26;
     const cr = radius * 0.62;
     const causticGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, cr);
-    const causticPeak = Math.min(0.62, 0.35 + 0.30 * gem.reflectivity);
+    const causticPeak = Math.min(0.58, 0.32 + 0.26 * gem.reflectivity);
 
     if (gem.isWhite) {
       causticGrad.addColorStop(0, `rgba(255, 255, 255, ${causticPeak.toFixed(2)})`);
       causticGrad.addColorStop(0.45, `rgba(224, 242, 254, ${(causticPeak * 0.45).toFixed(2)})`);
       causticGrad.addColorStop(1.0, 'rgba(255, 255, 255, 0)');
     } else {
-      causticGrad.addColorStop(0, `hsla(${gem.h}, 100%, ${Math.min(94, Math.round(gem.l * 125))}%, ${causticPeak.toFixed(2)})`);
-      causticGrad.addColorStop(0.45, `hsla(${gem.h}, 100%, ${Math.round(gem.l * 90)}%, ${(causticPeak * 0.45).toFixed(2)})`);
-      causticGrad.addColorStop(1.0, `hsla(${gem.h}, 95%, 45%, 0)`);
+      const isGreenish = gem.h >= 80 && gem.h <= 175;
+      const cSat = isGreenish ? 78 : 88;
+      const cLight0 = isGreenish ? Math.min(64, Math.round(gem.l * 72)) : Math.min(76, Math.round(gem.l * 95));
+      const cLight1 = isGreenish ? Math.min(52, Math.round(gem.l * 56)) : Math.min(64, Math.round(gem.l * 72));
+
+      causticGrad.addColorStop(0, `hsla(${gem.h}, ${cSat}%, ${cLight0}%, ${causticPeak.toFixed(2)})`);
+      causticGrad.addColorStop(0.45, `hsla(${gem.h}, ${cSat}%, ${cLight1}%, ${(causticPeak * 0.45).toFixed(2)})`);
+      causticGrad.addColorStop(1.0, `hsla(${gem.h}, ${cSat}%, 30%, 0)`);
     }
     ctx.fillStyle = causticGrad;
     ctx.beginPath();
@@ -765,8 +776,8 @@ export class Renderer {
       traceContour();
       ctx.lineWidth = Math.max(1.1, radius * (0.032 + 0.010 * gem.reflectivity));
       const rimGrad = ctx.createLinearGradient(-radius, -radius, radius, radius);
-      const topRimAlpha = Math.min(0.88, 0.55 + 0.30 * gem.reflectivity).toFixed(2);
-      const midRimAlpha = (0.35 + 0.25 * gem.reflectivity).toFixed(2);
+      const topRimAlpha = Math.min(0.85, 0.52 + 0.28 * gem.reflectivity).toFixed(2);
+      const midRimAlpha = (0.32 + 0.22 * gem.reflectivity).toFixed(2);
 
       if (gem.isWhite) {
         rimGrad.addColorStop(0, `rgba(255, 255, 255, ${topRimAlpha})`);
@@ -774,10 +785,12 @@ export class Renderer {
         rimGrad.addColorStop(0.70, 'rgba(186, 230, 253, 0.25)');
         rimGrad.addColorStop(1.0, 'rgba(71, 85, 105, 0.45)');
       } else {
+        const isGreenish = gem.h >= 80 && gem.h <= 175;
+        const rimLight = isGreenish ? 60 : 74;
         rimGrad.addColorStop(0, `rgba(255, 255, 255, ${topRimAlpha})`);
-        rimGrad.addColorStop(0.30, `hsla(${gem.h}, 100%, 82%, ${midRimAlpha})`);
-        rimGrad.addColorStop(0.70, `hsla(${gem.h}, 90%, 50%, 0.28)`);
-        rimGrad.addColorStop(1.0, `hsla(${gem.h}, 95%, 30%, 0.48)`);
+        rimGrad.addColorStop(0.30, `hsla(${gem.h}, 82%, ${rimLight}%, ${midRimAlpha})`);
+        rimGrad.addColorStop(0.70, `hsla(${gem.h}, 78%, 42%, 0.26)`);
+        rimGrad.addColorStop(1.0, `hsla(${gem.h}, 82%, 24%, 0.45)`);
       }
       ctx.strokeStyle = rimGrad;
       ctx.stroke();

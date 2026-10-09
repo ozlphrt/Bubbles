@@ -613,16 +613,16 @@ html, body {
 .modal-card-win {
   width: min(88vw, 290px);
   background: 
-    radial-gradient(circle at 50% -20%, rgba(52, 211, 153, 0.14) 0%, transparent 70%),
-    linear-gradient(180deg, #151b17 0%, #0d120f 100%);
-  border: 1.5px solid rgba(52, 211, 153, 0.30);
+    radial-gradient(circle at 50% -20%, rgba(245, 208, 140, 0.16) 0%, transparent 70%),
+    linear-gradient(180deg, #191e27 0%, #0e1117 100%);
+  border: 1.5px solid rgba(245, 208, 140, 0.32);
   border-radius: 26px;
   padding: 24px 22px 20px;
   box-shadow: 
-    0 28px 70px -12px rgba(0, 0, 0, 0.90),
-    0 0 0 1px rgba(52, 211, 153, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.20),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.40);
+    0 28px 70px -12px rgba(0, 0, 0, 0.92),
+    0 0 0 1px rgba(245, 208, 140, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.50);
   gap: 14px;
 }
 
@@ -683,10 +683,10 @@ html, body {
 }
 
 .modal-eyebrow.win-eyebrow {
-  color: #6ee7b7;
-  background: rgba(16, 185, 129, 0.14);
-  border-color: rgba(52, 211, 153, 0.38);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.20);
+  color: #fde68a;
+  background: linear-gradient(180deg, rgba(245, 208, 140, 0.18) 0%, rgba(217, 163, 76, 0.08) 100%);
+  border-color: rgba(245, 208, 140, 0.40);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.50), inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
 .modal-fail-header {
@@ -732,10 +732,10 @@ html, body {
 .win-title {
   font-size: 1.35rem;
   letter-spacing: -0.02em;
-  background: linear-gradient(180deg, #ffffff 40%, #a7f3d0 100%);
+  background: linear-gradient(180deg, #ffffff 30%, #fef3c7 70%, #f59e0b 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.7));
+  filter: drop-shadow(0 2px 10px rgba(245, 158, 11, 0.35)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8));
 }
 
 .fail-title {
@@ -794,8 +794,8 @@ html, body {
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45), 0 0 10px rgba(255, 255, 255, 0.15);
 }
 .modal-sphere.sphere-green {
-  background: radial-gradient(circle at 35% 35%, #a7f3d0 0%, #059669 55%, #064e3b 100%);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45), 0 0 12px rgba(5, 150, 105, 0.25);
+  background: radial-gradient(circle at 35% 35%, #34d399 0%, #047857 55%, #022c22 100%);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45), 0 0 12px rgba(4, 120, 87, 0.30);
 }
 .modal-sphere.sphere-red {
   background: radial-gradient(circle at 35% 35%, #fecdd3 0%, #be123c 55%, #4c0519 100%);
@@ -927,8 +927,8 @@ html, body {
 .fail-progress-bar-fill {
   height: 100%;
   border-radius: var(--radius-full);
-  background: linear-gradient(90deg, #f43f5e 0%, #fb923c 60%, #4ade80 100%);
-  box-shadow: 0 0 8px rgba(244, 63, 94, 0.6);
+  background: linear-gradient(90deg, #f43f5e 0%, #fb923c 60%, #fde68a 100%);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
   transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -970,8 +970,8 @@ html, body {
 }
 
 .fail-color-card.pass {
-  border-color: rgba(74, 222, 128, 0.35);
-  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(245, 208, 140, 0.35);
+  background: rgba(245, 208, 140, 0.07);
 }
 
 .fail-color-card.fail {
@@ -1031,7 +1031,7 @@ html, body {
 }
 
 .fail-color-card.pass .fail-stat-ratio {
-  color: #86efac;
+  color: #fde68a;
 }
 
 .fail-color-card.fail .fail-stat-ratio {
@@ -1053,8 +1053,8 @@ html, body {
 }
 
 .fail-color-card.pass .fail-mini-fill {
-  background: #22c55e;
-  box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+  background: linear-gradient(90deg, #f59e0b, #fde68a);
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.45);
 }
 
 .fail-color-card.fail .fail-mini-fill {

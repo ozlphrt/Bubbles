@@ -55,7 +55,7 @@ export const BUBBLE_COLORS = [
     densityLabel: 'Light Floater' 
   },
   { 
-    id: 'fluorite', name: 'Fluorite', hex: '#a7f3d0', hue: 152, isWhite: false, 
+    id: 'fluorite', name: 'Fluorite', hex: '#0d9488', hue: 175, isWhite: false, 
     material: 'Halide', density: 0.54, massFactor: 0.54, gravityScale: 0.64, buoyancy: 0.07, 
     elasticity: 0.84, friction: 0.012, wobbleFreq: 0.19, shininess: 0.85, reflectivity: 0.84, smoothness: 0.86, 
     densityLabel: 'Light' 
@@ -87,7 +87,7 @@ export const BUBBLE_COLORS = [
     densityLabel: 'Light' 
   },
   { 
-    id: 'chrysoprase', name: 'Chrysoprase', hex: '#34d399', hue: 156, isWhite: false, 
+    id: 'chrysoprase', name: 'Chrysoprase', hex: '#059669', hue: 156, isWhite: false, 
     material: 'Chalcedony', density: 0.72, massFactor: 0.72, gravityScale: 0.76, buoyancy: 0.04, 
     elasticity: 0.83, friction: 0.013, wobbleFreq: 0.18, shininess: 0.84, reflectivity: 0.80, smoothness: 0.84, 
     densityLabel: 'Light' 
@@ -99,7 +99,7 @@ export const BUBBLE_COLORS = [
     densityLabel: 'Light' 
   },
   { 
-    id: 'peridot', name: 'Peridot', hex: '#84cc16', hue: 84, isWhite: false, 
+    id: 'peridot', name: 'Peridot', hex: '#65a30d', hue: 85, isWhite: false, 
     material: 'Olivine', density: 0.78, massFactor: 0.78, gravityScale: 0.82, buoyancy: 0.02, 
     elasticity: 0.91, friction: 0.011, wobbleFreq: 0.19, shininess: 0.88, reflectivity: 0.86, smoothness: 0.87, 
     densityLabel: 'Springy Light' 
@@ -131,7 +131,7 @@ export const BUBBLE_COLORS = [
 
   // 21-30: Balanced Harmonious Gemstones (density 0.95 - 1.25)
   { 
-    id: 'green', alias: 'emerald', name: 'Emerald', hex: '#10b981', hue: 156, isWhite: false, 
+    id: 'green', alias: 'emerald', name: 'Emerald', hex: '#059669', hue: 158, isWhite: false, 
     material: 'Beryl', density: 0.95, massFactor: 0.95, gravityScale: 0.95, buoyancy: 0.00, 
     elasticity: 0.78, friction: 0.015, wobbleFreq: 0.16, shininess: 0.72, reflectivity: 0.66, smoothness: 0.68, 
     densityLabel: 'Medium' 
@@ -185,7 +185,7 @@ export const BUBBLE_COLORS = [
     densityLabel: 'Dense' 
   },
   { 
-    id: 'beryl', name: 'Beryl', hex: '#86efac', hue: 142, isWhite: false, 
+    id: 'beryl', name: 'Beryl', hex: '#16a34a', hue: 142, isWhite: false, 
     material: 'Cyclosilicate', density: 1.25, massFactor: 1.25, gravityScale: 1.18, buoyancy: -0.04, 
     elasticity: 0.83, friction: 0.015, wobbleFreq: 0.14, shininess: 0.88, reflectivity: 0.83, smoothness: 0.86, 
     densityLabel: 'Dense' 
