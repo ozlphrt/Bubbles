@@ -51,33 +51,45 @@ export class BurstParticle {
 export const BUBBLE_COLORS = [
   { 
     id: 'white',  name: 'Pearl',    hue: 210, isWhite: true,
-    elasticity: 0.88, massFactor: 0.90, friction: 0.010, wobbleFreq: 0.20,
-    shininess: 1.00, reflectivity: 0.95, smoothness: 0.96
+    density: 0.35, massFactor: 0.35, gravityScale: 0.45, buoyancy: 0.14,
+    elasticity: 0.92, friction: 0.008, wobbleFreq: 0.24,
+    shininess: 1.00, reflectivity: 0.95, smoothness: 0.96,
+    densityLabel: 'Ultra-Light'
   },
   { 
     id: 'cyan',   name: 'Sapphire', hue: 205, isWhite: false,
-    elasticity: 0.85, massFactor: 0.95, friction: 0.012, wobbleFreq: 0.18,
-    shininess: 0.94, reflectivity: 0.88, smoothness: 0.92
-  },
-  { 
-    id: 'red',    name: 'Ruby',     hue: 350, isWhite: false,
-    elasticity: 0.78, massFactor: 1.00, friction: 0.014, wobbleFreq: 0.16,
-    shininess: 0.90, reflectivity: 0.92, smoothness: 0.86
-  },
-  { 
-    id: 'purple', name: 'Amethyst', hue: 275, isWhite: false,
-    elasticity: 0.72, massFactor: 1.05, friction: 0.016, wobbleFreq: 0.15,
-    shininess: 0.85, reflectivity: 0.80, smoothness: 0.82
-  },
-  { 
-    id: 'orange', name: 'Amber',    hue: 42,  isWhite: false,
-    elasticity: 0.62, massFactor: 1.10, friction: 0.022, wobbleFreq: 0.12,
-    shininess: 0.78, reflectivity: 0.72, smoothness: 0.72
+    density: 0.65, massFactor: 0.65, gravityScale: 0.70, buoyancy: 0.06,
+    elasticity: 0.86, friction: 0.011, wobbleFreq: 0.19,
+    shininess: 0.94, reflectivity: 0.88, smoothness: 0.92,
+    densityLabel: 'Light'
   },
   { 
     id: 'green',  name: 'Emerald',  hue: 156, isWhite: false,
-    elasticity: 0.65, massFactor: 1.15, friction: 0.020, wobbleFreq: 0.13,
-    shininess: 0.72, reflectivity: 0.66, smoothness: 0.68
+    density: 0.95, massFactor: 0.95, gravityScale: 0.95, buoyancy: 0.00,
+    elasticity: 0.78, friction: 0.015, wobbleFreq: 0.16,
+    shininess: 0.72, reflectivity: 0.66, smoothness: 0.68,
+    densityLabel: 'Medium'
+  },
+  { 
+    id: 'orange', name: 'Amber',    hue: 42,  isWhite: false,
+    density: 1.35, massFactor: 1.35, gravityScale: 1.20, buoyancy: -0.05,
+    elasticity: 0.68, friction: 0.019, wobbleFreq: 0.13,
+    shininess: 0.78, reflectivity: 0.72, smoothness: 0.72,
+    densityLabel: 'Dense'
+  },
+  { 
+    id: 'red',    name: 'Ruby',     hue: 350, isWhite: false,
+    density: 1.75, massFactor: 1.75, gravityScale: 1.45, buoyancy: -0.10,
+    elasticity: 0.62, friction: 0.022, wobbleFreq: 0.11,
+    shininess: 0.90, reflectivity: 0.92, smoothness: 0.86,
+    densityLabel: 'Heavy'
+  },
+  { 
+    id: 'purple', name: 'Amethyst', hue: 275, isWhite: false,
+    density: 2.30, massFactor: 2.30, gravityScale: 1.75, buoyancy: -0.16,
+    elasticity: 0.55, friction: 0.026, wobbleFreq: 0.08,
+    shininess: 0.85, reflectivity: 0.80, smoothness: 0.82,
+    densityLabel: 'Super-Heavy'
   }
 ];
 
@@ -114,6 +126,12 @@ export class Bubble {
     this.isWhite = c.isWhite;
 
     // Distinct Gemstone Material Physics Traits per Color
+    this.density = c.density !== undefined ? c.density : (c.massFactor || 1.0);
+    this.massFactor = this.density;
+    this.gravityScale = c.gravityScale !== undefined ? c.gravityScale : 1.0;
+    this.buoyancy = c.buoyancy !== undefined ? c.buoyancy : 0.0;
+    this.densityLabel = c.densityLabel || 'Medium';
+
     this.elasticity = c.elasticity !== undefined ? c.elasticity : 0.72;
     this.friction = c.friction !== undefined ? c.friction : 0.016;
     this.wobbleFreq = c.wobbleFreq !== undefined ? c.wobbleFreq : 0.15;
@@ -121,9 +139,8 @@ export class Bubble {
     this.reflectivity = c.reflectivity !== undefined ? c.reflectivity : 0.80;
     this.smoothness = c.smoothness !== undefined ? c.smoothness : 0.80;
 
-    // Mass adjusted slightly by gemstone mineral density
-    const density = c.massFactor || 1.0;
-    this.mass = Math.max(0.2, Math.pow(radius / 22, 2) * density);
+    // Mass determined by physical volume and gemstone mineral density
+    this.mass = Math.max(0.1, Math.pow(radius / 22, 2) * this.density);
 
     // Rayleigh oscillation harmonics (wobble modes)
     this.wobble = 0.0;
@@ -179,8 +196,9 @@ export class Bubble {
     const gamma = Math.max(0.1, config.surfaceTension);
     this.flexibility = Math.min(1.0, Math.max(0.04, Math.pow(Math.max(0, this.radius - 12) / 38, 1.6) / gamma));
 
-    // Fluid forces: Gravity + Air Current + Drag
-    this.vy += config.gravity;
+    // Fluid forces: Density-scaled Gravity + Buoyancy + Air Current + Drag
+    const grav = config.gravity * (this.gravityScale !== undefined ? this.gravityScale : 1.0);
+    this.vy += grav - (this.buoyancy || 0.0);
     this.vx += config.wind;
 
     // Responsive fluid air drag incorporating surface smoothness/friction
@@ -189,8 +207,9 @@ export class Bubble {
     this.vx *= (1 - dragForce);
     this.vy *= (1 - dragForce);
 
-    // Terminal velocity cap (crisp, satisfying fall speed)
-    const maxSpeed = 14.0 + (25 / Math.max(8, this.radius));
+    // Terminal velocity scaled by density (heavier bubbles fall faster, light bubbles float gently)
+    const densityVal = this.density || 1.0;
+    const maxSpeed = (11.0 + (25 / Math.max(8, this.radius))) * Math.sqrt(Math.max(0.45, densityVal));
     const currentSpeedSq = this.vx * this.vx + this.vy * this.vy;
     if (currentSpeedSq > maxSpeed * maxSpeed) {
       const speed = Math.sqrt(currentSpeedSq);
@@ -204,8 +223,8 @@ export class Bubble {
     // Radius smoothing when merging
     if (this.radius !== this.targetRadius) {
       this.radius += (this.targetRadius - this.radius) * 0.25;
-      const density = this.massFactor || 1.0;
-      this.mass = Math.max(0.2, Math.pow(this.radius / 22, 2) * density);
+      const density = this.density || this.massFactor || 1.0;
+      this.mass = Math.max(0.1, Math.pow(this.radius / 22, 2) * density);
     }
 
     // Steady load squish based on floor proximity and weight on top
@@ -307,7 +326,9 @@ export class Bubble {
 
   exciteWobble(amount, angle) {
     const scale = (this.flexibility !== undefined) ? this.flexibility : 1.0;
-    this.wobble = Math.min(0.6, this.wobble + amount * 0.35 * scale);
+    const density = this.density || 1.0;
+    const wobbleDamping = Math.sqrt(1.0 / Math.max(0.35, density));
+    this.wobble = Math.min(0.6, this.wobble + amount * 0.35 * scale * wobbleDamping);
     if (angle !== undefined) {
       this.wobbleAngle = angle;
     }
@@ -683,6 +704,19 @@ export class PhysicsEngine {
           b1.y -= ny * overlap * ratio1 * 0.85;
           b2.x += nx * overlap * ratio2 * 0.85;
           b2.y += ny * overlap * ratio2 * 0.85;
+
+          // Archimedes density buoyancy stratification: lighter bubbles float upward, denser bubbles sink
+          const dDiff = (b2.density || 1.0) - (b1.density || 1.0);
+          if (Math.abs(dDiff) > 0.25) {
+            const verticalAlignment = Math.abs(ny);
+            if (verticalAlignment > 0.35 && dDiff * ny < 0) {
+              // Heavier bubble is higher up: facilitate natural buoyant fluid swap
+              const lift = Math.min(0.38, Math.abs(dDiff) * 0.09 * verticalAlignment);
+              const dir = dDiff > 0 ? 1 : -1;
+              b1.y -= lift * dir;
+              b2.y += lift * dir;
+            }
+          }
         }
       }
 

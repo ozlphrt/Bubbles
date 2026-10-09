@@ -520,6 +520,16 @@ window.addEventListener('DOMContentLoaded', () => {
       sliderExposure.value = exp;
       if (valExposure) valExposure.textContent = `${exp}%`;
     }
+
+    const valDensity = document.getElementById('valDensity');
+    if (valDensity) {
+      const c = BUBBLE_COLORS.find(item => item.id === colorKey);
+      if (c) {
+        valDensity.textContent = `${c.density.toFixed(2)}x • ${c.densityLabel}`;
+      } else {
+        valDensity.textContent = '0.35x (Pearl) → 2.30x (Amethyst)';
+      }
+    }
   }
 
   tunerColorTabs.forEach(tab => {
