@@ -163,6 +163,19 @@ html, body {
   transition: transform 0.15s ease-out;
 }
 
+#topTimerGroup {
+  pointer-events: auto;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  touch-action: manipulation;
+  transition: transform 0.1s ease;
+}
+
+#topTimerGroup:active {
+  transform: scale(0.94);
+}
+
 /* Top Right Controls (Settings Button - Hidden) */
 .top-controls-container {
   display: none !important;

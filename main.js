@@ -494,6 +494,34 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // 5-Tap Gesture on Timer to Open Settings Drawer
+  let timerTapCount = 0;
+  let lastTimerTapTime = 0;
+
+  if (topTimerGroup) {
+    topTimerGroup.addEventListener('pointerdown', (e) => {
+      e.stopPropagation();
+      const now = performance.now();
+      if (now - lastTimerTapTime > 1400) {
+        timerTapCount = 0;
+      }
+      timerTapCount++;
+      lastTimerTapTime = now;
+
+      if (timerTapCount >= 5) {
+        timerTapCount = 0;
+        audio.ensureAudio();
+        if (sideDrawer) {
+          sideDrawer.classList.toggle('open');
+        }
+      }
+    });
+
+    topTimerGroup.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+  }
+
   // Audio Toggle
   if (btnAudioToggle) {
     btnAudioToggle.addEventListener('click', () => {
