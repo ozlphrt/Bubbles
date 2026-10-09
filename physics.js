@@ -504,6 +504,12 @@ export class PhysicsEngine {
 
     // Respawn replacement bubble of the exact same size and color at the top
     const width = typeof window !== 'undefined' ? window.innerWidth : 600;
+    const spawnRadius = Math.min(radius, (this.config.maxBubbleRadius || 100) - 2);
+    const respawnX = Math.max(spawnRadius + 10, Math.min(width - spawnRadius - 10, posX));
+    const respawnY = -spawnRadius - 10;
+    const vx = (Math.random() - 0.5) * 0.5;
+    const vy = 2.5 + Math.random() * 2.0;
+
     if (radius > 50) {
       const splitRadius = Math.round(radius / Math.SQRT2);
       this.spawnBubble(Math.max(splitRadius + 8, respawnX - 16), respawnY, splitRadius, -0.4, vy, colorId);
