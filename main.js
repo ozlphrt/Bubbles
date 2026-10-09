@@ -42,6 +42,28 @@ window.addEventListener('DOMContentLoaded', () => {
   const btnTryAgain = document.getElementById('btnTryAgain');
   const btnSelectLevelFail = document.getElementById('btnSelectLevelFail');
 
+  // In-Game Guidance Toast System
+  const ingameHintPill = document.getElementById('ingameHintPill');
+  let hintTimeout = null;
+  let lastActivityTime = performance.now();
+
+  function showInGameHint(durationMs = 6000) {
+    if (!ingameHintPill) return;
+    ingameHintPill.classList.add('visible');
+    if (hintTimeout) clearTimeout(hintTimeout);
+    if (durationMs > 0) {
+      hintTimeout = setTimeout(() => {
+        ingameHintPill.classList.remove('visible');
+      }, durationMs);
+    }
+  }
+
+  function hideInGameHint() {
+    if (!ingameHintPill) return;
+    ingameHintPill.classList.remove('visible');
+    if (hintTimeout) clearTimeout(hintTimeout);
+  }
+
   // DOM Elements - Navigation & Drawer
   const btnAudioToggle = document.getElementById('btnAudioToggle');
   const audioOnIcon = document.querySelector('.audio-on-icon');
@@ -248,6 +270,8 @@ window.addEventListener('DOMContentLoaded', () => {
       modalObjective.classList.add('hidden');
       modalWin.classList.add('hidden');
       modalFail.classList.add('hidden');
+      lastActivityTime = performance.now();
+      showInGameHint(6500);
     }
   };
 
@@ -269,6 +293,13 @@ window.addEventListener('DOMContentLoaded', () => {
         topTimerGroup.classList.remove('urgent-amber', 'urgent-red');
       }
     }
+
+    // If player hasn't merged or spawned in 14s, gently suggest tapping empty gaps to unlock
+    if (gameEngine.state === GameState.PHASE2_MERGE) {
+      if (performance.now() - lastActivityTime > 14000) {
+        showInGameHint(5000);
+      }
+    }
   };
 
   gameEngine.onBonusTime = (seconds, x, y) => {
@@ -284,6 +315,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   let lastBonusTimeMs = 0;
   physics.onMerge = (x, y, newRadius, sizeRatio, colorId) => {
+    lastActivityTime = performance.now();
     if (gameEngine.state === GameState.PHASE2_MERGE) {
       const now = performance.now();
       if (now - lastBonusTimeMs < 3000) return;
@@ -310,6 +342,7 @@ window.addEventListener('DOMContentLoaded', () => {
   gameEngine.onColorProgress = (progressList) => {};
 
   gameEngine.onLevelWin = (scoreData) => {
+    hideInGameHint();
     modalObjective.classList.add('hidden');
     modalFail.classList.add('hidden');
     modalWin.classList.remove('hidden');
@@ -327,6 +360,7 @@ window.addEventListener('DOMContentLoaded', () => {
   };
 
   gameEngine.onLevelFail = (failData) => {
+    hideInGameHint();
     modalObjective.classList.add('hidden');
     modalWin.classList.add('hidden');
     modalFail.classList.remove('hidden');
@@ -740,9 +774,15 @@ window.addEventListener('DOMContentLoaded', () => {
           physics.popBubble(hitIndex, true);
         }
       } else {
+        lastActivityTime = performance.now();
         const radius = 26 + Math.random() * 18;
         const b = physics.spawnBubble(coords.x, coords.y, radius, (Math.random() - 0.5) * 1.5, (Math.random() - 0.5) * 1.5);
-        if (b) b.scalePulse = 1.15;
+        if (b) {
+          b.scalePulse = 1.15;
+          renderer.addFloatingText('+Gem', coords.x, coords.y - 12, '#38bdf8');
+          audio.playPop(1.4, radius);
+        }
+        hideInGameHint();
       }
     }
   });

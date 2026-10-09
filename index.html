@@ -18,6 +18,12 @@
   <div id="app-container">
     <!-- Simulation Canvas -->
     <canvas id="simCanvas"></canvas>
+    
+    <!-- In-Game Guidance Hint -->
+    <div class="ingame-hint-pill" id="ingameHintPill">
+      <span class="hint-sparkle">✨</span>
+      <span class="hint-text">Tap empty gaps to spawn new gems & unlock merges</span>
+    </div>
 
     <!-- Top Left Objective & Timer Display (Level, Goal, Time) -->
     <div class="top-stats-container">
@@ -53,6 +59,14 @@
 
         <div class="modal-color-preview" id="objColorsGrid">
           <canvas id="modalColorsCanvas" class="modal-colors-canvas" width="220" height="36"></canvas>
+        </div>
+
+        <div class="modal-guidance-card">
+          <span class="guidance-icon">💡</span>
+          <div class="guidance-body">
+            <span class="guidance-title">Unblock Anytime</span>
+            <span class="guidance-desc">Tap empty gaps between bubbles to spawn new gems and unlock tight clusters!</span>
+          </div>
         </div>
 
         <button id="btnStartLevel" class="btn-hero-primary">
@@ -112,6 +126,11 @@
 
         <div class="fail-checklist-container" id="failResultsGrid">
           <!-- Dynamic Glass Color Cards with Mini Bubble Canvases & Progress Bars -->
+        </div>
+
+        <div class="fail-tip-card">
+          <span class="tip-icon">💡</span>
+          <span>Stuck? Tap empty gaps between bubbles to spawn gems and unlock tight clusters!</span>
         </div>
 
         <div class="modal-buttons-grid">

@@ -427,8 +427,8 @@ html, body {
 
 /* Ultra-sleek floating translucent liquid glass card for Objective */
 .modal-card-objective {
-  width: min(88vw, 275px);
-  background: radial-gradient(circle at 50% -20%, rgba(56, 189, 248, 0.14) 0%, transparent 75%), rgba(11, 17, 32, 0.80);
+  width: min(92vw, 320px);
+  background: radial-gradient(circle at 50% -20%, rgba(56, 189, 248, 0.14) 0%, transparent 75%), rgba(11, 17, 32, 0.85);
   backdrop-filter: blur(28px) saturate(190%);
   -webkit-backdrop-filter: blur(28px) saturate(190%);
   border: 1px solid rgba(255, 255, 255, 0.15);
@@ -439,6 +439,45 @@ html, body {
     0 0 0 1px rgba(255, 255, 255, 0.05),
     inset 0 1px 0 rgba(255, 255, 255, 0.22);
   gap: 12px;
+}
+
+.modal-guidance-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: rgba(56, 189, 248, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  border-radius: var(--radius-md);
+  padding: 9px 12px;
+  text-align: left;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.guidance-icon {
+  font-size: 1.15rem;
+  line-height: 1.2;
+  flex-shrink: 0;
+}
+
+.guidance-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.guidance-title {
+  font-size: 0.70rem;
+  font-weight: 700;
+  color: #38bdf8;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-family: var(--font-mono);
+}
+
+.guidance-desc {
+  font-size: 0.74rem;
+  color: #cbd5e1;
+  line-height: 1.35;
 }
 
 .modal-card-objective::before {
@@ -994,6 +1033,72 @@ html, body {
 .fail-color-card.fail .fail-mini-fill {
   background: linear-gradient(90deg, #f43f5e 0%, #fb923c 100%);
   box-shadow: 0 0 6px rgba(244, 63, 94, 0.4);
+}
+
+.fail-tip-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(244, 63, 94, 0.07);
+  border: 1px solid rgba(244, 63, 94, 0.20);
+  border-radius: var(--radius-md);
+  padding: 7px 11px;
+  font-size: 0.74rem;
+  color: #fecdd3;
+  line-height: 1.35;
+  text-align: left;
+}
+
+.fail-tip-card .tip-icon {
+  font-size: 1.05rem;
+  flex-shrink: 0;
+}
+
+/* In-Game Guidance Hint Pill */
+.ingame-hint-pill {
+  position: absolute;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%) translateY(14px);
+  background: rgba(10, 15, 28, 0.86);
+  backdrop-filter: blur(24px) saturate(200%);
+  -webkit-backdrop-filter: blur(24px) saturate(200%);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  box-shadow: 
+    0 12px 32px rgba(0, 0, 0, 0.75), 
+    0 0 18px rgba(56, 189, 248, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.20);
+  border-radius: var(--radius-full);
+  padding: 7px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #f1f5f9;
+  font-family: var(--font-sans);
+  font-size: 0.80rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 60;
+  white-space: nowrap;
+}
+
+.ingame-hint-pill.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.hint-sparkle {
+  color: #38bdf8;
+  font-size: 0.95rem;
+  animation: pulseSparkle 2s infinite ease-in-out;
+}
+
+@keyframes pulseSparkle {
+  0%, 100% { transform: scale(1); opacity: 0.85; }
+  50% { transform: scale(1.25); opacity: 1; }
 }
 
 .btn-hero-secondary.btn-icon-label {
