@@ -213,23 +213,27 @@ export class Bubble {
     // Boundary constraints (Soft, springy boundary cushion)
     if (this.x - this.radius < 0) {
       this.x = this.radius;
-      if (this.vx < -0.35) {
-        this.exciteWobble(0.25 * this.flexibility, 0);
+      if (this.vx < -1.6) {
+        this.exciteWobble(0.20 * this.flexibility, 0);
+        this.vx = -this.vx * 0.35;
+      } else {
+        this.vx = 0;
       }
-      this.vx = Math.abs(this.vx) * 0.50;
     } else if (this.x + this.radius > width) {
       this.x = width - this.radius;
-      if (this.vx > 0.35) {
-        this.exciteWobble(0.25 * this.flexibility, Math.PI);
+      if (this.vx > 1.6) {
+        this.exciteWobble(0.20 * this.flexibility, Math.PI);
+        this.vx = -this.vx * 0.35;
+      } else {
+        this.vx = 0;
       }
-      this.vx = -Math.abs(this.vx) * 0.50;
     }
 
     // Top container ceiling boundary
     if (this.y - this.radius < 0) {
       this.y = this.radius;
-      if (this.vy < -0.30) {
-        this.vy = -this.vy * 0.30;
+      if (this.vy < -1.5) {
+        this.vy = -this.vy * 0.25;
       } else {
         this.vy = 0;
       }
@@ -239,14 +243,15 @@ export class Bubble {
     if (this.y + this.radius >= height) {
       this.y = height - this.radius;
       
-      if (this.vy > 0.50) {
-        this.vy = -this.vy * (config.elasticity || 0.7) * 0.30;
+      const impactThreshold = Math.max(2.4, (config.gravity || 1.5) * 1.6);
+      if (this.vy > impactThreshold) {
+        this.vy = -this.vy * (config.elasticity || 0.7) * 0.25;
       } else {
         this.vy = 0;
       }
 
-      this.vx *= 0.85; // Natural floor friction
-      if (Math.abs(this.vx) < 0.04) this.vx = 0;
+      this.vx *= 0.80; // Natural floor friction
+      if (Math.abs(this.vx) < 0.05) this.vx = 0;
     }
 
     // Rounded corners containment (radius = 40px)
@@ -267,8 +272,15 @@ export class Bubble {
           this.y = cy + ny * maxAllowed;
           const vDot = this.vx * nx + this.vy * ny;
           if (vDot > 0) {
-            this.vx -= (1 + (this.elasticity || 0.72)) * vDot * nx * 0.7;
-            this.vy -= (1 + (this.elasticity || 0.72)) * vDot * ny * 0.7;
+            if (vDot > 2.0) {
+              this.vx -= (1 + (this.elasticity || 0.72)) * vDot * nx * 0.4;
+              this.vy -= (1 + (this.elasticity || 0.72)) * vDot * ny * 0.4;
+            } else {
+              this.vx -= vDot * nx;
+              this.vy -= vDot * ny;
+              this.vx *= 0.85;
+              this.vy *= 0.85;
+            }
           }
         }
       } else if (this.x > width - cornerR) {
@@ -285,8 +297,15 @@ export class Bubble {
           this.y = cy + ny * maxAllowed;
           const vDot = this.vx * nx + this.vy * ny;
           if (vDot > 0) {
-            this.vx -= (1 + (this.elasticity || 0.72)) * vDot * nx * 0.7;
-            this.vy -= (1 + (this.elasticity || 0.72)) * vDot * ny * 0.7;
+            if (vDot > 2.0) {
+              this.vx -= (1 + (this.elasticity || 0.72)) * vDot * nx * 0.4;
+              this.vy -= (1 + (this.elasticity || 0.72)) * vDot * ny * 0.4;
+            } else {
+              this.vx -= vDot * nx;
+              this.vy -= vDot * ny;
+              this.vx *= 0.85;
+              this.vy *= 0.85;
+            }
           }
         }
       }
@@ -307,8 +326,15 @@ export class Bubble {
           this.y = cy + ny * maxAllowed;
           const vDot = this.vx * nx + this.vy * ny;
           if (vDot < 0) {
-            this.vx -= (1 + (this.elasticity || 0.72)) * vDot * nx * 0.7;
-            this.vy -= (1 + (this.elasticity || 0.72)) * vDot * ny * 0.7;
+            if (vDot < -2.0) {
+              this.vx -= (1 + (this.elasticity || 0.72)) * vDot * nx * 0.4;
+              this.vy -= (1 + (this.elasticity || 0.72)) * vDot * ny * 0.4;
+            } else {
+              this.vx -= vDot * nx;
+              this.vy -= vDot * ny;
+              this.vx *= 0.85;
+              this.vy *= 0.85;
+            }
           }
         }
       } else if (this.x > width - cornerR) {
@@ -325,8 +351,15 @@ export class Bubble {
           this.y = cy + ny * maxAllowed;
           const vDot = this.vx * nx + this.vy * ny;
           if (vDot < 0) {
-            this.vx -= (1 + (this.elasticity || 0.72)) * vDot * nx * 0.7;
-            this.vy -= (1 + (this.elasticity || 0.72)) * vDot * ny * 0.7;
+            if (vDot < -2.0) {
+              this.vx -= (1 + (this.elasticity || 0.72)) * vDot * nx * 0.4;
+              this.vy -= (1 + (this.elasticity || 0.72)) * vDot * ny * 0.4;
+            } else {
+              this.vx -= vDot * nx;
+              this.vy -= vDot * ny;
+              this.vx *= 0.85;
+              this.vy *= 0.85;
+            }
           }
         }
       }
@@ -711,41 +744,19 @@ export class PhysicsEngine {
           const ny = dist > 0.001 ? dy / dist : (Math.random() - 0.5);
           const overlap = minDist - dist;
 
-          const totalMass = b1.mass + b2.mass;
-          // Clamp mass displacement ratio so massive bubbles cannot unyieldingly crush tiny bubbles into walls
-          const rawRatio1 = b2.mass / totalMass;
-          const ratio1 = Math.max(0.20, Math.min(0.80, rawRatio1));
-          const ratio2 = 1.0 - ratio1;
+          if (overlap > 0.01) {
+            const totalMass = b1.mass + b2.mass;
+            const rawRatio1 = b2.mass / totalMass;
+            const ratio1 = Math.max(0.20, Math.min(0.80, rawRatio1));
+            const ratio2 = 1.0 - ratio1;
 
-          // Firm non-penetration position correction (bubbles cannot overlap)
-          b1.x -= nx * overlap * ratio1 * 0.90;
-          b1.y -= ny * overlap * ratio1 * 0.90;
-          b2.x += nx * overlap * ratio2 * 0.90;
-          b2.y += ny * overlap * ratio2 * 0.90;
-
-          // Archimedes density buoyancy stratification: lighter bubbles float upward, denser bubbles sink
-          const dDiff = (b2.density || 1.0) - (b1.density || 1.0);
-          if (Math.abs(dDiff) > 0.25) {
-            const verticalAlignment = Math.abs(ny);
-            if (verticalAlignment > 0.35 && dDiff * ny < 0) {
-              // Heavier bubble is higher up: facilitate natural buoyant fluid swap
-              const lift = Math.min(0.38, Math.abs(dDiff) * 0.09 * verticalAlignment);
-              const dir = dDiff > 0 ? 1 : -1;
-              b1.y -= lift * dir;
-              b2.y += lift * dir;
-            }
+            // Stable 0.70 relaxation factor: resolves 99% overlap across 4 passes without oscillation overshoot
+            const solveRatio = 0.70;
+            b1.x -= nx * overlap * ratio1 * solveRatio;
+            b1.y -= ny * overlap * ratio1 * solveRatio;
+            b2.x += nx * overlap * ratio2 * solveRatio;
+            b2.y += ny * overlap * ratio2 * solveRatio;
           }
-        } else if (distSq < minDist * 1.08 * (minDist * 1.08)) {
-          // Capillary Meniscus Cohesion (Cheerios effect): Surface tension draws adjacent bubbles into snug contact
-          const dist = Math.max(0.001, Math.sqrt(distSq));
-          const nx = dx / dist;
-          const ny = dy / dist;
-          const gap = dist - minDist;
-          const cohesion = 0.28 * (1.0 - gap / (minDist * 0.08));
-          b1.x += nx * cohesion * 0.5;
-          b1.y += ny * cohesion * 0.5;
-          b2.x -= nx * cohesion * 0.5;
-          b2.y -= ny * cohesion * 0.5;
         }
       }
 
@@ -760,14 +771,15 @@ export class PhysicsEngine {
       
       if (b1.y + b1.radius >= height) {
         b1.y = height - b1.radius;
-        if (b1.vy > 0.8) {
-          b1.vy = -b1.vy * (b1.elasticity || 0.72) * 0.35;
+        const impactThreshold = Math.max(2.4, (this.config.gravity || 1.5) * 1.6);
+        if (b1.vy > impactThreshold) {
+          b1.vy = -b1.vy * (b1.elasticity || 0.72) * 0.25;
           b1.exciteWobble(0.20 * b1.flexibility, Math.PI / 2);
         } else {
           b1.vy = 0;
         }
-        b1.vx *= Math.max(0.70, 1 - (b1.friction || 0.016) * 8);
-        if (Math.abs(b1.vx) < 0.04) b1.vx = 0;
+        b1.vx *= Math.max(0.60, 1 - (b1.friction || 0.016) * 10);
+        if (Math.abs(b1.vx) < 0.05) b1.vx = 0;
       }
 
       // Rounded bottom corners containment (radius = 40px)
@@ -789,11 +801,17 @@ export class PhysicsEngine {
               b1.y = cy + ny * maxAllowed;
               const vDot = b1.vx * nx + b1.vy * ny;
               if (vDot > 0) {
-                b1.vx -= (1 + (b1.elasticity || 0.72)) * vDot * nx * 0.7;
-                b1.vy -= (1 + (b1.elasticity || 0.72)) * vDot * ny * 0.7;
+                if (vDot > 2.0) {
+                  b1.vx -= (1 + (b1.elasticity || 0.72)) * vDot * nx * 0.4;
+                  b1.vy -= (1 + (b1.elasticity || 0.72)) * vDot * ny * 0.4;
+                } else {
+                  b1.vx -= vDot * nx;
+                  b1.vy -= vDot * ny;
+                  b1.vx *= 0.85;
+                  b1.vy *= 0.85;
+                }
               }
             } else if (maxAllowed <= 0) {
-              // Bubble is larger than corner radius: keep its center within safe boundaries
               b1.x = Math.max(b1.radius, b1.x);
               b1.y = Math.min(height - b1.radius, b1.y);
             }
@@ -814,12 +832,83 @@ export class PhysicsEngine {
               b1.y = cy + ny * maxAllowed;
               const vDot = b1.vx * nx + b1.vy * ny;
               if (vDot > 0) {
-                b1.vx -= (1 + (b1.elasticity || 0.72)) * vDot * nx * 0.7;
-                b1.vy -= (1 + (b1.elasticity || 0.72)) * vDot * ny * 0.7;
+                if (vDot > 2.0) {
+                  b1.vx -= (1 + (b1.elasticity || 0.72)) * vDot * nx * 0.4;
+                  b1.vy -= (1 + (b1.elasticity || 0.72)) * vDot * ny * 0.4;
+                } else {
+                  b1.vx -= vDot * nx;
+                  b1.vy -= vDot * ny;
+                  b1.vx *= 0.85;
+                  b1.vy *= 0.85;
+                }
               }
             } else if (maxAllowed <= 0) {
               b1.x = Math.min(width - b1.radius, b1.x);
               b1.y = Math.min(height - b1.radius, b1.y);
+            }
+          }
+        }
+      }
+      // Rounded top corners containment (radius = 40px)
+      if (b1.y < cornerR) {
+        if (b1.x < cornerR) {
+          const cx = cornerR;
+          const cy = cornerR;
+          const dx = b1.x - cx;
+          const dy = b1.y - cy;
+          if (dx < 0 && dy < 0) {
+            const dist = Math.hypot(dx, dy);
+            const maxAllowed = cornerR - b1.radius;
+            if (maxAllowed > 0 && dist > maxAllowed) {
+              const nx = dx / dist;
+              const ny = dy / dist;
+              b1.x = cx + nx * maxAllowed;
+              b1.y = cy + ny * maxAllowed;
+              const vDot = b1.vx * nx + b1.vy * ny;
+              if (vDot < 0) {
+                if (vDot < -2.0) {
+                  b1.vx -= (1 + (b1.elasticity || 0.72)) * vDot * nx * 0.4;
+                  b1.vy -= (1 + (b1.elasticity || 0.72)) * vDot * ny * 0.4;
+                } else {
+                  b1.vx -= vDot * nx;
+                  b1.vy -= vDot * ny;
+                  b1.vx *= 0.85;
+                  b1.vy *= 0.85;
+                }
+              }
+            } else if (maxAllowed <= 0) {
+              b1.x = Math.max(b1.radius, b1.x);
+              b1.y = Math.max(b1.radius, b1.y);
+            }
+          }
+        } else if (b1.x > width - cornerR) {
+          const cx = width - cornerR;
+          const cy = cornerR;
+          const dx = b1.x - cx;
+          const dy = b1.y - cy;
+          if (dx > 0 && dy < 0) {
+            const dist = Math.hypot(dx, dy);
+            const maxAllowed = cornerR - b1.radius;
+            if (maxAllowed > 0 && dist > maxAllowed) {
+              const nx = dx / dist;
+              const ny = dy / dist;
+              b1.x = cx + nx * maxAllowed;
+              b1.y = cy + ny * maxAllowed;
+              const vDot = b1.vx * nx + b1.vy * ny;
+              if (vDot < 0) {
+                if (vDot < -2.0) {
+                  b1.vx -= (1 + (b1.elasticity || 0.72)) * vDot * nx * 0.4;
+                  b1.vy -= (1 + (b1.elasticity || 0.72)) * vDot * ny * 0.4;
+                } else {
+                  b1.vx -= vDot * nx;
+                  b1.vy -= vDot * ny;
+                  b1.vx *= 0.85;
+                  b1.vy *= 0.85;
+                }
+              }
+            } else if (maxAllowed <= 0) {
+              b1.x = Math.min(width - b1.radius, b1.x);
+              b1.y = Math.max(b1.radius, b1.y);
             }
           }
         }
@@ -1040,8 +1129,10 @@ export class PhysicsEngine {
           } else {
             // === CALM BOUNCE & PLATEAU FOAM STABILITY ===
             const overlap = Math.max(0, minDist - dist);
+            const impactThreshold = Math.max(2.2, (this.config.gravity || 1.5) * 1.5);
 
-            if (velAlongNormal < -0.1) {
+            if (velAlongNormal < -impactThreshold) {
+              // 1. High-energy dynamic impact: elastic bounce with restitution and deformation
               const combinedElasticity = ((b1.elasticity || this.config.elasticity) + (b2.elasticity || this.config.elasticity)) * 0.5;
               const impulse = -(1 + combinedElasticity) * velAlongNormal / (1 / b1.mass + 1 / b2.mass);
               
@@ -1057,23 +1148,32 @@ export class PhysicsEngine {
               b2.contactAngle = bounceAngle + Math.PI;
               b2.contactSquish = Math.min(0.25, (overlap / b2.radius) * 0.3 * b2.flexibility);
 
-              if (velAlongNormal < -0.45) {
-                const squish1 = Math.min(0.4, Math.abs(velAlongNormal) * 0.15 * (b1.elasticity || 0.72)) * b1.flexibility;
-                const squish2 = Math.min(0.4, Math.abs(velAlongNormal) * 0.15 * (b2.elasticity || 0.72)) * b2.flexibility;
-                b1.exciteWobble(squish1, bounceAngle);
-                b2.exciteWobble(squish2, bounceAngle + Math.PI);
-              }
+              const squish1 = Math.min(0.35, Math.abs(velAlongNormal) * 0.12 * (b1.elasticity || 0.72)) * b1.flexibility;
+              const squish2 = Math.min(0.35, Math.abs(velAlongNormal) * 0.12 * (b2.elasticity || 0.72)) * b2.flexibility;
+              b1.exciteWobble(squish1, bounceAngle);
+              b2.exciteWobble(squish2, bounceAngle + Math.PI);
 
-              if (soundEngine && Math.abs(velAlongNormal) > 0.4) {
-                soundEngine.playBounce(Math.min(1.0, Math.abs(velAlongNormal) / 3.0), smaller.radius);
+              if (soundEngine && Math.abs(velAlongNormal) > 1.2) {
+                soundEngine.playBounce(Math.min(1.0, Math.abs(velAlongNormal) / 4.0), smaller.radius);
               }
-            } else {
-              // Gentle resting contact damping modulated by surface friction
-              const frictionDamping = 1 - Math.min(0.12, ((b1.friction || 0.016) + (b2.friction || 0.016)) * 2);
+            } else if (velAlongNormal < 0) {
+              // 2. Resting contact / gentle compression under gravity: completely inelastic (restitution = 0)
+              // Cancels closing velocity along the contact normal so bubbles do NOT bounce off each other
+              const impulse = -velAlongNormal / (1 / b1.mass + 1 / b2.mass);
+              b1.vx -= (impulse / b1.mass) * nx;
+              b1.vy -= (impulse / b1.mass) * ny;
+              b2.vx += (impulse / b2.mass) * nx;
+              b2.vy += (impulse / b2.mass) * ny;
+
+              // Gentle resting contact surface friction damping
+              const frictionDamping = 0.90;
               b1.vx *= frictionDamping;
               b1.vy *= frictionDamping;
               b2.vx *= frictionDamping;
               b2.vy *= frictionDamping;
+
+              if (Math.hypot(b1.vx, b1.vy) < 0.05) { b1.vx = 0; b1.vy = 0; }
+              if (Math.hypot(b2.vx, b2.vy) < 0.05) { b2.vx = 0; b2.vy = 0; }
             }
           }
         }
