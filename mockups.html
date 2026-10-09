@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bubble Number Style Mockups - 15 Variations</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0e14;
+      --card-bg: #121721;
+      --card-border: rgba(245, 208, 140, 0.20);
+      --accent-gold: #fde68a;
+      --accent-amber: #f59e0b;
+      --text-primary: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background: radial-gradient(circle at 50% 0%, #192231 0%, #090c10 70%);
+      color: var(--text-primary);
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      padding: 36px 20px 80px;
+    }
+    .header {
+      max-width: 1200px;
+      margin: 0 auto 36px;
+      text-align: center;
+    }
+    .eyebrow {
+      display: inline-block;
+      font-size: 0.76rem;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent-gold);
+      background: rgba(245, 208, 140, 0.12);
+      border: 1px solid rgba(245, 208, 140, 0.32);
+      padding: 4px 14px;
+      border-radius: 999px;
+      margin-bottom: 12px;
+    }
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(180deg, #ffffff 40%, #fde68a 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+    p.sub {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      max-width: 680px;
+      margin: 0 auto 24px;
+    }
+    .actions-bar {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .btn-nav {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(245, 208, 140, 0.15);
+      border: 1px solid rgba(245, 208, 140, 0.35);
+      color: var(--accent-gold);
+      padding: 10px 20px;
+      border-radius: 999px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.95rem;
+      transition: all 0.2s ease;
+    }
+    .btn-nav:hover {
+      background: rgba(245, 208, 140, 0.25);
+      transform: translateY(-2px);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 24px;
+      max-width: 1240px;
+      margin: 0 auto;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 22px;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(245, 208, 140, 0.45);
+    }
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+    .card-id {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.80rem;
+      font-weight: 800;
+      color: var(--accent-gold);
+      background: rgba(245, 208, 140, 0.12);
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #ffffff;
+      flex-grow: 1;
+      margin-left: 10px;
+    }
+    .card-desc {
+      font-size: 0.84rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+    .preview-canvas-wrap {
+      background: radial-gradient(circle at 50% 50%, #151c27 0%, #080a0e 100%);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 14px;
+      padding: 14px 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    canvas {
+      display: block;
+      filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.6));
+    }
+    .specs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+    .spec-pill {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.70rem;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.05);
+      color: #cbd5e1;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="eyebrow">Design Showcase</div>
+    <h1>15 Bubble Number Style Mockups</h1>
+    <p class="sub">High-fidelity visual mockups rendered across multiple gem bubble colors (Amber, Green, Blue, Ruby, Moonstone). Review the options below to pick the best fit.</p>
+    <div class="actions-bar">
+      <a href="/" class="btn-nav">← Back to Game</a>
+    </div>
+  </div>
+
+  <div class="grid" id="mockupGrid"></div>
+
+  <script type="module">
+    import { BubbleRenderer } from './renderer.js';
+
+    const renderer = new BubbleRenderer();
+
+    const styles = [
+      {
+        id: 1,
+        title: "Pure Porcelain White (High Contrast)",
+        desc: "Solid white core with a razor obsidian halo. Razor-sharp legibility on both dark and light gems.",
+        specs: ["Core: #FFFFFF", "Halo: #050811 (14%)", "Blur: 4px", "Vibe: Clean / Crisp"],
+        render: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.95);
+          ctx.font = `800 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          // Outer dark shadow halo
+          ctx.save();
+          ctx.shadowColor = 'rgba(0,0,0,0.85)';
+          ctx.shadowBlur = Math.round(fs * 0.18);
+          ctx.shadowOffsetY = 2;
+          ctx.strokeStyle = '#050811';
+          ctx.lineWidth = Math.max(3, fs * 0.12);
+          ctx.strokeText(num, x, y);
+          ctx.restore();
+
+          // Solid porcelain white core
+          ctx.fillStyle = '#ffffff';
+          ctx.fillText(num, x, y);
+        }
+      },
+      {
+        id: 2,
+        title: "Champagne & Warm Gold Foil",
+        desc: "Warm metallic gold gradient with dark bronze perimeter. Perfectly matches the game's luxury gold UI frame.",
+        specs: ["Core: Gold Gradient (#FEF08A -> #D97706)", "Border: #291804", "Vibe: Luxurious"],
+        render: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.95);
+          ctx.font = `800 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          // Dark bronze halo
+          ctx.save();
+          ctx.strokeStyle = '#1e1102';
+          ctx.lineWidth = Math.max(3.2, fs * 0.12);
+          ctx.shadowColor = 'rgba(0,0,0,0.85)';
+          ctx.shadowBlur = Math.round(fs * 0.16);
+          ctx.strokeText(num, x, y);
+          ctx.restore();
+
+          // Gold Gradient
+          const grad = ctx.createLinearGradient(x, y - fs * 0.5, x, y + fs * 0.5);
+          grad.addColorStop(0, '#ffffff');
+          grad.addColorStop(0.35, '#fef08a');
+          grad.addColorStop(0.70, '#f59e0b');
+          grad.addColorStop(1.0, '#b45309');
+          ctx.fillStyle = grad;
+          ctx.fillText(num, x, y);
+        }
+      },
+      {
+        id: 3,
+        title: "Soft Complementary Tint",
+        desc: "Number tint adapts harmoniously to the bubble's jewel tone with a bright luminous center.",
+        specs: ["Core: Tonal Pastel", "Aura: Gem Bloom", "Vibe: Chromatic Harmony"],
+        render: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.95);
+          ctx.font = `800 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          // Dark outline
+          ctx.save();
+          ctx.strokeStyle = 'rgba(4, 7, 14, 0.95)';
+          ctx.lineWidth = Math.max(3.2, fs * 0.13);
+          ctx.strokeText(num, x, y);
+          ctx.restore();
+
+          // Tinted core
+          ctx.save();
+          ctx.shadowColor = gem.glow;
+          ctx.shadowBlur = Math.round(fs * 0.22);
+          ctx.fillStyle = '#ffffff';
+          ctx.fillText(num, x, y);
+          ctx.restore();
+        }
+      },
+      {
+        id: 4,
+        title: "Debossed Crystal Etch",
+        desc: "Laser-etched inside the crystal bubble with top inner shadow and bottom light reflection bevel.",
+        specs: ["Shadow: Top Dark Inset", "Highlight: Bottom Bevel", "Vibe: Physical Gem Carving"],
+        render: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.92);
+          ctx.font = `800 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          // Bottom specular bevel reflection
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+          ctx.fillText(num, x, y + 1.8);
+
+          // Deep recessed core
+          ctx.fillStyle = 'rgba(10, 15, 24, 0.88)';
+          ctx.fillText(num, x, y);
+        }
+      },
+      {
+        id: 5,
+        title: "Inverted Obsidian Onyx Core",
+        desc: "Pitch-black dark typography encased in a bright radiant rim matching the bubble color.",
+        specs: ["Core: #080C14", "Stroke: #FFFFFF", "Vibe: Bold Contrast"],
+        render: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.95);
+          ctx.font = `900 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          // Outer luminous ring
+          ctx.save();
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = Math.max(3.5, fs * 0.14);
+          ctx.shadowColor = gem.glow;
+          ctx.shadowBlur = 10;
+          ctx.strokeText(num, x, y);
+          ctx.restore();
+
+          // Obsidian inner core
+          ctx.fillStyle = '#080c14';
+          ctx.fillText(num, x, y);
+        }
+      },
+      {
+        id: 6,
+        title: "Neon Plasma Core",
+        desc: "Electrified neon aura with double bloom glow and radiant white-hot filament center.",
+        specs: ["Glow: Multi-layer Bloom", "Core: Hot White", "Vibe: High Energy Arcade"],
+        render: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.94);
+          ctx.font = `800 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          // Deep dark halo
+          ctx.strokeStyle = 'rgba(2, 6, 12, 0.95)';
+          ctx.lineWidth = Math.max(4, fs * 0.16);
+          ctx.strokeText(num, x, y);
+
+          // Neon stroke
+          ctx.save();
+          ctx.shadowColor = gem.glow;
+          ctx.shadowBlur = 14;
+          ctx.strokeStyle = gem.glow;
+          ctx.lineWidth = Math.max(2, fs * 0.08);
+          ctx.strokeText(num, x, y);
+          ctx.restore();
+
+          // Hot center
+          ctx.fillStyle = '#ffffff';
+          ctx.fillText(num, x, y);
+        }
+      },
+      {
+        id: 7,
+        title: "Swiss Slate Minimal",
+        desc: "Zero neon glare. Crisp flat off-white typography with a gentle graphite offset shadow.",
+        specs: ["Color: #F1F5F9", "Shadow: Pure 0/1px Offset", "Vibe: Modern Swiss Graphic"],
+        render: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.95);
+          ctx.font = `800 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          // Tight graphite shadow
+          ctx.save();
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
+          ctx.shadowBlur = 2;
+          ctx.shadowOffsetX = 1;
+          ctx.shadowOffsetY = 2;
+          ctx.fillStyle = '#f8fafc';
+          ctx.fillText(num, x, y);
+          ctx.restore();
+        }
+      },
+      {
+        id: 8,
+        title: "Prismatic Iridescent Sheen",
+        desc: "Multi-spectrum rainbow gradient simulating thin-film optical interference on soap bubbles.",
+        specs: ["Gradient: Coral -> Violet -> Cyan", "Rim: Dark Slate", "Vibe: Soap Bubble Spectrum"],
+        render: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.95);
+          ctx.font = `900 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          // Dark halo
+          ctx.strokeStyle = '#05070e';
+          ctx.lineWidth = Math.max(3.2, fs * 0.12);
+          ctx.strokeText(num, x, y);
+
+          // Prismatic gradient
+          const grad = ctx.createLinearGradient(x - fs * 0.5, y - fs * 0.5, x + fs * 0.5, y + fs * 0.5);
+          grad.addColorStop(0, '#fbcfe8');
+          grad.addColorStop(0.33, '#fed7aa');
+          grad.addColorStop(0.66, '#a7f3d0');
+          grad.addColorStop(1.0, '#bae6fd');
+          ctx.fillStyle = grad;
+          ctx.fillText(num, x, y);
+        }
+      },
+      {
+        id: 9,
+        title: "Liquid Silver Chrome",
+        desc: "Reflective liquid mercury / polished silver with bright horizon line and specular glints.",
+        specs: ["Core: Chrome Metallic", "Border: Polished Platinum", "Vibe: Futuristic Chrome"],
+        render: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.95);
+          ctx.font = `900 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          ctx.strokeStyle = '#090d16';
+          ctx.lineWidth = Math.max(3.5, fs * 0.14);
+          ctx.strokeText(num, x, y);
+
+          const grad = ctx.createLinearGradient(x, y - fs * 0.5, x, y + fs * 0.5);
+          grad.addColorStop(0, '#ffffff');
+          grad.addColorStop(0.48, '#e2e8f0');
+          grad.addColorStop(0.52, '#64748b');
+          grad.addColorStop(0.85, '#cbd5e1');
+          grad.addColorStop(1.0, '#ffffff');
+          ctx.fillStyle = grad;
+          ctx.fillText(num, x, y);
+        }
+      },
+      {
+        id: 10,
+        title: "3D Beveled Brilliant Cut",
+        desc: "Upper-left facets in bright light with lower-right shade facets, giving a sculptured gem relief.",
+        specs: ["Relief: Dual Light Offset", "Core: Champagne Amber", "Vibe: Chiseled Crystal"],
+        render: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.94);
+          ctx.font = `900 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          // Bottom shade offset
+          ctx.fillStyle = '#78350f';
+          ctx.fillText(num, x + 1.8, y + 1.8);
+
+          // Top highlight offset
+          ctx.fillStyle = '#ffffff';
+          ctx.fillText(num, x - 1.2, y - 1.2);
+
+          // Center face
+          ctx.fillStyle = '#fbbf24';
+          ctx.fillText(num, x, y);
+        }
+      },
+      {
+        id: 11,
+        title: "Warm Pearl Glow",
+        desc: "Soft warm ivory core (#FFFBEB) with a gentle diffuse candle-flame aura.",
+        specs: ["Core: #FFFBEB Ivory", "Aura: Warm Diffuse Amber", "Vibe: Organic Warmth"],
+        render: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.95);
+          ctx.font = `800 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          ctx.save();
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+          ctx.shadowBlur = 6;
+          ctx.strokeStyle = '#18120c';
+          ctx.lineWidth = Math.max(3.2, fs * 0.12);
+          ctx.strokeText(num, x, y);
+          ctx.restore();
+
+          ctx.save();
+          ctx.shadowColor = 'rgba(251, 191, 36, 0.55)';
+          ctx.shadowBlur = 8;
+          ctx.fillStyle = '#fffbeb';
+          ctx.fillText(num, x, y);
+          ctx.restore();
+        }
+      },
+      {
+        id: 12,
+        title: "Arcade Royal Gold",
+        desc: "Bold high-energy royal gold typography with stark pitch-black stroke. Unbeatable arcade punch.",
+        specs: ["Core: #FBBF24 Solid Gold", "Stroke: #000000 Solid", "Vibe: Arcade Punch"],
+        render: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.96);
+          ctx.font = `900 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          ctx.strokeStyle = '#000000';
+          ctx.lineWidth = Math.max(4, fs * 0.15);
+          ctx.strokeText(num, x, y);
+
+          ctx.fillStyle = '#fbbf24';
+          ctx.fillText(num, x, y);
+        }
+      },
+      {
+        id: 13,
+        title: "Subtle Glass Watermark",
+        desc: "Translucent frosted white watermark floating inside the gem dome with no aggressive outline.",
+        specs: ["Core: 85% Translucent White", "Shadow: Soft Inset Depth", "Vibe: Ambient Glass"],
+        render: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.92);
+          ctx.font = `700 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          ctx.save();
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
+          ctx.shadowBlur = 4;
+          ctx.shadowOffsetY = 1.5;
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.88)';
+          ctx.fillText(num, x, y);
+          ctx.restore();
+        }
+      },
+      {
+        id: 14,
+        title: "Ice Cyan Sci-Fi",
+        desc: "Crystalline ice-cyan luminescence with electric plasma edge. Futuristic high-tech puzzle feel.",
+        specs: ["Core: #E0F2FE", "Rim: #38BDF8 Electric Cyan", "Vibe: Sci-Fi / Cyber"],
+        render: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.94);
+          ctx.font = `800 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          ctx.strokeStyle = '#040d1a';
+          ctx.lineWidth = Math.max(3.8, fs * 0.14);
+          ctx.strokeText(num, x, y);
+
+          ctx.save();
+          ctx.shadowColor = '#38bdf8';
+          ctx.shadowBlur = 10;
+          ctx.fillStyle = '#e0f2fe';
+          ctx.fillText(num, x, y);
+          ctx.restore();
+        }
+      },
+      {
+        id: 15,
+        title: "Charcoal Velvet Matte",
+        desc: "Deep pitch charcoal number enclosed in a soft pale ivory border. Subdued, elegant, and ultra-refined.",
+        specs: ["Core: #111827 Matte Charcoal", "Rim: #FEF3C7 Pale Ivory", "Vibe: Understated Editorial"],
+        render: (ctx, x, y, r, num, gem) => {
+          const fs = Math.round(r * 0.95);
+          ctx.font = `900 ${fs}px Outfit, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          ctx.strokeStyle = '#fef3c7';
+          ctx.lineWidth = Math.max(3, fs * 0.12);
+          ctx.strokeText(num, x, y);
+
+          ctx.fillStyle = '#111827';
+          ctx.fillText(num, x, y);
+        }
+      }
+    ];
+
+    const container = document.getElementById('mockupGrid');
+
+    const sampleGems = [
+      { color: 'green', num: '140', name: 'Emerald' },
+      { color: 'amber', num: '98', name: 'Amber' },
+      { color: 'blue', num: '162', name: 'Sapphire' },
+      { color: 'red', num: '85', name: 'Ruby' },
+      { color: 'white', num: '196', name: 'Diamond' }
+    ];
+
+    styles.forEach(style => {
+      const card = document.createElement('div');
+      card.className = 'card';
+
+      card.innerHTML = `
+        <div class="card-top">
+          <span class="card-id">STYLE ${style.id}</span>
+          <h2 class="card-title">${style.title}</h2>
+        </div>
+        <p class="card-desc">${style.desc}</p>
+        <div class="preview-canvas-wrap">
+          <canvas id="canvas_${style.id}" width="340" height="74"></canvas>
+        </div>
+        <div class="specs">
+          ${style.specs.map(s => `<span class="spec-pill">${s}</span>`).join('')}
+        </div>
+      `;
+
+      container.appendChild(card);
+
+      const canvas = card.querySelector(`#canvas_${style.id}`);
+      const ctx = canvas.getContext('2d');
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = 340 * dpr;
+      canvas.height = 74 * dpr;
+      canvas.style.width = '340px';
+      canvas.style.height = '74px';
+      ctx.scale(dpr, dpr);
+
+      // Render 5 sample bubbles across the card width
+      const bubbleR = 27;
+      const spacing = 64;
+      const startX = 42;
+      const centerY = 37;
+
+      sampleGems.forEach((gem, idx) => {
+        const bx = startX + idx * spacing;
+        const by = centerY;
+
+        // Render base gem bubble from renderer
+        ctx.save();
+        renderer.renderStandaloneBubble(ctx, bx, by, bubbleR, gem.color);
+        ctx.restore();
+
+        // Render custom number style
+        ctx.save();
+        const gemInfo = renderer.getGemColorInfo(gem.color);
+        style.render(ctx, bx, by, bubbleR, gem.num, gemInfo);
+        ctx.restore();
+      });
+    });
+  </script>
+</body>
+</html>
