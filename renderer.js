@@ -592,6 +592,13 @@ export class Renderer {
       });
     }
 
+    let minR = radius;
+    for (let i = 0; i < numPoints; i++) {
+      if (smoothedRadii[i] < minR) minR = smoothedRadii[i];
+    }
+    b.minRadius = minR;
+    b.contourPoints = points;
+
     // 4. Define and draw bubble contour
     const traceContour = () => {
       ctx.beginPath();
@@ -1035,12 +1042,36 @@ export class Renderer {
       ctx.save();
       ctx.translate(b.x, b.y);
 
-      // Lowlight completed goal bubble readout: smaller, calm, non-distracting
-      let fontScale = isGoalReached ? 0.65 : 0.86;
-      let fontSize = Math.floor(b.radius * fontScale);
+      // Strictly clip readout to the bubble's actual boundary so text never bleeds outside
+      if (b.contourPoints && b.contourPoints.length > 0) {
+        ctx.beginPath();
+        const pts = b.contourPoints;
+        ctx.moveTo(pts[0].x, pts[0].y);
+        for (let i = 0; i < pts.length; i++) {
+          const p0 = pts[i];
+          const p1 = pts[(i + 1) % pts.length];
+          const midX = (p0.x + p1.x) * 0.5;
+          const midY = (p0.y + p1.y) * 0.5;
+          ctx.quadraticCurveTo(p0.x, p0.y, midX, midY);
+        }
+        ctx.closePath();
+        ctx.clip();
+      }
+
+      // Responsive font sizing based on actual compressed surface radius
+      const effR = b.minRadius ? Math.min(b.radius, b.minRadius) : b.radius;
+      let fontScale = isGoalReached ? 0.36 : 0.48;
+      let fontSize = Math.max(10, Math.floor(effR * fontScale));
+
+      // Strictly bound width and height to preserve generous internal padding
+      const maxAllowedWidth = effR * 1.30;
+      const maxAllowedHeight = effR * 0.68;
+      if (fontSize > maxAllowedHeight) {
+        fontSize = Math.floor(maxAllowedHeight);
+      }
+
       ctx.font = `${isGoalReached ? '600' : '800'} ${fontSize}px Outfit, Inter, system-ui, sans-serif`;
       let textWidth = ctx.measureText(text).width;
-      const maxAllowedWidth = b.radius * 1.35;
       if (textWidth > maxAllowedWidth) {
         fontSize = Math.floor(fontSize * (maxAllowedWidth / textWidth));
         ctx.font = `${isGoalReached ? '600' : '800'} ${fontSize}px Outfit, Inter, system-ui, sans-serif`;
