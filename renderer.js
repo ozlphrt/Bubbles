@@ -582,25 +582,6 @@ export class Renderer {
       });
     }
 
-    // Outer ambient lantern light bloom (casts soft luminous light matching gem color into surrounding foam)
-    if (isGoalReached) {
-      const pulse = 0.92 + 0.08 * Math.sin(this.time * 2.5);
-      const outerAuraRadius = radius * 1.40;
-      const isWhite = b.isWhite || b.colorId === 'white' || (b.colorIndex === 0 && b.hue === 0);
-      const gem = this.getGemColorInfo(isWhite ? 'white' : (b.colorId || 'red'), b);
-
-      ctx.save();
-      const lampGlow = ctx.createRadialGradient(0, 0, radius * 0.35, 0, 0, outerAuraRadius);
-      lampGlow.addColorStop(0, isWhite ? `rgba(255, 255, 255, ${0.32 * pulse})` : `hsla(${gem.h}, 100%, 75%, ${0.32 * pulse})`);
-      lampGlow.addColorStop(0.40, isWhite ? `rgba(224, 242, 254, ${0.20 * pulse})` : `hsla(${gem.h}, 100%, 60%, ${0.20 * pulse})`);
-      lampGlow.addColorStop(1.0, 'rgba(0, 0, 0, 0)');
-      ctx.fillStyle = lampGlow;
-      ctx.beginPath();
-      ctx.arc(0, 0, outerAuraRadius, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
-
     // 4. Define and draw bubble contour
     const traceContour = () => {
       ctx.beginPath();
@@ -618,20 +599,20 @@ export class Renderer {
     traceContour();
 
     // 5. Faceted Brilliant Gemstone Shading
-    if (b.opacity !== undefined && b.opacity < 1.0) {
+    // If goal reached: deliberately lowlight bubble (subdued opacity so unfinished bubbles take center focus)
+    if (isGoalReached) {
+      ctx.globalAlpha = (b.opacity !== undefined ? Math.max(0, b.opacity) : 1.0) * 0.46;
+    } else if (b.opacity !== undefined && b.opacity < 1.0) {
       ctx.globalAlpha = Math.max(0, b.opacity);
     }
     this.applyThemeStyle(ctx, b, radius, traceContour);
 
-    // 6. Volumetric Internal Lit Lamp Effect (When Goal Diameter Reached)
+    // If goal reached: apply subtle frosted lowlight wash and subdued rim
     if (isGoalReached) {
-      const isWhite = b.isWhite || b.colorId === 'white' || (b.colorIndex === 0 && b.hue === 0);
-      const colorKey = isWhite ? 'white' : (b.colorId || 'red');
-      const gem = this.getGemColorInfo(colorKey, b);
-      this.renderLampInterior(ctx, b, radius, gem, traceContour);
+      this.renderLowlightOverlay(ctx, b, radius, traceContour);
     }
 
-    // 7. Fusion Energy Flash Glow Overlay on Merge
+    // 6. Fusion Energy Flash Glow Overlay on Merge
     if (b.flashLife && b.flashLife > 0.02) {
       const flashGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, radius);
       flashGrad.addColorStop(0, `rgba(255, 255, 255, ${b.flashLife * 0.45})`);
@@ -641,104 +622,48 @@ export class Renderer {
       ctx.fill();
     }
 
-    // 8. Specular Diamond Starburst Highlights & Scintillation Glints
-    this.renderHighlights(ctx, radius, b);
+    // 7. Specular Diamond Starburst Highlights & Scintillation Glints
+    // Subdue specular glints on completed bubbles so they don't sparkle or distract the player
+    if (isGoalReached) {
+      ctx.save();
+      ctx.globalAlpha = (b.opacity !== undefined ? b.opacity : 1.0) * 0.18;
+      this.renderHighlights(ctx, radius, b);
+      ctx.restore();
+    } else {
+      this.renderHighlights(ctx, radius, b);
+    }
 
     ctx.restore();
   }
 
   /**
-   * Renders the volumetric illuminated lamp effect inside a goal-met bubble
+   * Applies subtle lowlighting to a completed goal-met bubble
+   * (Subdues saturation, softens contrast, and provides a calm frosted satisfaction aesthetic)
    */
-  /**
-   * Renders realistic volumetric transillumination inside a goal-met bubble
-   * (Physical subsurface scattering, glowing incandescent filament core, fluid caustics, and Fresnel edge emission)
-   */
-  renderLampInterior(ctx, b, radius, gem, traceContour) {
-    const pulse = 0.94 + 0.06 * Math.sin(this.time * 2.5);
-    const isWhite = gem.isWhite;
-
+  renderLowlightOverlay(ctx, b, radius, traceContour) {
     ctx.save();
     traceContour();
     ctx.clip();
 
-    // 1. Volumetric Subsurface Transillumination
-    // Soft radiant light that permeates the entire volume from within, matching the gem's true wavelength
-    const lampGrad = ctx.createRadialGradient(0, 0, radius * 0.02, 0, 0, radius * 0.96);
-    lampGrad.addColorStop(0, `rgba(255, 255, 255, ${0.92 * pulse})`);
-    lampGrad.addColorStop(0.12, isWhite ? `rgba(255, 255, 255, ${0.85 * pulse})` : `hsla(${gem.h}, 90%, 90%, ${0.85 * pulse})`);
-    lampGrad.addColorStop(0.38, isWhite ? `rgba(224, 242, 254, ${0.60 * pulse})` : `hsla(${gem.h}, 95%, 68%, ${0.65 * pulse})`);
-    lampGrad.addColorStop(0.72, isWhite ? `rgba(186, 230, 253, ${0.40 * pulse})` : `hsla(${gem.h}, 100%, 52%, ${0.45 * pulse})`);
-    lampGrad.addColorStop(1.0, isWhite ? `rgba(147, 197, 253, ${0.20 * pulse})` : `hsla(${gem.h}, 100%, 42%, ${0.25 * pulse})`);
-    ctx.fillStyle = lampGrad;
+    // 1. Soft dark glass recessing wash
+    ctx.fillStyle = 'rgba(6, 9, 18, 0.38)';
     ctx.fill();
 
-    // 2. Organic Fluid Subsurface Caustics
-    // Soft, undulating internal focal caustic pool (gently breathing with bubble wobble, no rigid mechanical spokes)
-    const causticOffset = radius * 0.12;
-    const causticWobbleX = Math.cos(this.time * 1.5) * (radius * 0.04);
-    const causticWobbleY = Math.sin(this.time * 1.8) * (radius * 0.04);
-    const causticRadius = radius * 0.70;
-
-    const fluidCaustic = ctx.createRadialGradient(
-      causticOffset + causticWobbleX, 
-      causticOffset + causticWobbleY, 
-      0, 
-      causticOffset + causticWobbleX, 
-      causticOffset + causticWobbleY, 
-      causticRadius
-    );
-    const causticAlpha = isWhite ? 0.35 : 0.42;
-    fluidCaustic.addColorStop(0, isWhite ? `rgba(255, 255, 255, ${causticAlpha * pulse})` : `hsla(${gem.h}, 100%, 82%, ${causticAlpha * pulse})`);
-    fluidCaustic.addColorStop(0.50, isWhite ? `rgba(224, 242, 254, ${(causticAlpha * 0.45 * pulse).toFixed(2)})` : `hsla(${gem.h}, 100%, 65%, ${(causticAlpha * 0.45 * pulse).toFixed(2)})`);
-    fluidCaustic.addColorStop(1.0, 'rgba(255, 255, 255, 0)');
-    ctx.fillStyle = fluidCaustic;
-    ctx.beginPath();
-    ctx.arc(causticOffset + causticWobbleX, causticOffset + causticWobbleY, causticRadius, 0, Math.PI * 2);
+    // 2. Subtle frosted crystalline vignette
+    const frostGrad = ctx.createRadialGradient(0, 0, radius * 0.35, 0, 0, radius * 0.98);
+    frostGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+    frostGrad.addColorStop(0.70, 'rgba(148, 163, 184, 0.06)');
+    frostGrad.addColorStop(1.0, 'rgba(15, 23, 42, 0.40)');
+    ctx.fillStyle = frostGrad;
     ctx.fill();
 
-    // 3. Incandescent Filament Light Core
-    // Realistic spherical light-emitter core with soft natural Gaussian decay
-    const bulbR = Math.max(6, radius * 0.18);
-    const bulbGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, bulbR * 2.2);
-    bulbGrad.addColorStop(0, '#ffffff');
-    bulbGrad.addColorStop(0.20, 'rgba(255, 255, 255, 0.95)');
-    bulbGrad.addColorStop(0.50, isWhite ? 'rgba(240, 249, 255, 0.65)' : `hsla(${gem.h}, 100%, 85%, 0.70)`);
-    bulbGrad.addColorStop(1.0, isWhite ? 'rgba(255, 255, 255, 0)' : `hsla(${gem.h}, 100%, 70%, 0)`);
-
-    ctx.save();
-    ctx.fillStyle = bulbGrad;
-    ctx.beginPath();
-    ctx.arc(0, 0, bulbR * 2.2, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Subtle horizontal optical lens glint through curved glass
-    const glintW = radius * 0.65;
-    const glintH = Math.max(2, radius * 0.04);
-    const glintGrad = ctx.createLinearGradient(-glintW * 0.5, 0, glintW * 0.5, 0);
-    glintGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
-    glintGrad.addColorStop(0.5, `rgba(255, 255, 255, ${0.40 * pulse})`);
-    glintGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
-    ctx.fillStyle = glintGrad;
-    ctx.fillRect(-glintW * 0.5, -glintH * 0.5, glintW, glintH);
     ctx.restore();
 
-    ctx.restore(); // Ends clipping to contour
-
-    // 4. Total Internal Reflection & Fresnel Luminous Rim
-    // Glass boundary lights up where internal rays strike the surface
+    // 3. Subtle, calm perimeter rim (soft subdued slate/white, no loud neon)
     ctx.save();
     traceContour();
-    ctx.lineWidth = Math.max(2.0, radius * 0.035);
-    ctx.strokeStyle = isWhite ? `rgba(255, 255, 255, ${0.90 * pulse})` : `hsla(${gem.h}, 100%, 82%, ${0.88 * pulse})`;
-    ctx.shadowColor = isWhite ? 'rgba(224, 242, 254, 0.75)' : `hsla(${gem.h}, 100%, 65%, 0.75)`;
-    ctx.shadowBlur = Math.max(8, radius * 0.18);
-    ctx.stroke();
-
-    // Crisp pure white specular highlight edge
-    ctx.lineWidth = Math.max(1.0, radius * 0.015);
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.92)';
-    ctx.shadowBlur = 0;
+    ctx.lineWidth = Math.max(1.0, radius * 0.02);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.16)';
     ctx.stroke();
     ctx.restore();
   }
@@ -1052,62 +977,74 @@ export class Renderer {
       ctx.save();
       ctx.translate(b.x, b.y);
 
-      // Scale font size to fit comfortably inside the gem
-      let fontSize = Math.floor(b.radius * 0.86);
-      ctx.font = `800 ${fontSize}px Outfit, Inter, system-ui, sans-serif`;
+      // Lowlight completed goal bubble readout: smaller, calm, non-distracting
+      let fontScale = isGoalReached ? 0.65 : 0.86;
+      let fontSize = Math.floor(b.radius * fontScale);
+      ctx.font = `${isGoalReached ? '600' : '800'} ${fontSize}px Outfit, Inter, system-ui, sans-serif`;
       let textWidth = ctx.measureText(text).width;
       const maxAllowedWidth = b.radius * 1.35;
       if (textWidth > maxAllowedWidth) {
         fontSize = Math.floor(fontSize * (maxAllowedWidth / textWidth));
-        ctx.font = `800 ${fontSize}px Outfit, Inter, system-ui, sans-serif`;
+        ctx.font = `${isGoalReached ? '600' : '800'} ${fontSize}px Outfit, Inter, system-ui, sans-serif`;
         textWidth = ctx.measureText(text).width;
       }
 
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
 
-      // 1. Soft radial vignette behind number
-      // Keeps text crisp while allowing internal lantern light to shine through naturally
-      const auraRadius = Math.max(textWidth * 0.65, fontSize * 0.80);
-      const auraGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, auraRadius);
-      auraGrad.addColorStop(0, isGoalReached ? 'rgba(0, 0, 0, 0.22)' : 'rgba(3, 7, 18, 0.58)');
-      auraGrad.addColorStop(0.55, isGoalReached ? 'rgba(255, 255, 255, 0.08)' : `rgba(${em.glowRgb}, 0.24)`);
-      auraGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      if (isGoalReached) {
+        // Lowlighted subtle text: muted translucent slate/white, no loud neon glow
+        ctx.save();
+        ctx.fillStyle = 'rgba(203, 213, 225, 0.55)';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
+        ctx.shadowBlur = 3;
+        ctx.shadowOffsetY = 1;
+        ctx.fillText(text, 0, 0);
+        ctx.restore();
+      } else {
+        // Active goal bubble: high-contrast vibrant glow and crisp white-hot core
+        // 1. Soft radial vignette & light emission aura behind number
+        const auraRadius = Math.max(textWidth * 0.70, fontSize * 0.85);
+        const auraGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, auraRadius);
+        auraGrad.addColorStop(0, 'rgba(3, 7, 18, 0.58)');
+        auraGrad.addColorStop(0.55, `rgba(${em.glowRgb}, 0.24)`);
+        auraGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
 
-      ctx.beginPath();
-      ctx.arc(0, 0, auraRadius, 0, Math.PI * 2);
-      ctx.fillStyle = auraGrad;
-      ctx.fill();
+        ctx.beginPath();
+        ctx.arc(0, 0, auraRadius, 0, Math.PI * 2);
+        ctx.fillStyle = auraGrad;
+        ctx.fill();
 
-      // 2. Outer Light Emission Bloom
-      ctx.save();
-      ctx.shadowColor = isGoalReached ? '#fef08a' : em.glow;
-      ctx.shadowBlur = Math.max(10, fontSize * 0.38);
-      ctx.lineWidth = Math.max(2, fontSize * 0.06);
-      ctx.strokeStyle = isGoalReached ? 'rgba(254, 240, 138, 0.70)' : `rgba(${em.glowRgb}, 0.75)`;
-      ctx.lineJoin = 'round';
-      ctx.strokeText(text, 0, 0);
-      ctx.restore();
+        // 2. Outer Light Emission Bloom
+        ctx.save();
+        ctx.shadowColor = em.glow;
+        ctx.shadowBlur = Math.max(12, fontSize * 0.45);
+        ctx.lineWidth = Math.max(2, fontSize * 0.06);
+        ctx.strokeStyle = `rgba(${em.glowRgb}, 0.75)`;
+        ctx.lineJoin = 'round';
+        ctx.strokeText(text, 0, 0);
+        ctx.restore();
 
-      // 3. Crisp Dark Outline Halo (Detaches text cleanly from glossy reflections)
-      ctx.save();
-      ctx.strokeStyle = isGoalReached ? 'rgba(10, 15, 28, 0.90)' : em.stroke;
-      ctx.lineWidth = Math.max(3.0, fontSize * 0.11);
-      ctx.lineJoin = 'round';
-      ctx.lineCap = 'round';
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.65)';
-      ctx.shadowBlur = Math.max(4, fontSize * 0.14);
-      ctx.shadowOffsetY = Math.max(1, fontSize * 0.04);
-      ctx.strokeText(text, 0, 0);
-      ctx.restore();
+        // 3. Crisp Dark Outline Halo (Detaches text cleanly from glossy reflections)
+        ctx.save();
+        ctx.strokeStyle = em.stroke;
+        ctx.lineWidth = Math.max(3.2, fontSize * 0.12);
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.65)';
+        ctx.shadowBlur = Math.max(4, fontSize * 0.14);
+        ctx.shadowOffsetY = Math.max(1, fontSize * 0.04);
+        ctx.strokeText(text, 0, 0);
+        ctx.restore();
 
-      // 4. White-Hot Luminous Core Fill
-      ctx.save();
-      ctx.fillStyle = '#ffffff';
-      ctx.shadowColor = isGoalReached ? '#fef08a' : em.glow;
-      ctx.shadowBlur = Math.max(4, fontSize * 0.16);
-      ctx.fillText(text, 0, 0);
-      ctx.restore();
+        // 4. White-Hot Luminous Core Fill
+        ctx.save();
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = em.glow;
+        ctx.shadowBlur = Math.max(4, fontSize * 0.16);
+        ctx.fillText(text, 0, 0);
+        ctx.restore();
+      }
 
       ctx.restore();
     }
