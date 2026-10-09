@@ -719,49 +719,38 @@ export class Renderer {
     ctx.save();
     ctx.clip();
 
-    // 1. Translucent Optical Glass Body (Airy, see-through chromatic glass)
+    // 1. Luminous Optical Gem Body (Vibrant, high-contrast, crystal-clear color)
     const bodyGrad = ctx.createRadialGradient(-radius * 0.22, -radius * 0.22, radius * 0.05, 0, 0, radius * 1.05);
-    const centerAlpha = gem.smoothness > 0.85 ? 0.30 : 0.36;
-    const midAlpha = gem.smoothness > 0.85 ? 0.20 : 0.26;
 
     if (gem.isWhite) {
-      bodyGrad.addColorStop(0, `rgba(255, 255, 255, ${centerAlpha})`);
-      bodyGrad.addColorStop(0.35, `rgba(240, 249, 255, ${midAlpha})`);
-      bodyGrad.addColorStop(0.70, 'rgba(203, 213, 225, 0.28)');
-      bodyGrad.addColorStop(1.0, 'rgba(100, 116, 139, 0.48)');
+      bodyGrad.addColorStop(0, 'rgba(255, 255, 255, 0.78)');
+      bodyGrad.addColorStop(0.35, 'rgba(240, 249, 255, 0.55)');
+      bodyGrad.addColorStop(0.70, 'rgba(215, 228, 245, 0.65)');
+      bodyGrad.addColorStop(1.0, 'rgba(160, 185, 215, 0.85)');
     } else {
-      const bSat = 92;
-      const l0 = Math.min(78, Math.round(gem.l * 76));
-      const l1 = Math.min(68, Math.round(gem.l * 64));
-      const l2 = Math.round(gem.l * 46);
-
-      bodyGrad.addColorStop(0, `hsla(${gem.h}, ${bSat}%, ${l0}%, ${centerAlpha})`);
-      bodyGrad.addColorStop(0.35, `hsla(${gem.h}, ${bSat - 2}%, ${l1}%, ${midAlpha})`);
-      bodyGrad.addColorStop(0.70, `hsla(${gem.h}, ${bSat - 2}%, ${l2}%, 0.38)`);
-      bodyGrad.addColorStop(1.0, `hsla(${gem.h}, ${bSat}%, 30%, 0.60)`);
+      const bSat = 96;
+      bodyGrad.addColorStop(0, `hsla(${gem.h}, ${bSat}%, 74%, 0.72)`);
+      bodyGrad.addColorStop(0.35, `hsla(${gem.h}, ${bSat}%, 60%, 0.58)`);
+      bodyGrad.addColorStop(0.70, `hsla(${gem.h}, ${bSat}%, 48%, 0.72)`);
+      bodyGrad.addColorStop(1.0, `hsla(${gem.h}, ${bSat}%, 38%, 0.88)`);
     }
     ctx.fillStyle = bodyGrad;
     ctx.fill();
 
     // 2. Internal Refractive Caustic Pool (Luminous colored focal heart)
-    const cx = radius * 0.26;
-    const cy = radius * 0.26;
-    const cr = radius * 0.62;
+    const cx = radius * 0.25;
+    const cy = radius * 0.25;
+    const cr = radius * 0.65;
     const causticGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, cr);
-    const causticPeak = Math.min(0.58, 0.32 + 0.26 * gem.reflectivity);
 
     if (gem.isWhite) {
-      causticGrad.addColorStop(0, `rgba(255, 255, 255, ${causticPeak.toFixed(2)})`);
-      causticGrad.addColorStop(0.45, `rgba(224, 242, 254, ${(causticPeak * 0.45).toFixed(2)})`);
+      causticGrad.addColorStop(0, 'rgba(255, 255, 255, 0.90)');
+      causticGrad.addColorStop(0.45, 'rgba(224, 242, 254, 0.50)');
       causticGrad.addColorStop(1.0, 'rgba(255, 255, 255, 0)');
     } else {
-      const cSat = 90;
-      const cLight0 = Math.min(78, Math.round(gem.l * 95));
-      const cLight1 = Math.min(66, Math.round(gem.l * 72));
-
-      causticGrad.addColorStop(0, `hsla(${gem.h}, ${cSat}%, ${cLight0}%, ${causticPeak.toFixed(2)})`);
-      causticGrad.addColorStop(0.45, `hsla(${gem.h}, ${cSat}%, ${cLight1}%, ${(causticPeak * 0.45).toFixed(2)})`);
-      causticGrad.addColorStop(1.0, `hsla(${gem.h}, ${cSat}%, 32%, 0)`);
+      causticGrad.addColorStop(0, `hsla(${gem.h}, 100%, 78%, 0.88)`);
+      causticGrad.addColorStop(0.45, `hsla(${gem.h}, 96%, 64%, 0.55)`);
+      causticGrad.addColorStop(1.0, `hsla(${gem.h}, 96%, 48%, 0)`);
     }
     ctx.fillStyle = causticGrad;
     ctx.beginPath();
@@ -770,25 +759,23 @@ export class Renderer {
 
     ctx.restore(); // Ends clipping
 
-    // 3. Polished Glass Rim (Fresnel Rim - wraps bubble in radiant thin glass edge)
+    // 3. Polished Glass Rim (Fresnel Rim - wraps bubble in radiant, vivid thin glass edge)
     if (typeof traceContour === 'function') {
       ctx.save();
       traceContour();
-      ctx.lineWidth = Math.max(1.1, radius * (0.032 + 0.010 * gem.reflectivity));
+      ctx.lineWidth = Math.max(1.4, radius * 0.042);
       const rimGrad = ctx.createLinearGradient(-radius, -radius, radius, radius);
-      const topRimAlpha = Math.min(0.85, 0.52 + 0.28 * gem.reflectivity).toFixed(2);
-      const midRimAlpha = (0.32 + 0.22 * gem.reflectivity).toFixed(2);
 
       if (gem.isWhite) {
-        rimGrad.addColorStop(0, `rgba(255, 255, 255, ${topRimAlpha})`);
-        rimGrad.addColorStop(0.35, `rgba(224, 242, 254, ${midRimAlpha})`);
-        rimGrad.addColorStop(0.70, 'rgba(186, 230, 253, 0.25)');
-        rimGrad.addColorStop(1.0, 'rgba(71, 85, 105, 0.45)');
+        rimGrad.addColorStop(0, 'rgba(255, 255, 255, 0.98)');
+        rimGrad.addColorStop(0.35, 'rgba(224, 242, 254, 0.80)');
+        rimGrad.addColorStop(0.70, 'rgba(186, 230, 253, 0.60)');
+        rimGrad.addColorStop(1.0, 'rgba(148, 163, 184, 0.70)');
       } else {
-        rimGrad.addColorStop(0, `rgba(255, 255, 255, ${topRimAlpha})`);
-        rimGrad.addColorStop(0.30, `hsla(${gem.h}, 84%, 74%, ${midRimAlpha})`);
-        rimGrad.addColorStop(0.70, `hsla(${gem.h}, 80%, 44%, 0.28)`);
-        rimGrad.addColorStop(1.0, `hsla(${gem.h}, 84%, 26%, 0.48)`);
+        rimGrad.addColorStop(0, 'rgba(255, 255, 255, 0.96)');
+        rimGrad.addColorStop(0.30, `hsla(${gem.h}, 100%, 76%, 0.92)`);
+        rimGrad.addColorStop(0.70, `hsla(${gem.h}, 95%, 58%, 0.75)`);
+        rimGrad.addColorStop(1.0, `hsla(${gem.h}, 95%, 44%, 0.82)`);
       }
       ctx.strokeStyle = rimGrad;
       ctx.stroke();

@@ -65,8 +65,8 @@ export const LEVEL_DEFINITIONS = [
   {
     level: 6,
     name: "Solar Forge",
-    description: "Harness high-contrast energy: Ruby, Amber, golden Citrine, Emerald, and Sapphire to Ø182px.",
-    colors: ['red', 'orange', 'citrine', 'green', 'cyan'],
+    description: "Harness high-contrast energy: Ruby, Sapphire, Emerald, Amber, and Amethyst to Ø182px.",
+    colors: ['red', 'cyan', 'green', 'orange', 'purple'],
     dropBudget: 28,
     targetDiameter: 182,
     timerSeconds: 195,

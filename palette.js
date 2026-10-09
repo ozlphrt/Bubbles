@@ -179,7 +179,7 @@ export const BUBBLE_COLORS = [
     densityLabel: 'Balanced' 
   },
   { 
-    id: 'orange', alias: 'amber', name: 'Amber', hex: '#f59e0b', hue: 42, isWhite: false, 
+    id: 'orange', alias: 'amber', name: 'Amber', hex: '#ea580c', hue: 24, isWhite: false, 
     material: 'Fossilized Resin', density: 1.22, massFactor: 1.22, gravityScale: 1.16, buoyancy: -0.04, 
     elasticity: 0.68, friction: 0.019, wobbleFreq: 0.13, shininess: 0.78, reflectivity: 0.72, smoothness: 0.72, 
     densityLabel: 'Dense' 
