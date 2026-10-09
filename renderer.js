@@ -848,91 +848,101 @@ export class Renderer {
       return smoothedRadii[i0] * (1 - frac) + smoothedRadii[i1] * frac;
     };
 
-    // 1. Primary Curved Glass Gloss Crescent
-    // Smoothness controls tightness/polish of the reflection arc
-    // Shininess controls peak gloss luminance
-    const primaryAngle = Math.atan2(-0.34, -0.30);
-    const localRPrimary = Math.min(radius, getRadiusAtAngle(primaryAngle));
-    const scalePrimary = Math.min(1.0, Math.max(0.15, localRPrimary / radius));
-    const effPrimaryR = radius * scalePrimary;
+    // 1. Organic Curved Specular Crescent (Hugs upper-left spherical surface dome)
+    // Real bubbles reflect light in a gentle, tapered curved arc following the bubble's surface curvature
+    const startAngle = -Math.PI * 0.86; // ~ -155 deg
+    const endAngle = -Math.PI * 0.54;   // ~ -97 deg
+    const midAngle = (startAngle + endAngle) * 0.5; // ~ -126 deg (apex)
+    const numSteps = 16;
 
-    ctx.save();
-    ctx.translate(-effPrimaryR * 0.30, -effPrimaryR * 0.34);
-    ctx.rotate(-Math.PI / 4);
-
-    const glossRx = Math.max(1.8, effPrimaryR * (0.33 + (1 - gem.smoothness) * 0.16));
-    const glossRy = Math.max(0.8, effPrimaryR * (0.11 + (1 - gem.smoothness) * 0.08));
-
-    const glossGrad = ctx.createLinearGradient(-glossRx, -glossRy, glossRx, glossRy);
-    const peakGloss = Math.min(0.98, 0.60 + 0.38 * gem.shininess).toFixed(2);
-    const midGloss = (0.40 + 0.35 * gem.shininess).toFixed(2);
-
-    glossGrad.addColorStop(0, `rgba(255, 255, 255, ${peakGloss})`);
-    glossGrad.addColorStop(0.45, `rgba(255, 255, 255, ${midGloss})`);
-    glossGrad.addColorStop(1.0, 'rgba(255, 255, 255, 0)');
-
-    ctx.fillStyle = glossGrad;
-    ctx.beginPath();
-    ctx.ellipse(0, 0, glossRx, glossRy, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-
-    // 2. Pinpoint Sparkling Glass Dot
-    const dotAngle = Math.atan2(-0.44, -0.44);
-    const localRDot = Math.min(radius, getRadiusAtAngle(dotAngle));
-    const scaleDot = Math.min(1.0, Math.max(0.15, localRDot / radius));
-    const effDotR = radius * scaleDot;
-
-    ctx.save();
-    const sx = -effDotR * 0.44;
-    const sy = -effDotR * 0.44;
-    const dotR = Math.max(0.8, effDotR * (0.052 + (1 - gem.smoothness) * 0.030));
-
-    ctx.beginPath();
-    ctx.arc(sx, sy, dotR, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(255, 255, 255, ${(0.65 + 0.35 * gem.shininess).toFixed(2)})`;
-    ctx.shadowColor = gem.isWhite ? '#93c5fd' : '#ffffff';
-    ctx.shadowBlur = Math.max(2, effDotR * 0.12 * gem.shininess);
-    ctx.fill();
-    ctx.restore();
-
-    // 3. Secondary Glass Surface Glint (Present on high-shininess/high-polish gems)
-    if (radius > 14 && gem.shininess > 0.80) {
-      const glintAngle = Math.atan2(-0.56, -0.12);
-      const localRGlint = Math.min(radius, getRadiusAtAngle(glintAngle));
-      const scaleGlint = Math.min(1.0, Math.max(0.15, localRGlint / radius));
-      const effGlintR = radius * scaleGlint;
-
-      ctx.save();
-      const s2x = -effGlintR * 0.12;
-      const s2y = -effGlintR * 0.56;
+    const buildCrescentPath = (insetRatio) => {
       ctx.beginPath();
-      ctx.arc(s2x, s2y, Math.max(0.6, effGlintR * 0.038 * gem.shininess), 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255, 255, 255, ${(0.50 + 0.30 * gem.shininess).toFixed(2)})`;
-      ctx.fill();
-      ctx.restore();
-    }
+      for (let i = 0; i <= numSteps; i++) {
+        const t = i / numSteps;
+        const a = startAngle + (endAngle - startAngle) * t;
+        const localR = getRadiusAtAngle(a);
+        const rPos = localR * insetRatio;
+        const px = Math.cos(a) * rPos;
+        const py = Math.sin(a) * rPos;
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+    };
 
-    // 4. Opposing Rim Internal Caustic Bounce (Modulated by reflectivity)
-    if (radius > 10) {
-      const oppAngle = Math.PI / 4;
-      const localROpp = Math.min(radius, getRadiusAtAngle(oppAngle));
-      const scaleOpp = Math.min(1.0, Math.max(0.15, localROpp / radius));
-      const effOppR = radius * scaleOpp;
+    const p0x = Math.cos(startAngle) * (getRadiusAtAngle(startAngle) * 0.68);
+    const p0y = Math.sin(startAngle) * (getRadiusAtAngle(startAngle) * 0.68);
+    const p1x = Math.cos(endAngle) * (getRadiusAtAngle(endAngle) * 0.68);
+    const p1y = Math.sin(endAngle) * (getRadiusAtAngle(endAngle) * 0.68);
+
+    // Pass A: Soft Diffuse Ambient Gloss Arc (feathers out naturally)
+    ctx.save();
+    buildCrescentPath(0.67);
+    ctx.lineWidth = Math.max(2.8, radius * 0.16 * (1.2 - gem.smoothness * 0.3));
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    const softGrad = ctx.createLinearGradient(p0x, p0y, p1x, p1y);
+    const softPeak = (0.24 + 0.14 * gem.shininess).toFixed(2);
+    softGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+    softGrad.addColorStop(0.3, `rgba(255, 255, 255, ${(softPeak * 0.55).toFixed(2)})`);
+    softGrad.addColorStop(0.5, `rgba(255, 255, 255, ${softPeak})`);
+    softGrad.addColorStop(0.7, `rgba(255, 255, 255, ${(softPeak * 0.55).toFixed(2)})`);
+    softGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    ctx.strokeStyle = softGrad;
+    ctx.stroke();
+    ctx.restore();
+
+    // Pass B: Crisp Focused Specular Arc
+    ctx.save();
+    buildCrescentPath(0.68);
+    ctx.lineWidth = Math.max(1.4, radius * 0.065 * (0.85 + (1 - gem.smoothness) * 0.3));
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    const coreGrad = ctx.createLinearGradient(p0x, p0y, p1x, p1y);
+    const corePeak = Math.min(0.92, 0.55 + 0.35 * gem.shininess).toFixed(2);
+    coreGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+    coreGrad.addColorStop(0.25, `rgba(255, 255, 255, ${(corePeak * 0.45).toFixed(2)})`);
+    coreGrad.addColorStop(0.5, `rgba(255, 255, 255, ${corePeak})`);
+    coreGrad.addColorStop(0.75, `rgba(255, 255, 255, ${(corePeak * 0.45).toFixed(2)})`);
+    coreGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    ctx.strokeStyle = coreGrad;
+    ctx.stroke();
+    ctx.restore();
+
+    // Pass C: Integrated Concentric Specular Hotspot (Seamlessly embedded at apex)
+    const midLocalR = getRadiusAtAngle(midAngle);
+    const midX = Math.cos(midAngle) * (midLocalR * 0.68);
+    const midY = Math.sin(midAngle) * (midLocalR * 0.68);
+    const glintR = Math.max(1.5, radius * (0.055 + 0.025 * gem.shininess));
+
+    ctx.save();
+    const glintGrad = ctx.createRadialGradient(midX, midY, 0, midX, midY, glintR);
+    const glintPeak = Math.min(0.96, 0.70 + 0.25 * gem.shininess).toFixed(2);
+    glintGrad.addColorStop(0, `rgba(255, 255, 255, ${glintPeak})`);
+    glintGrad.addColorStop(0.40, `rgba(255, 255, 255, ${(glintPeak * 0.45).toFixed(2)})`);
+    glintGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    ctx.fillStyle = glintGrad;
+    ctx.beginPath();
+    ctx.arc(midX, midY, glintR, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // 2. Subtle Opposing Ambient Bounce (Reflects ambient ground light onto lower-right dome)
+    if (radius > 12) {
+      const oppAngle = Math.PI * 0.25; // 45 deg
+      const oppR = getRadiusAtAngle(oppAngle) * 0.76;
+      const ox = Math.cos(oppAngle) * oppR;
+      const oy = Math.sin(oppAngle) * oppR;
+      const oRadius = Math.max(2.5, radius * (0.16 + 0.08 * gem.reflectivity));
 
       ctx.save();
-      const ox = Math.cos(oppAngle) * (effOppR * 0.76);
-      const oy = Math.sin(oppAngle) * (effOppR * 0.76);
-      const or = effOppR * (0.22 + 0.08 * gem.reflectivity);
-
-      const bounceAlpha = (0.25 + 0.30 * gem.reflectivity).toFixed(2);
-      const rimBounce = ctx.createRadialGradient(ox, oy, 0, ox, oy, or);
-      rimBounce.addColorStop(0, gem.isWhite ? `rgba(255, 255, 255, ${bounceAlpha})` : `hsla(${gem.h}, 95%, 80%, ${bounceAlpha})`);
-      rimBounce.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      const bounceAlpha = (0.14 + 0.14 * gem.reflectivity).toFixed(2);
+      const rimBounce = ctx.createRadialGradient(ox, oy, 0, ox, oy, oRadius);
+      rimBounce.addColorStop(0, gem.isWhite ? `rgba(255, 255, 255, ${bounceAlpha})` : `hsla(${gem.h}, 90%, 82%, ${bounceAlpha})`);
+      rimBounce.addColorStop(1, 'rgba(255, 255, 255, 0)');
 
       ctx.fillStyle = rimBounce;
       ctx.beginPath();
-      ctx.arc(ox, oy, or, 0, Math.PI * 2);
+      ctx.arc(ox, oy, oRadius, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
     }
