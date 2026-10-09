@@ -546,8 +546,10 @@ export class Renderer {
     }
 
     // 3. Compute clean non-overlapping deformed contour points (strictly zero overlap)
+    const numPoints = 64;
     let points = b.contourPoints;
-    let needsContourUpdate = !points || !b.isStationary;
+    let smoothedRadii = b.smoothedRadii;
+    let needsContourUpdate = !points || !smoothedRadii || !b.isStationary;
     if (!needsContourUpdate) {
       for (let n of interactingNeighbors) {
         if (!n.neighbor.isStationary) {
@@ -558,7 +560,6 @@ export class Renderer {
     }
 
     if (needsContourUpdate) {
-      const numPoints = 64;
       const rawRadii = new Float32Array(numPoints);
 
       for (let i = 0; i < numPoints; i++) {
@@ -591,7 +592,7 @@ export class Renderer {
       }
 
       // Smooth transition corners with inward filleting (strictly non-penetrating: never exceeds raw clipping chord)
-      const smoothedRadii = new Float32Array(numPoints);
+      smoothedRadii = new Float32Array(numPoints);
       for (let i = 0; i < numPoints; i++) {
         const prev = rawRadii[(i - 1 + numPoints) % numPoints];
         const curr = rawRadii[i];
@@ -616,6 +617,7 @@ export class Renderer {
       }
       b.minRadius = minR;
       b.contourPoints = points;
+      b.smoothedRadii = smoothedRadii;
     }
 
     // 4. Define and draw bubble contour
