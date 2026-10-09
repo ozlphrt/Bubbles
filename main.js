@@ -273,7 +273,8 @@ window.addEventListener('DOMContentLoaded', () => {
       modalWin.classList.add('hidden');
       modalFail.classList.add('hidden');
       lastActivityTime = performance.now();
-      showInGameHint(6500);
+      hideInGameHint();
+      renderer.setLockedHint(false);
     }
   };
 
@@ -925,6 +926,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
         if (inactiveTime > 5500 || isSettled) {
           renderer.setLockedHint(true);
+          showInGameHint(5000);
         }
       } else {
         renderer.setLockedHint(false);
