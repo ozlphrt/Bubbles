@@ -1020,8 +1020,8 @@ export class Renderer {
     const unitTop = (top100 / 100) + pad;
     const unitBottom = (bottom100 / 100) + pad;
 
-    // Safety margin to guarantee zero boundary contact
-    const margin = isGoalReached ? 0.92 : 0.96;
+    // Safety margin to provide comfortable breathing room inside bubble dome
+    const margin = isGoalReached ? 0.72 : 0.80;
 
     const numPoints = (b.contourPoints && b.contourPoints.length >= 16) ? b.contourPoints.length : 0;
     let minAllowedFont = 999;
@@ -1052,7 +1052,7 @@ export class Renderer {
     }
 
     const maxFont = Math.floor(minAllowedFont);
-    return Math.max(12, Math.min(145, maxFont));
+    return Math.max(12, Math.min(105, maxFont));
   }
 
   /**

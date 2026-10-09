@@ -71,13 +71,21 @@ html, body {
   border-bottom-right-radius: 40px;
 }
 
+/* Compact Top Header HUD (Level, Goal, Time) */
 .top-stats-container {
   position: absolute;
-  top: 22px;
-  left: 26px;
-  display: flex;
-  align-items: flex-start;
-  gap: 32px;
+  top: 16px;
+  left: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  padding: 6px 16px;
+  background: rgba(10, 15, 26, 0.68);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-full);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.40), inset 0 1px 0 rgba(255, 255, 255, 0.08);
   pointer-events: none;
   z-index: 10;
   user-select: none;
@@ -85,33 +93,41 @@ html, body {
 
 .top-stat-group {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
+  align-items: baseline;
+  gap: 6px;
   transition: transform var(--transition-fast);
+}
+
+.top-stat-group:not(:last-child)::after {
+  content: '';
+  display: inline-block;
+  width: 1px;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.12);
+  margin-left: 8px;
+  align-self: center;
 }
 
 .stat-mini-label {
   font-family: var(--font-mono);
-  font-size: 0.78rem;
+  font-size: 0.65rem;
   font-weight: 700;
-  letter-spacing: 0.16em;
-  color: var(--accent-cyan);
-  opacity: 0.85;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #94a3b8;
+  opacity: 0.90;
   transition: color var(--transition-fast);
 }
 
 .stat-large-val {
   font-family: var(--font-sans);
-  font-size: 3.6rem;
+  font-size: 1.15rem;
   font-weight: 800;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.01em;
   line-height: 1;
   font-variant-numeric: tabular-nums;
-  color: #ffffff;
-  -webkit-text-fill-color: #ffffff;
-  filter: drop-shadow(0 3px 12px rgba(0, 0, 0, 0.95)) drop-shadow(0 1px 3px rgba(0, 0, 0, 0.9));
+  color: #f8fafc;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
   transition: all var(--transition-fast);
 }
 
@@ -120,8 +136,7 @@ html, body {
 }
 .top-stat-group.urgent-amber .stat-large-val {
   color: #fbbf24;
-  -webkit-text-fill-color: #fbbf24;
-  filter: drop-shadow(0 3px 12px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 18px rgba(251, 191, 36, 0.6));
+  text-shadow: 0 0 10px rgba(251, 191, 36, 0.6);
 }
 
 .top-stat-group.urgent-red .stat-mini-label {
@@ -129,22 +144,20 @@ html, body {
 }
 .top-stat-group.urgent-red .stat-large-val {
   color: #f43f5e;
-  -webkit-text-fill-color: #f43f5e;
-  filter: drop-shadow(0 3px 12px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 22px rgba(244, 63, 94, 0.8));
+  text-shadow: 0 0 12px rgba(244, 63, 94, 0.8);
   animation: pulse-top-timer 0.6s infinite ease-in-out;
 }
 
 @keyframes pulse-top-timer {
   0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.06); }
+  50% { transform: scale(1.08); }
 }
 
 .top-stat-group.bonus-flash .stat-large-val {
   color: #34d399 !important;
-  -webkit-text-fill-color: #34d399 !important;
-  filter: drop-shadow(0 0 16px rgba(52, 211, 153, 0.95)) !important;
+  text-shadow: 0 0 12px rgba(52, 211, 153, 0.95) !important;
   transform: scale(1.15) !important;
-  transition: transform 0.15s ease-out, filter 0.15s ease-out;
+  transition: transform 0.15s ease-out;
 }
 
 /* Top Right Controls (Settings Button - Hidden) */
@@ -189,16 +202,17 @@ html, body {
 
 @media (max-width: 600px) {
   .top-stats-container {
-    top: 14px;
-    left: 16px;
-    gap: 18px;
+    top: 10px;
+    left: 12px;
+    padding: 4px 12px;
+    gap: 10px;
   }
   .stat-mini-label {
-    font-size: 0.68rem;
-    letter-spacing: 0.12em;
+    font-size: 0.58rem;
+    letter-spacing: 0.08em;
   }
   .stat-large-val {
-    font-size: 2.7rem;
+    font-size: 0.98rem;
   }
   .top-controls-container {
     top: 14px;
