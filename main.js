@@ -10,6 +10,7 @@ import { physicsEngine, BUBBLE_COLORS } from './physics.js';
 import { Renderer } from './renderer.js';
 import { gameEngine, GameState } from './game.js';
 import { GameStorage } from './storage.js';
+import { LEVEL_DEFINITIONS, getLevelConfig } from './levels.js';
 
 window.addEventListener('DOMContentLoaded', () => {
   const canvas = document.getElementById('simCanvas');
