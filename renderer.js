@@ -1102,7 +1102,7 @@ export class Renderer {
 
       const diameter = Math.round(b.radius * 2);
       const isGoalReached = targetDiameter > 0 && diameter >= targetDiameter;
-      const text = isGoalReached ? `${diameter} ✓` : `${diameter}`;
+      const text = `${diameter}`;
       let em = EMISSIONS[key];
       if (!em) {
         const cObj = getColorById(key);
