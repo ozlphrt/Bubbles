@@ -488,18 +488,18 @@ export class Renderer {
       const dx = nb.x - b.x;
       const dy = nb.y - b.y;
       const distSq = dx * dx + dy * dy;
-      const touchDist = (radius + nb.radius) * 1.08;
-      if (distSq < touchDist * touchDist && distSq > 0.001) {
+      const sumR = radius + nb.radius;
+      // Only form contact facets when bubbles are actually in contact / pressing together
+      if (distSq < sumR * sumR && distSq > 0.001) {
         const dist = Math.sqrt(distSq);
         const angle = Math.atan2(dy, dx);
-        // Distance to the flat contact chord from center of b
+        // Exact radical plane chord distance (sum of d1 + d2 exactly equals center distance, zero gap)
         const chordDist = (distSq + radius * radius - nb.radius * nb.radius) / (2 * dist);
-        const overlap = Math.max(0, (radius + nb.radius) - dist);
         interactingNeighbors.push({
           angle,
           dist,
-          chordDist: Math.max(radius * 0.15, chordDist - overlap * 0.18),
-          overlap
+          chordDist: Math.max(radius * 0.20, chordDist),
+          overlap: sumR - dist
         });
       }
     }
@@ -568,18 +568,14 @@ export class Renderer {
       rawRadii[i] = r;
     }
 
-    // 2-pass smoothing to naturally fillet contact corners without any notched ears
+    // Smooth transition corners without sagging the contact chord inward (eliminates artificial gaps)
     const smoothedRadii = new Float32Array(numPoints);
-    smoothedRadii.set(rawRadii);
-
-    for (let pass = 0; pass < 2; pass++) {
-      const prevArray = new Float32Array(smoothedRadii);
-      for (let i = 0; i < numPoints; i++) {
-        const prev = prevArray[(i - 1 + numPoints) % numPoints];
-        const curr = prevArray[i];
-        const next = prevArray[(i + 1) % numPoints];
-        smoothedRadii[i] = prev * 0.25 + curr * 0.50 + next * 0.25;
-      }
+    for (let i = 0; i < numPoints; i++) {
+      const prev = rawRadii[(i - 1 + numPoints) % numPoints];
+      const curr = rawRadii[i];
+      const next = rawRadii[(i + 1) % numPoints];
+      const smoothed = prev * 0.22 + curr * 0.56 + next * 0.22;
+      smoothedRadii[i] = Math.max(rawRadii[i], smoothed);
     }
 
     const points = [];

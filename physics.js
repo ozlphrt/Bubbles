@@ -675,6 +675,17 @@ export class PhysicsEngine {
               b2.y += lift * dir;
             }
           }
+        } else if (distSq < minDist * 1.08 * (minDist * 1.08)) {
+          // Capillary Meniscus Cohesion (Cheerios effect): Surface tension draws adjacent bubbles into snug contact
+          const dist = Math.max(0.001, Math.sqrt(distSq));
+          const nx = dx / dist;
+          const ny = dy / dist;
+          const gap = dist - minDist;
+          const cohesion = 0.28 * (1.0 - gap / (minDist * 0.08));
+          b1.x += nx * cohesion * 0.5;
+          b1.y += ny * cohesion * 0.5;
+          b2.x -= nx * cohesion * 0.5;
+          b2.y -= ny * cohesion * 0.5;
         }
       }
 
