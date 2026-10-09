@@ -616,12 +616,16 @@ export class Renderer {
 
     // 6. Fusion Energy Flash Glow Overlay on Merge
     if (b.flashLife && b.flashLife > 0.02) {
+      ctx.save();
+      traceContour();
+      ctx.clip();
       const flashGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, radius);
       flashGrad.addColorStop(0, `rgba(255, 255, 255, ${b.flashLife * 0.45})`);
       flashGrad.addColorStop(0.55, `rgba(255, 255, 255, ${b.flashLife * 0.20})`);
       flashGrad.addColorStop(1.0, 'rgba(255, 255, 255, 0)');
       ctx.fillStyle = flashGrad;
       ctx.fill();
+      ctx.restore();
     }
 
     // 7. Specular Diamond Starburst Highlights & Scintillation Glints
@@ -629,10 +633,10 @@ export class Renderer {
     if (isGoalReached) {
       ctx.save();
       ctx.globalAlpha = (b.opacity !== undefined ? b.opacity : 1.0) * 0.18;
-      this.renderHighlights(ctx, radius, b);
+      this.renderHighlights(ctx, radius, b, smoothedRadii, numPoints, traceContour);
       ctx.restore();
     } else {
-      this.renderHighlights(ctx, radius, b);
+      this.renderHighlights(ctx, radius, b, smoothedRadii, numPoints, traceContour);
     }
 
     ctx.restore();
@@ -806,22 +810,47 @@ export class Renderer {
     }
   }
 
-  renderHighlights(ctx, radius, b) {
+  renderHighlights(ctx, radius, b, smoothedRadii = null, numPoints = 0, traceContour = null) {
     if (radius < 4) return;
+
+    // Strictly clip all reflections within the actual bubble surface boundary
+    ctx.save();
+    if (typeof traceContour === 'function') {
+      traceContour();
+      ctx.clip();
+    }
 
     const isWhite = b.isWhite || b.colorId === 'white' || (b.colorIndex === 0 && b.hue === 0);
     const colorKey = isWhite ? 'white' : (b.colorId || 'red');
     const gem = this.getGemColorInfo(colorKey, b);
 
+    // Helper to evaluate local surface radius along any angular direction
+    const getRadiusAtAngle = (angle) => {
+      if (!smoothedRadii || !numPoints) return radius;
+      const twoPi = Math.PI * 2;
+      let a = angle % twoPi;
+      if (a < 0) a += twoPi;
+      const idx = (a / twoPi) * numPoints;
+      const i0 = Math.floor(idx) % numPoints;
+      const i1 = (i0 + 1) % numPoints;
+      const frac = idx - Math.floor(idx);
+      return smoothedRadii[i0] * (1 - frac) + smoothedRadii[i1] * frac;
+    };
+
     // 1. Primary Curved Glass Gloss Crescent
     // Smoothness controls tightness/polish of the reflection arc
     // Shininess controls peak gloss luminance
+    const primaryAngle = Math.atan2(-0.34, -0.30);
+    const localRPrimary = Math.min(radius, getRadiusAtAngle(primaryAngle));
+    const scalePrimary = Math.min(1.0, Math.max(0.15, localRPrimary / radius));
+    const effPrimaryR = radius * scalePrimary;
+
     ctx.save();
-    ctx.translate(-radius * 0.30, -radius * 0.34);
+    ctx.translate(-effPrimaryR * 0.30, -effPrimaryR * 0.34);
     ctx.rotate(-Math.PI / 4);
 
-    const glossRx = Math.max(2.5, radius * (0.33 + (1 - gem.smoothness) * 0.16));
-    const glossRy = Math.max(1.2, radius * (0.11 + (1 - gem.smoothness) * 0.08));
+    const glossRx = Math.max(1.8, effPrimaryR * (0.33 + (1 - gem.smoothness) * 0.16));
+    const glossRy = Math.max(0.8, effPrimaryR * (0.11 + (1 - gem.smoothness) * 0.08));
 
     const glossGrad = ctx.createLinearGradient(-glossRx, -glossRy, glossRx, glossRy);
     const peakGloss = Math.min(0.98, 0.60 + 0.38 * gem.shininess).toFixed(2);
@@ -838,27 +867,36 @@ export class Renderer {
     ctx.restore();
 
     // 2. Pinpoint Sparkling Glass Dot
-    // Smoothness controls pinpoint sharpness; shininess controls core brightness
+    const dotAngle = Math.atan2(-0.44, -0.44);
+    const localRDot = Math.min(radius, getRadiusAtAngle(dotAngle));
+    const scaleDot = Math.min(1.0, Math.max(0.15, localRDot / radius));
+    const effDotR = radius * scaleDot;
+
     ctx.save();
-    const sx = -radius * 0.44;
-    const sy = -radius * 0.44;
-    const dotR = Math.max(1.0, radius * (0.052 + (1 - gem.smoothness) * 0.030));
+    const sx = -effDotR * 0.44;
+    const sy = -effDotR * 0.44;
+    const dotR = Math.max(0.8, effDotR * (0.052 + (1 - gem.smoothness) * 0.030));
 
     ctx.beginPath();
     ctx.arc(sx, sy, dotR, 0, Math.PI * 2);
     ctx.fillStyle = `rgba(255, 255, 255, ${(0.65 + 0.35 * gem.shininess).toFixed(2)})`;
     ctx.shadowColor = gem.isWhite ? '#93c5fd' : '#ffffff';
-    ctx.shadowBlur = Math.max(2, radius * 0.12 * gem.shininess);
+    ctx.shadowBlur = Math.max(2, effDotR * 0.12 * gem.shininess);
     ctx.fill();
     ctx.restore();
 
     // 3. Secondary Glass Surface Glint (Present on high-shininess/high-polish gems)
     if (radius > 14 && gem.shininess > 0.80) {
+      const glintAngle = Math.atan2(-0.56, -0.12);
+      const localRGlint = Math.min(radius, getRadiusAtAngle(glintAngle));
+      const scaleGlint = Math.min(1.0, Math.max(0.15, localRGlint / radius));
+      const effGlintR = radius * scaleGlint;
+
       ctx.save();
-      const s2x = -radius * 0.12;
-      const s2y = -radius * 0.56;
+      const s2x = -effGlintR * 0.12;
+      const s2y = -effGlintR * 0.56;
       ctx.beginPath();
-      ctx.arc(s2x, s2y, Math.max(0.7, radius * 0.038 * gem.shininess), 0, Math.PI * 2);
+      ctx.arc(s2x, s2y, Math.max(0.6, effGlintR * 0.038 * gem.shininess), 0, Math.PI * 2);
       ctx.fillStyle = `rgba(255, 255, 255, ${(0.50 + 0.30 * gem.shininess).toFixed(2)})`;
       ctx.fill();
       ctx.restore();
@@ -866,11 +904,15 @@ export class Renderer {
 
     // 4. Opposing Rim Internal Caustic Bounce (Modulated by reflectivity)
     if (radius > 10) {
-      ctx.save();
       const oppAngle = Math.PI / 4;
-      const ox = Math.cos(oppAngle) * (radius * 0.76);
-      const oy = Math.sin(oppAngle) * (radius * 0.76);
-      const or = radius * (0.22 + 0.08 * gem.reflectivity);
+      const localROpp = Math.min(radius, getRadiusAtAngle(oppAngle));
+      const scaleOpp = Math.min(1.0, Math.max(0.15, localROpp / radius));
+      const effOppR = radius * scaleOpp;
+
+      ctx.save();
+      const ox = Math.cos(oppAngle) * (effOppR * 0.76);
+      const oy = Math.sin(oppAngle) * (effOppR * 0.76);
+      const or = effOppR * (0.22 + 0.08 * gem.reflectivity);
 
       const bounceAlpha = (0.25 + 0.30 * gem.reflectivity).toFixed(2);
       const rimBounce = ctx.createRadialGradient(ox, oy, 0, ox, oy, or);
@@ -883,6 +925,8 @@ export class Renderer {
       ctx.fill();
       ctx.restore();
     }
+
+    ctx.restore(); // Ends traceContour clipping
   }
 
   /**
@@ -911,7 +955,7 @@ export class Renderer {
     this.applyThemeStyle(ctx, b, radius, traceContour);
 
     // Identical diamond sparkle flares, caustics & prismatic dispersion
-    this.renderHighlights(ctx, radius, b);
+    this.renderHighlights(ctx, radius, b, null, 0, traceContour);
 
     ctx.restore();
   }
