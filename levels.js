@@ -4,7 +4,7 @@
  * the 50-color gemstone and mineral palette with distinct densities and elasticities.
  */
 
-import { BUBBLE_COLORS, getColorById } from './palette.js';
+import { BUBBLE_COLORS, getColorById, selectDiverseLevelColors } from './palette.js';
 
 export const LEVEL_DEFINITIONS = [
   {
@@ -132,7 +132,20 @@ function toRoman(n) {
 export function getLevelConfig(levelNum = 1) {
   const num = Math.max(1, Math.floor(levelNum));
   if (num <= LEVEL_DEFINITIONS.length) {
-    return LEVEL_DEFINITIONS[num - 1];
+    const base = LEVEL_DEFINITIONS[num - 1];
+    const colorCount = (base.colors && base.colors.length) || 4;
+
+    // Dynamically select diverse, contrasting gemstones at the start of every level run
+    const selectedGems = selectDiverseLevelColors(colorCount);
+    const colors = selectedGems.map(g => g.id);
+    const gemNames = selectedGems.map(g => g.name).join(', ');
+
+    return {
+      ...base,
+      colors,
+      gemstones: selectedGems,
+      description: `Coalesce ${colors.length} rare minerals (${gemNames}) to Ø${base.targetDiameter}px before the clock expires.`
+    };
   }
 
   // Procedural Endless Progression for Level 11+
@@ -155,25 +168,18 @@ export function getLevelConfig(levelNum = 1) {
   // Timer remains engaging (140s - 180s)
   const timerSeconds = Math.max(140, 185 - cycleCount * 5 - cycle * 3);
 
-  // Procedurally sample 5-6 harmonious, contrasting materials from the 50-color palette
-  const allPaletteIds = BUBBLE_COLORS.map(c => c.id);
+  // Procedurally sample 5-6 harmonious, highly contrasting materials from the 50-color palette
   const colorCount = cycle >= 3 ? 6 : 5;
-  const step = 7;
-  const startIdx = ((num - 1) * step) % allPaletteIds.length;
-  const colors = [];
-  for (let i = 0; i < colorCount * 2; i++) {
-    const cid = allPaletteIds[(startIdx + i * 9) % allPaletteIds.length];
-    if (!colors.includes(cid)) {
-      colors.push(cid);
-    }
-    if (colors.length >= colorCount) break;
-  }
+  const selectedGems = selectDiverseLevelColors(colorCount);
+  const colors = selectedGems.map(g => g.id);
+  const gemNames = selectedGems.map(g => g.name).join(', ');
 
   return {
     level: num,
     name: `${TITLES[cycle]} ${toRoman(cycleCount)}`,
-    description: `Endless Mastery Tier: Coalesce ${colors.length} rare mineral materials to Ø${targetDiameter}px under intense surface tension.`,
+    description: `Endless Mastery Tier: Coalesce ${colors.length} rare minerals (${gemNames}) to Ø${targetDiameter}px under intense surface tension.`,
     colors,
+    gemstones: selectedGems,
     dropBudget: Math.min(42, 32 + cycle * 2 + cycleCount),
     targetDiameter,
     timerSeconds,

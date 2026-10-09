@@ -850,9 +850,11 @@ export class PhysicsEngine {
           const sizeRatio = larger.radius / smaller.radius;
 
           // Same-color coalescence strict rule: Different colors never merge
-          const isSameColor = (b1.colorIndex !== undefined && b2.colorIndex !== undefined)
-            ? (b1.colorIndex === b2.colorIndex)
-            : (b1.hue === b2.hue);
+          const isSameColor = (b1.colorId && b2.colorId)
+            ? (b1.colorId === b2.colorId)
+            : ((b1.colorIndex !== undefined && b2.colorIndex !== undefined)
+              ? (b1.colorIndex === b2.colorIndex)
+              : (b1.hue === b2.hue));
 
           // 1. Impact Kinetic Energy (Moderate drop impact triggers merge)
           const impactSpeed = Math.max(0, -velAlongNormal);

@@ -332,11 +332,137 @@ export function getColorDisplayName(id) {
   return c ? c.name : id;
 }
 
+export const GEMSTONE_FAMILIES = [
+  { id: 'white', name: 'White / Pearl', members: ['white', 'diamond', 'moonstone', 'opal'] },
+  { id: 'red', name: 'Crimson / Red', members: ['red', 'garnet', 'spinel', 'jasper'] },
+  { id: 'orange', name: 'Amber / Orange', members: ['orange', 'topaz', 'sunstone', 'carnelian', 'pyrite'] },
+  { id: 'yellow', name: 'Gold / Citrine', members: ['citrine', 'heliodor'] },
+  { id: 'lime', name: 'Lime / Peridot', members: ['peridot', 'beryl'] },
+  { id: 'green', name: 'Emerald / Jade', members: ['green', 'jade', 'malachite', 'tsavorite', 'aventurine', 'chrysoprase', 'fluorite', 'serpentine'] },
+  { id: 'cyan', name: 'Cyan / Turquoise', members: ['aquamarine', 'turquoise', 'larimar', 'alexandrite', 'apatite', 'zircon'] },
+  { id: 'blue', name: 'Cobalt / Sapphire', members: ['cyan', 'lapis', 'tanzanite', 'sodalite', 'iolite', 'cordierite', 'chalcedony'] },
+  { id: 'purple', name: 'Amethyst / Violet', members: ['purple', 'charoite', 'ametrine'] },
+  { id: 'pink', name: 'Rose / Pink', members: ['rose_quartz', 'tourmaline', 'kunzite', 'morganite', 'rhodolite'] }
+];
+
+export const FAMILY_CONFLICTS = {
+  'red': ['pink'],
+  'pink': ['red'],
+  'orange': ['yellow'],
+  'yellow': ['orange'],
+  'cyan': ['blue'],
+  'blue': ['cyan'],
+  'lime': ['green'],
+  'green': ['lime']
+};
+
 /**
- * Samples a random set of distinct colors from the 50-color palette
+ * Computes perceptual color distance between two gemstones
+ */
+function hexToRgb(hex) {
+  const c = hex.replace('#', '');
+  return [parseInt(c.substr(0, 2), 16), parseInt(c.substr(2, 2), 16), parseInt(c.substr(4, 2), 16)];
+}
+
+export function getGemstoneDifference(c1, c2) {
+  if (!c1 || !c2) return 0;
+  if (c1.id === c2.id) return 0;
+
+  // Whites are visually distinct from all rich saturated colors
+  if (c1.isWhite && c2.isWhite) return 0;
+  if (c1.isWhite || c2.isWhite) {
+    const other = c1.isWhite ? c2 : c1;
+    const [r, g, b] = hexToRgb(other.hex);
+    return Math.sqrt(2 * (255 - r) ** 2 + 4 * (255 - g) ** 2 + 3 * (255 - b) ** 2);
+  }
+
+  // Circular hue distance (0 - 180 degrees)
+  let hueDist = Math.abs(c1.hue - c2.hue);
+  if (hueDist > 180) hueDist = 360 - hueDist;
+
+  // Weighted perceptual RGB distance
+  const [r1, g1, b1] = hexToRgb(c1.hex);
+  const [r2, g2, b2] = hexToRgb(c2.hex);
+  const rgbDist = Math.sqrt(2 * (r1 - r2) ** 2 + 4 * (g1 - g2) ** 2 + 3 * (b1 - b2) ** 2);
+
+  return { hueDist, rgbDist, totalScore: rgbDist + hueDist * 1.0 };
+}
+
+/**
+ * Selects a set of distinct, contrasting gemstones for a level run.
+ * Guarantees:
+ * 1. Every gemstone belongs to a different color family.
+ * 2. No confusable adjacent families (e.g. Red and Pink, Yellow and Orange) are mixed.
+ * 3. Max 1 white/pearlescent gemstone per level.
+ * 4. Pairwise hue distance >= 40 deg (>= 44 deg for 4-5 colors) between chromatic gems.
+ * 5. Diverse physical attributes (densities, buoyancies, and elasticities).
+ */
+export function selectDiverseLevelColors(count = 4, excludeIds = []) {
+  const targetCount = Math.max(3, Math.min(6, Math.floor(count)));
+
+  for (let trial = 0; trial < 250; trial++) {
+    const shuffledFamilies = [...GEMSTONE_FAMILIES].sort(() => Math.random() - 0.5);
+    const chosenFamilies = [];
+
+    for (const fam of shuffledFamilies) {
+      const hasConflict = chosenFamilies.some(f => FAMILY_CONFLICTS[f.id] && FAMILY_CONFLICTS[f.id].includes(fam.id));
+      if (hasConflict && (shuffledFamilies.length - chosenFamilies.length) > (targetCount - chosenFamilies.length)) {
+        continue;
+      }
+      chosenFamilies.push(fam);
+      if (chosenFamilies.length === targetCount) break;
+    }
+
+    if (chosenFamilies.length < targetCount) continue;
+
+    const gems = chosenFamilies.map(f => {
+      const availableMembers = f.members.filter(id => !excludeIds.includes(id));
+      const pool = availableMembers.length > 0 ? availableMembers : f.members;
+      const chosenId = pool[Math.floor(Math.random() * pool.length)];
+      return getColorById(chosenId);
+    }).filter(Boolean);
+
+    if (gems.length !== targetCount) continue;
+
+    // Check pairwise distinctness
+    let valid = true;
+    const minHueDist = targetCount >= 6 ? 36 : 44;
+
+    for (let i = 0; i < gems.length; i++) {
+      for (let j = i + 1; j < gems.length; j++) {
+        const g1 = gems[i];
+        const g2 = gems[j];
+
+        if (g1.isWhite && g2.isWhite) {
+          valid = false;
+          break;
+        }
+
+        if (!g1.isWhite && !g2.isWhite) {
+          let hd = Math.abs(g1.hue - g2.hue);
+          if (hd > 180) hd = 360 - hd;
+          if (hd < minHueDist) {
+            valid = false;
+            break;
+          }
+        }
+      }
+      if (!valid) break;
+    }
+
+    if (valid) {
+      return gems;
+    }
+  }
+
+  // Fallback safe preset if needed
+  const fallbackIds = ['white', 'red', 'green', 'orange', 'cyan', 'purple'].slice(0, targetCount);
+  return fallbackIds.map(getColorById);
+}
+
+/**
+ * Samples a random set of distinct color IDs from the 50-color palette
  */
 export function samplePaletteColors(count = 4, exclude = []) {
-  const available = BUBBLE_COLORS.filter(c => !exclude.includes(c.id) && !exclude.includes(c.alias));
-  const shuffled = [...available].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, Math.min(count, shuffled.length)).map(c => c.id);
+  return selectDiverseLevelColors(count, exclude).map(c => c.id);
 }

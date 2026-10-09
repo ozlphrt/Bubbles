@@ -959,9 +959,16 @@ export class Renderer {
     ctx.save();
     ctx.translate(x, y);
 
+    const cObj = getColorById(colorId);
+    const isWhite = cObj ? !!cObj.isWhite : (colorId === 'white');
+
     const b = {
       colorId,
-      isWhite: colorId === 'white',
+      hue: cObj ? cObj.hue : 0,
+      isWhite,
+      shininess: cObj ? cObj.shininess : 0.85,
+      reflectivity: cObj ? cObj.reflectivity : 0.80,
+      smoothness: cObj ? cObj.smoothness : 0.80,
       scalePulse: 1.0
     };
 
