@@ -654,14 +654,16 @@ export class PhysicsEngine {
           const overlap = minDist - dist;
 
           const totalMass = b1.mass + b2.mass;
-          const ratio1 = b2.mass / totalMass;
-          const ratio2 = b1.mass / totalMass;
+          // Clamp mass displacement ratio so massive bubbles cannot unyieldingly crush tiny bubbles into walls
+          const rawRatio1 = b2.mass / totalMass;
+          const ratio1 = Math.max(0.20, Math.min(0.80, rawRatio1));
+          const ratio2 = 1.0 - ratio1;
 
           // Firm non-penetration position correction (bubbles cannot overlap)
-          b1.x -= nx * overlap * ratio1 * 0.85;
-          b1.y -= ny * overlap * ratio1 * 0.85;
-          b2.x += nx * overlap * ratio2 * 0.85;
-          b2.y += ny * overlap * ratio2 * 0.85;
+          b1.x -= nx * overlap * ratio1 * 0.90;
+          b1.y -= ny * overlap * ratio1 * 0.90;
+          b2.x += nx * overlap * ratio2 * 0.90;
+          b2.y += ny * overlap * ratio2 * 0.90;
 
           // Archimedes density buoyancy stratification: lighter bubbles float upward, denser bubbles sink
           const dDiff = (b2.density || 1.0) - (b1.density || 1.0);
@@ -719,17 +721,23 @@ export class PhysicsEngine {
           const cy = height - cornerR;
           const dx = b1.x - cx;
           const dy = b1.y - cy;
-          const dist = Math.hypot(dx, dy);
-          const maxAllowed = Math.max(2, cornerR - b1.radius);
-          if (dist > maxAllowed && dist > 0.001) {
-            const nx = dx / dist;
-            const ny = dy / dist;
-            b1.x = cx + nx * maxAllowed;
-            b1.y = cy + ny * maxAllowed;
-            const vDot = b1.vx * nx + b1.vy * ny;
-            if (vDot > 0) {
-              b1.vx -= (1 + (b1.elasticity || 0.72)) * vDot * nx * 0.7;
-              b1.vy -= (1 + (b1.elasticity || 0.72)) * vDot * ny * 0.7;
+          if (dx < 0 && dy > 0) {
+            const dist = Math.hypot(dx, dy);
+            const maxAllowed = cornerR - b1.radius;
+            if (maxAllowed > 0 && dist > maxAllowed) {
+              const nx = dx / dist;
+              const ny = dy / dist;
+              b1.x = cx + nx * maxAllowed;
+              b1.y = cy + ny * maxAllowed;
+              const vDot = b1.vx * nx + b1.vy * ny;
+              if (vDot > 0) {
+                b1.vx -= (1 + (b1.elasticity || 0.72)) * vDot * nx * 0.7;
+                b1.vy -= (1 + (b1.elasticity || 0.72)) * vDot * ny * 0.7;
+              }
+            } else if (maxAllowed <= 0) {
+              // Bubble is larger than corner radius: keep its center within safe boundaries
+              b1.x = Math.max(b1.radius, b1.x);
+              b1.y = Math.min(height - b1.radius, b1.y);
             }
           }
         } else if (b1.x > width - cornerR) {
@@ -738,17 +746,22 @@ export class PhysicsEngine {
           const cy = height - cornerR;
           const dx = b1.x - cx;
           const dy = b1.y - cy;
-          const dist = Math.hypot(dx, dy);
-          const maxAllowed = Math.max(2, cornerR - b1.radius);
-          if (dist > maxAllowed && dist > 0.001) {
-            const nx = dx / dist;
-            const ny = dy / dist;
-            b1.x = cx + nx * maxAllowed;
-            b1.y = cy + ny * maxAllowed;
-            const vDot = b1.vx * nx + b1.vy * ny;
-            if (vDot > 0) {
-              b1.vx -= (1 + (b1.elasticity || 0.72)) * vDot * nx * 0.7;
-              b1.vy -= (1 + (b1.elasticity || 0.72)) * vDot * ny * 0.7;
+          if (dx > 0 && dy > 0) {
+            const dist = Math.hypot(dx, dy);
+            const maxAllowed = cornerR - b1.radius;
+            if (maxAllowed > 0 && dist > maxAllowed) {
+              const nx = dx / dist;
+              const ny = dy / dist;
+              b1.x = cx + nx * maxAllowed;
+              b1.y = cy + ny * maxAllowed;
+              const vDot = b1.vx * nx + b1.vy * ny;
+              if (vDot > 0) {
+                b1.vx -= (1 + (b1.elasticity || 0.72)) * vDot * nx * 0.7;
+                b1.vy -= (1 + (b1.elasticity || 0.72)) * vDot * ny * 0.7;
+              }
+            } else if (maxAllowed <= 0) {
+              b1.x = Math.min(width - b1.radius, b1.x);
+              b1.y = Math.min(height - b1.radius, b1.y);
             }
           }
         }

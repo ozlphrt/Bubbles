@@ -493,12 +493,13 @@ export class Renderer {
       if (distSq < sumR * sumR && distSq > 0.001) {
         const dist = Math.sqrt(distSq);
         const angle = Math.atan2(dy, dx);
-        // Exact radical plane chord distance (sum of d1 + d2 exactly equals center distance, zero gap)
-        const chordDist = (distSq + radius * radius - nb.radius * nb.radius) / (2 * dist);
+        // Proportional Young-Laplace contact interface (d1 + d2 = dist, zero gap)
+        // Smaller bubbles maintain higher internal pressure, preventing deformation into pills
+        const chordDist = dist * (radius / sumR);
         interactingNeighbors.push({
           angle,
           dist,
-          chordDist: Math.max(radius * 0.20, chordDist),
+          chordDist: Math.max(radius * 0.72, chordDist),
           overlap: sumR - dist
         });
       }
@@ -513,26 +514,26 @@ export class Renderer {
         const cy = height - cornerR;
         const angle = Math.atan2(b.y - cy, b.x - cx);
         const dist = Math.hypot(b.x - cx, b.y - cy);
-        const chordDist = Math.max(2, cornerR - dist);
+        const chordDist = Math.max(radius * 0.72, cornerR - dist);
         boundaries.push({ angle, chordDist, overlap: Math.max(0, radius - chordDist) });
       } else if (b.x > width - cornerR - 10) {
         const cx = width - cornerR;
         const cy = height - cornerR;
         const angle = Math.atan2(b.y - cy, b.x - cx);
         const dist = Math.hypot(b.x - cx, b.y - cy);
-        const chordDist = Math.max(2, cornerR - dist);
+        const chordDist = Math.max(radius * 0.72, cornerR - dist);
         boundaries.push({ angle, chordDist, overlap: Math.max(0, radius - chordDist) });
       }
     }
 
     if (b.x - radius < 12) {
-      boundaries.push({ angle: Math.PI, chordDist: Math.max(2, b.x), overlap: Math.max(0, radius - b.x) });
+      boundaries.push({ angle: Math.PI, chordDist: Math.max(radius * 0.72, b.x), overlap: Math.max(0, radius - b.x) });
     }
     if (width - b.x - radius < 12) {
-      boundaries.push({ angle: 0, chordDist: Math.max(2, width - b.x), overlap: Math.max(0, radius - (width - b.x)) });
+      boundaries.push({ angle: 0, chordDist: Math.max(radius * 0.72, width - b.x), overlap: Math.max(0, radius - (width - b.x)) });
     }
     if (height - b.y - radius < 12) {
-      boundaries.push({ angle: Math.PI / 2, chordDist: Math.max(2, height - b.y), overlap: Math.max(0, radius - (height - b.y)) });
+      boundaries.push({ angle: Math.PI / 2, chordDist: Math.max(radius * 0.72, height - b.y), overlap: Math.max(0, radius - (height - b.y)) });
     }
 
     // 3. Compute clean non-overlapping deformed contour points (strictly zero overlap)
