@@ -991,24 +991,38 @@ export class Renderer {
     const effR = b.minRadius ? Math.min(radius, b.minRadius) : radius;
     if (effR < 8) return 10;
 
-    // 1. Measure text dimensions at reference 100px font
+    // 1. Measure text dimensions at reference 100px font with exact center alignment
+    ctx.save();
     ctx.font = `${isGoalReached ? '600' : '800'} 100px Outfit, Inter, system-ui, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
     const m = ctx.measureText(text);
-    const w100 = m.width || 180;
-    const maxHalfW = (m.actualBoundingBoxLeft !== undefined && m.actualBoundingBoxRight !== undefined && m.actualBoundingBoxLeft > 0)
-      ? Math.max(m.actualBoundingBoxLeft, m.actualBoundingBoxRight)
-      : (w100 / 2);
-    const maxHalfH = (m.actualBoundingBoxAscent !== undefined && m.actualBoundingBoxDescent !== undefined && m.actualBoundingBoxAscent > 0)
-      ? Math.max(m.actualBoundingBoxAscent, m.actualBoundingBoxDescent)
-      : 36;
+    const w100 = m.width || 170;
 
-    // Stroke outline allowance per font px (stroke width is ~0.12 * fontSize, outer expansion is ~0.06)
-    const strokeAllowance = isGoalReached ? 0.03 : 0.07;
-    const halfUnitW = (maxHalfW / 100) + strokeAllowance;
-    const halfUnitH = (maxHalfH / 100) + strokeAllowance;
+    // Exact glyph extents relative to center (0,0) at 100px reference
+    const left100 = (m.actualBoundingBoxLeft !== undefined && m.actualBoundingBoxLeft > 0)
+      ? m.actualBoundingBoxLeft
+      : (w100 * 0.5);
+    const right100 = (m.actualBoundingBoxRight !== undefined && m.actualBoundingBoxRight > 0)
+      ? m.actualBoundingBoxRight
+      : (w100 * 0.5);
+    const top100 = (m.actualBoundingBoxAscent !== undefined && m.actualBoundingBoxAscent > 0)
+      ? m.actualBoundingBoxAscent
+      : 36;
+    const bottom100 = (m.actualBoundingBoxDescent !== undefined && m.actualBoundingBoxDescent > 0)
+      ? m.actualBoundingBoxDescent
+      : 36;
+    ctx.restore();
+
+    // Stroke outline allowance per font px (outer stroke is ~0.12 * fontSize, so ~0.06 outwards)
+    const pad = isGoalReached ? 0.025 : 0.055;
+    const unitLeft = (left100 / 100) + pad;
+    const unitRight = (right100 / 100) + pad;
+    const unitTop = (top100 / 100) + pad;
+    const unitBottom = (bottom100 / 100) + pad;
 
     // Safety margin to guarantee zero boundary contact
-    const margin = isGoalReached ? 0.90 : 0.94;
+    const margin = isGoalReached ? 0.92 : 0.96;
 
     const numPoints = (b.contourPoints && b.contourPoints.length >= 16) ? b.contourPoints.length : 0;
     let minAllowedFont = 999;
@@ -1018,14 +1032,13 @@ export class Renderer {
         const pt = b.contourPoints[i];
         const r_i = Math.hypot(pt.x, pt.y) * margin;
         const angle = (i / numPoints) * Math.PI * 2;
-        const cosA = Math.abs(Math.cos(angle));
-        const sinA = Math.abs(Math.sin(angle));
+        const cosA = Math.cos(angle);
+        const sinA = Math.sin(angle);
 
-        // Exact distance from center to bounding box boundary along ray at this angle
-        const distPerPx = Math.min(
-          cosA > 1e-4 ? halfUnitW / cosA : 1e9,
-          sinA > 1e-4 ? halfUnitH / sinA : 1e9
-        );
+        // Ray intersection with the 4 bounding box edges
+        const dx = cosA > 1e-4 ? (unitRight / cosA) : (cosA < -1e-4 ? (unitLeft / -cosA) : 1e9);
+        const dy = sinA > 1e-4 ? (unitBottom / sinA) : (sinA < -1e-4 ? (unitTop / -sinA) : 1e9);
+        const distPerPx = Math.min(dx, dy);
 
         if (distPerPx > 0) {
           const maxF_i = r_i / distPerPx;
@@ -1035,12 +1048,12 @@ export class Renderer {
         }
       }
     } else {
-      const cornerDist = Math.hypot(halfUnitW, halfUnitH);
+      const cornerDist = Math.hypot(Math.max(unitLeft, unitRight), Math.max(unitTop, unitBottom));
       minAllowedFont = (effR * margin) / cornerDist;
     }
 
     const maxFont = Math.floor(minAllowedFont);
-    return Math.max(12, Math.min(140, maxFont));
+    return Math.max(12, Math.min(145, maxFont));
   }
 
   /**
