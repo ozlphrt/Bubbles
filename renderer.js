@@ -451,18 +451,20 @@ export class Renderer {
       const dx = nb.x - b.x;
       const dy = nb.y - b.y;
       const distSq = dx * dx + dy * dy;
-      const sumR = radius + nb.radius;
+      const nbRadius = Math.max(3, nb.radius * (nb.scalePulse || 1.0));
+      const sumR = radius + nbRadius;
       // Only form contact facets when bubbles are actually in contact / pressing together
       if (distSq < sumR * sumR && distSq > 0.001) {
         const dist = Math.sqrt(distSq);
         const angle = Math.atan2(dy, dx);
-        // Proportional Young-Laplace contact interface (d1 + d2 = dist, zero gap)
-        // Smaller bubbles maintain higher internal pressure, preventing deformation into pills
-        const chordDist = dist * (radius / sumR);
+        // Radical axis interface: exact geometric plane of contact between two spheres.
+        // d1 = (D^2 + R1^2 - R2^2) / (2D), d2 = (D^2 + R2^2 - R1^2) / (2D)
+        // d1 + d2 = D identically, guaranteeing mathematically 0.000px overlap regardless of compression depth.
+        const chordDist = (dist * dist + radius * radius - nbRadius * nbRadius) / (2 * dist);
         interactingNeighbors.push({
           angle,
           dist,
-          chordDist: Math.max(radius * 0.72, chordDist),
+          chordDist: Math.max(1, Math.min(radius, chordDist)),
           overlap: sumR - dist
         });
       }
@@ -477,26 +479,26 @@ export class Renderer {
         const cy = height - cornerR;
         const angle = Math.atan2(b.y - cy, b.x - cx);
         const dist = Math.hypot(b.x - cx, b.y - cy);
-        const chordDist = Math.max(radius * 0.72, cornerR - dist);
+        const chordDist = Math.max(1, cornerR - dist);
         boundaries.push({ angle, chordDist, overlap: Math.max(0, radius - chordDist) });
       } else if (b.x > width - cornerR - 10) {
         const cx = width - cornerR;
         const cy = height - cornerR;
         const angle = Math.atan2(b.y - cy, b.x - cx);
         const dist = Math.hypot(b.x - cx, b.y - cy);
-        const chordDist = Math.max(radius * 0.72, cornerR - dist);
+        const chordDist = Math.max(1, cornerR - dist);
         boundaries.push({ angle, chordDist, overlap: Math.max(0, radius - chordDist) });
       }
     }
 
     if (b.x - radius < 12) {
-      boundaries.push({ angle: Math.PI, chordDist: Math.max(radius * 0.72, b.x), overlap: Math.max(0, radius - b.x) });
+      boundaries.push({ angle: Math.PI, chordDist: Math.max(1, b.x), overlap: Math.max(0, radius - b.x) });
     }
     if (width - b.x - radius < 12) {
-      boundaries.push({ angle: 0, chordDist: Math.max(radius * 0.72, width - b.x), overlap: Math.max(0, radius - (width - b.x)) });
+      boundaries.push({ angle: 0, chordDist: Math.max(1, width - b.x), overlap: Math.max(0, radius - (width - b.x)) });
     }
     if (height - b.y - radius < 12) {
-      boundaries.push({ angle: Math.PI / 2, chordDist: Math.max(radius * 0.72, height - b.y), overlap: Math.max(0, radius - (height - b.y)) });
+      boundaries.push({ angle: Math.PI / 2, chordDist: Math.max(1, height - b.y), overlap: Math.max(0, radius - (height - b.y)) });
     }
 
     // 3. Compute clean non-overlapping deformed contour points (strictly zero overlap)
@@ -532,14 +534,14 @@ export class Renderer {
       rawRadii[i] = r;
     }
 
-    // Smooth transition corners without sagging the contact chord inward (eliminates artificial gaps)
+    // Smooth transition corners with inward filleting (strictly non-penetrating: never exceeds raw clipping chord)
     const smoothedRadii = new Float32Array(numPoints);
     for (let i = 0; i < numPoints; i++) {
       const prev = rawRadii[(i - 1 + numPoints) % numPoints];
       const curr = rawRadii[i];
       const next = rawRadii[(i + 1) % numPoints];
       const smoothed = prev * 0.22 + curr * 0.56 + next * 0.22;
-      smoothedRadii[i] = Math.max(rawRadii[i], smoothed);
+      smoothedRadii[i] = Math.min(rawRadii[i], smoothed);
     }
 
     const points = [];
