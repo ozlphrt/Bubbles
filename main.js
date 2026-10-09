@@ -43,27 +43,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const btnTryAgain = document.getElementById('btnTryAgain');
   const btnSelectLevelFail = document.getElementById('btnSelectLevelFail');
 
-  // In-Game Guidance Toast System
-  const ingameHintPill = document.getElementById('ingameHintPill');
-  let hintTimeout = null;
   let lastActivityTime = performance.now();
-
-  function showInGameHint(durationMs = 6000) {
-    if (!ingameHintPill) return;
-    ingameHintPill.classList.add('visible');
-    if (hintTimeout) clearTimeout(hintTimeout);
-    if (durationMs > 0) {
-      hintTimeout = setTimeout(() => {
-        ingameHintPill.classList.remove('visible');
-      }, durationMs);
-    }
-  }
-
-  function hideInGameHint() {
-    if (!ingameHintPill) return;
-    ingameHintPill.classList.remove('visible');
-    if (hintTimeout) clearTimeout(hintTimeout);
-  }
 
   // DOM Elements - Navigation & Drawer
   const btnAudioToggle = document.getElementById('btnAudioToggle');
@@ -273,7 +253,6 @@ window.addEventListener('DOMContentLoaded', () => {
       modalWin.classList.add('hidden');
       modalFail.classList.add('hidden');
       lastActivityTime = performance.now();
-      hideInGameHint();
       renderer.setLockedHint(false);
     }
   };
@@ -315,7 +294,6 @@ window.addEventListener('DOMContentLoaded', () => {
   physics.onMerge = (x, y, newRadius, sizeRatio, colorId) => {
     lastActivityTime = performance.now();
     renderer.setLockedHint(false);
-    hideInGameHint();
     if (gameEngine.state === GameState.PHASE2_MERGE) {
       const now = performance.now();
       if (now - lastBonusTimeMs < 3000) return;
@@ -342,7 +320,7 @@ window.addEventListener('DOMContentLoaded', () => {
   gameEngine.onColorProgress = (progressList) => {};
 
   gameEngine.onLevelWin = (scoreData) => {
-    hideInGameHint();
+    renderer.setLockedHint(false);
     modalObjective.classList.add('hidden');
     modalFail.classList.add('hidden');
     modalWin.classList.remove('hidden');
@@ -360,7 +338,7 @@ window.addEventListener('DOMContentLoaded', () => {
   };
 
   gameEngine.onLevelFail = (failData) => {
-    hideInGameHint();
+    renderer.setLockedHint(false);
     modalObjective.classList.add('hidden');
     modalWin.classList.add('hidden');
     modalFail.classList.remove('hidden');
@@ -756,7 +734,6 @@ window.addEventListener('DOMContentLoaded', () => {
     mouseState.active = true;
     lastActivityTime = performance.now();
     renderer.setLockedHint(false);
-    hideInGameHint();
 
     if (e.button === 2) {
       physics.applyForceField(coords.x, coords.y, 50, 1, 'pop');
@@ -785,7 +762,6 @@ window.addEventListener('DOMContentLoaded', () => {
           renderer.addFloatingText('+Gem', coords.x, coords.y - 12, '#38bdf8');
           audio.playPop(1.4, radius);
         }
-        hideInGameHint();
       }
     }
   });
@@ -926,7 +902,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
         if (inactiveTime > 5500 || isSettled) {
           renderer.setLockedHint(true);
-          showInGameHint(5000);
         }
       } else {
         renderer.setLockedHint(false);
