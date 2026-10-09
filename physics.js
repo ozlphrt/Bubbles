@@ -237,6 +237,7 @@ export class Bubble {
 
       this.vx *= 0.85; // Natural floor friction
       if (Math.abs(this.vx) < 0.04) this.vx = 0;
+      if (Math.abs(this.vy) < 0.04) this.vy = 0;
     }
 
     // Rounded bottom corners containment (radius = 40px)
@@ -659,35 +660,38 @@ export class PhysicsEngine {
           const ny = dist > 0.001 ? dy / dist : -1;
           const overlap = minDist - dist;
 
-          // Mass-weighted position correction:
-          // When a bubble rests on the floor, it cannot be pushed down further into the floor.
-          // In vertical stacking, the upper bubble absorbs the upward displacement.
-          const b1OnFloor = (b1.y + b1.radius >= height - 1.0);
-          const b2OnFloor = (b2.y + b2.radius >= height - 1.0);
+          // Deadband threshold: ignore negligible sub-pixel numerical overlap (< 0.03px)
+          if (overlap > 0.03) {
+            // Mass-weighted position correction:
+            // When a bubble rests on the floor, it cannot be pushed down further into the floor.
+            // In vertical stacking, the upper bubble absorbs the upward displacement.
+            const b1OnFloor = (b1.y + b1.radius >= height - 1.0);
+            const b2OnFloor = (b2.y + b2.radius >= height - 1.0);
 
-          let w1 = b2.mass / (b1.mass + b2.mass);
-          let w2 = 1.0 - w1;
+            let w1 = b2.mass / (b1.mass + b2.mass);
+            let w2 = 1.0 - w1;
 
-          // Clamp mass displacement ratio so massive bubbles don't crush small ones
-          w1 = Math.max(0.20, Math.min(0.80, w1));
-          w2 = 1.0 - w1;
+            // Clamp mass displacement ratio so massive bubbles don't crush small ones
+            w1 = Math.max(0.20, Math.min(0.80, w1));
+            w2 = 1.0 - w1;
 
-          // Directional support against the floor:
-          // ny points from b1 to b2. If ny < -0.25, b2 is sitting on top of b1.
-          if (b1OnFloor && ny < -0.25) {
-            w1 = 0.04;
-            w2 = 0.96;
-          } else if (b2OnFloor && ny > 0.25) {
-            w1 = 0.96;
-            w2 = 0.04;
+            // Directional support against the floor:
+            // ny points from b1 to b2. If ny < -0.25, b2 is sitting on top of b1.
+            if (b1OnFloor && ny < -0.25) {
+              w1 = 0.04;
+              w2 = 0.96;
+            } else if (b2OnFloor && ny > 0.25) {
+              w1 = 0.96;
+              w2 = 0.04;
+            }
+
+            // Stable relaxation factor (0.80) to guarantee smooth non-penetration without oscillation
+            const sep = (overlap - 0.02) * 0.80;
+            b1.x -= nx * sep * w1;
+            b1.y -= ny * sep * w1;
+            b2.x += nx * sep * w2;
+            b2.y += ny * sep * w2;
           }
-
-          // Stable relaxation factor (0.82) to guarantee smooth non-penetration without oscillation
-          const sep = overlap * 0.82;
-          b1.x -= nx * sep * w1;
-          b1.y -= ny * sep * w1;
-          b2.x += nx * sep * w2;
-          b2.y += ny * sep * w2;
         }
       }
 

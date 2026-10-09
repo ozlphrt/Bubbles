@@ -435,8 +435,39 @@ export class Renderer {
    * Renders single bubble with Plateau contact flattening and interstitial gap-closing deformation
    */
   renderBubble(ctx, b, allBubbles, height, width, targetDiameter = 0) {
+    // Temporal jitter suppression filter:
+    // When bubbles are compressed or resting in stacks, multi-body constraints can introduce
+    // sub-pixel micro-fluctuations (0.05px - 0.25px). We use an adaptive deadband filter:
+    // - Sub-pixel jitter (< 0.08px): Deadband lock (0% movement, rock-solid stillness)
+    // - Micro-vibration (0.08px - 0.45px): Heavy low-pass dampening (absorbs vibration)
+    // - Moderate motion (0.45px - 2.0px): Smooth fluid tracking
+    // - Dynamic motion / spawning (> 2.0px): Instant follow with 0 lag
+    if (b.renderX === undefined || isNaN(b.renderX)) {
+      b.renderX = b.x;
+      b.renderY = b.y;
+    } else {
+      const dX = b.x - b.renderX;
+      const dY = b.y - b.renderY;
+      const dDist = Math.hypot(dX, dY);
+      if (dDist < 0.08) {
+        // Deadband: lock completely motionless
+      } else if (dDist < 0.45) {
+        b.renderX += dX * 0.15;
+        b.renderY += dY * 0.15;
+      } else if (dDist < 2.0) {
+        b.renderX += dX * 0.60;
+        b.renderY += dY * 0.60;
+      } else {
+        b.renderX = b.x;
+        b.renderY = b.y;
+      }
+    }
+
+    const curX = b.renderX;
+    const curY = b.renderY;
+
     ctx.save();
-    ctx.translate(b.x, b.y);
+    ctx.translate(curX, curY);
 
     const radius = Math.max(3, b.radius * (b.scalePulse || 1.0));
     const currentDiameter = Math.round(Math.max(b.radius, radius) * 2);
@@ -448,24 +479,28 @@ export class Renderer {
     for (let j = 0; j < len; j++) {
       const nb = allBubbles[j];
       if (nb === b) continue;
-      const dx = nb.x - b.x;
-      const dy = nb.y - b.y;
+      const nbX = nb.renderX !== undefined ? nb.renderX : nb.x;
+      const nbY = nb.renderY !== undefined ? nb.renderY : nb.y;
+      const dx = nbX - curX;
+      const dy = nbY - curY;
       const distSq = dx * dx + dy * dy;
       const nbRadius = Math.max(3, nb.radius * (nb.scalePulse || 1.0));
       const sumR = radius + nbRadius;
-      // Only form contact facets when bubbles are actually in contact / pressing together
-      if (distSq < sumR * sumR && distSq > 0.001) {
+      const overlap = sumR - Math.sqrt(distSq);
+
+      // Only form contact facets when bubbles are actually pressing together
+      // Smoothly blend in chord flattening over 1.0px so facets never flicker on contact threshold
+      if (overlap > 0.10 && distSq > 0.001) {
         const dist = Math.sqrt(distSq);
         const angle = Math.atan2(dy, dx);
-        // Radical axis interface: exact geometric plane of contact between two spheres.
-        // d1 = (D^2 + R1^2 - R2^2) / (2D), d2 = (D^2 + R2^2 - R1^2) / (2D)
-        // d1 + d2 = D identically, guaranteeing mathematically 0.000px overlap regardless of compression depth.
-        const chordDist = (dist * dist + radius * radius - nbRadius * nbRadius) / (2 * dist);
+        const rawChordDist = (dist * dist + radius * radius - nbRadius * nbRadius) / (2 * dist);
+        const blend = Math.min(1.0, (overlap - 0.10) / 0.90);
+        const chordDist = radius * (1 - blend) + Math.max(1, Math.min(radius, rawChordDist)) * blend;
         interactingNeighbors.push({
           angle,
           dist,
-          chordDist: Math.max(1, Math.min(radius, chordDist)),
-          overlap: sumR - dist
+          chordDist,
+          overlap
         });
       }
     }
@@ -473,32 +508,38 @@ export class Renderer {
     // 2. Container wall & floor boundaries (including rounded bottom corners)
     const boundaries = [];
     const cornerR = 40;
-    if (b.y > height - cornerR - 10) {
-      if (b.x < cornerR + 10) {
+    if (curY > height - cornerR - 10) {
+      if (curX < cornerR + 10) {
         const cx = cornerR;
         const cy = height - cornerR;
-        const angle = Math.atan2(b.y - cy, b.x - cx);
-        const dist = Math.hypot(b.x - cx, b.y - cy);
-        const chordDist = Math.max(1, cornerR - dist);
-        boundaries.push({ angle, chordDist, overlap: Math.max(0, radius - chordDist) });
-      } else if (b.x > width - cornerR - 10) {
+        const angle = Math.atan2(curY - cy, curX - cx);
+        const dist = Math.hypot(curX - cx, curY - cy);
+        const maxDist = cornerR - radius;
+        if (dist > maxDist) {
+          const chordDist = Math.max(1, radius - (dist - maxDist));
+          boundaries.push({ angle, chordDist, overlap: dist - maxDist });
+        }
+      } else if (curX > width - cornerR - 10) {
         const cx = width - cornerR;
         const cy = height - cornerR;
-        const angle = Math.atan2(b.y - cy, b.x - cx);
-        const dist = Math.hypot(b.x - cx, b.y - cy);
-        const chordDist = Math.max(1, cornerR - dist);
-        boundaries.push({ angle, chordDist, overlap: Math.max(0, radius - chordDist) });
+        const angle = Math.atan2(curY - cy, curX - cx);
+        const dist = Math.hypot(curX - cx, curY - cy);
+        const maxDist = cornerR - radius;
+        if (dist > maxDist) {
+          const chordDist = Math.max(1, radius - (dist - maxDist));
+          boundaries.push({ angle, chordDist, overlap: dist - maxDist });
+        }
       }
     }
 
-    if (b.x - radius < 12) {
-      boundaries.push({ angle: Math.PI, chordDist: Math.max(1, b.x), overlap: Math.max(0, radius - b.x) });
+    if (curX - radius < 12) {
+      boundaries.push({ angle: Math.PI, chordDist: Math.max(1, curX), overlap: Math.max(0, radius - curX) });
     }
-    if (width - b.x - radius < 12) {
-      boundaries.push({ angle: 0, chordDist: Math.max(1, width - b.x), overlap: Math.max(0, radius - (width - b.x)) });
+    if (width - curX - radius < 12) {
+      boundaries.push({ angle: 0, chordDist: Math.max(1, width - curX), overlap: Math.max(0, radius - (width - curX)) });
     }
-    if (height - b.y - radius < 12) {
-      boundaries.push({ angle: Math.PI / 2, chordDist: Math.max(1, height - b.y), overlap: Math.max(0, radius - (height - b.y)) });
+    if (height - curY - radius < 12) {
+      boundaries.push({ angle: Math.PI / 2, chordDist: Math.max(1, height - curY), overlap: Math.max(0, radius - (height - curY)) });
     }
 
     // 3. Compute clean non-overlapping deformed contour points (strictly zero overlap)
