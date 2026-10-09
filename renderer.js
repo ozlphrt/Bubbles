@@ -435,13 +435,14 @@ export class Renderer {
    * Renders single bubble with Plateau contact flattening and interstitial gap-closing deformation
    */
   renderBubble(ctx, b, allBubbles, height, width, targetDiameter = 0) {
-    // Temporal jitter suppression filter:
-    // When bubbles are compressed or resting in stacks, multi-body constraints can introduce
-    // sub-pixel micro-fluctuations (0.10px - 0.30px). We use an adaptive deadband filter:
-    // - Sub-pixel jitter (< 0.36px): Deadband lock (0% movement, rock-solid stillness)
-    // - Low-frequency settling (0.36px - 1.2px): Progressive damping
-    // - Dynamic motion / spawning (> 1.2px): Instant follow with 0 lag
-    if (b.renderX === undefined || isNaN(b.renderX)) {
+    // Smooth, lag-free render follower:
+    // When the bubble is in motion (sliding, rolling, falling, speed > 0.08):
+    // Render directly at physical coordinates — 0 drag, 0 friction, 0 deadband stutter.
+    // When the bubble has physically settled (speed <= 0.08):
+    // Lock render position motionless so resting stacks never jitter.
+    const speed = Math.hypot(b.vx, b.vy);
+
+    if (b.renderX === undefined || isNaN(b.renderX) || speed > 0.08) {
       b.renderX = b.x;
       b.renderY = b.y;
       b.isStationary = false;
@@ -449,18 +450,13 @@ export class Renderer {
       const dX = b.x - b.renderX;
       const dY = b.y - b.renderY;
       const dDist = Math.hypot(dX, dY);
-      if (dDist < 0.36) {
-        // Complete deadband lock: freeze position rock-solid
+
+      if (dDist < 0.25) {
+        // Firm resting lock: completely motionless
         b.isStationary = true;
-      } else if (dDist < 1.2) {
-        const t = (dDist - 0.36) / (1.2 - 0.36);
-        const filterT = 0.25 + t * 0.45;
-        b.renderX += dX * filterT;
-        b.renderY += dY * filterT;
-        b.isStationary = false;
       } else {
-        b.renderX = b.x;
-        b.renderY = b.y;
+        b.renderX += dX * 0.35;
+        b.renderY += dY * 0.35;
         b.isStationary = false;
       }
     }

@@ -660,33 +660,26 @@ export class PhysicsEngine {
           const ny = dist > 0.001 ? dy / dist : -1;
           const overlap = minDist - dist;
 
-          // Deadband threshold: ignore negligible sub-pixel numerical overlap (< 0.03px)
-          if (overlap > 0.03) {
-            // Mass-weighted position correction:
-            // When a bubble rests on the floor, it cannot be pushed down further into the floor.
-            // In vertical stacking, the upper bubble absorbs the upward displacement.
-            const b1OnFloor = (b1.y + b1.radius >= height - 1.0);
-            const b2OnFloor = (b2.y + b2.radius >= height - 1.0);
-
+          if (overlap > 0.001) {
+            // Directional support from bottom to top:
+            // ny points from b1 to b2 (dy = b2.y - b1.y).
+            // If ny < -0.20, b2 is ABOVE b1 in the stack.
             let w1 = b2.mass / (b1.mass + b2.mass);
             let w2 = 1.0 - w1;
-
-            // Clamp mass displacement ratio so massive bubbles don't crush small ones
             w1 = Math.max(0.20, Math.min(0.80, w1));
             w2 = 1.0 - w1;
 
-            // Directional support against the floor:
-            // ny points from b1 to b2. If ny < -0.25, b2 is sitting on top of b1.
-            if (b1OnFloor && ny < -0.25) {
-              w1 = 0.04;
-              w2 = 0.96;
-            } else if (b2OnFloor && ny > 0.25) {
-              w1 = 0.96;
-              w2 = 0.04;
+            if (ny < -0.20) {
+              // Upper bubble b2 absorbs displacement upward into free air
+              w1 = 0.12;
+              w2 = 0.88;
+            } else if (ny > 0.20) {
+              // Upper bubble b1 absorbs displacement upward into free air
+              w1 = 0.88;
+              w2 = 0.12;
             }
 
-            // Stable relaxation factor (0.80) to guarantee smooth non-penetration without oscillation
-            const sep = (overlap - 0.02) * 0.80;
+            const sep = overlap * 0.85;
             b1.x -= nx * sep * w1;
             b1.y -= ny * sep * w1;
             b2.x += nx * sep * w2;
@@ -1010,40 +1003,23 @@ export class PhysicsEngine {
                 soundEngine.playBounce(Math.min(1.0, approachSpeed / 3.0), smaller.radius);
               }
             } else if (approachSpeed > 0) {
-              // Resting contact under compression: completely inelastic (e = 0)
-              // Quench normal approach velocity so resting stacks settle rock-solid
+              // Resting contact under compression: completely inelastic along contact normal (e = 0)
+              // Quench normal approach velocity to stabilize stacks, while preserving 100% of tangential
+              // velocity for silky, oily, effortless fluid sliding!
               const restingImpulse = approachSpeed / (1 / b1.mass + 1 / b2.mass);
               b1.vx -= (restingImpulse / b1.mass) * nx;
               b1.vy -= (restingImpulse / b1.mass) * ny;
               b2.vx += (restingImpulse / b2.mass) * nx;
               b2.vy += (restingImpulse / b2.mass) * ny;
 
-              // Surface friction damping along tangent
-              const tx = -ny;
-              const ty = nx;
-              const rvt = (b2.vx - b1.vx) * tx + (b2.vy - b1.vy) * ty;
-              const frictionFactor = Math.min(0.25, ((b1.friction || 0.016) + (b2.friction || 0.016)) * 4);
-              const frictionImpulse = rvt * frictionFactor / (1 / b1.mass + 1 / b2.mass);
-              b1.vx += (frictionImpulse / b1.mass) * tx;
-              b1.vy += (frictionImpulse / b1.mass) * ty;
-              b2.vx -= (frictionImpulse / b2.mass) * tx;
-              b2.vy -= (frictionImpulse / b2.mass) * ty;
-
-              if (Math.abs(b1.vx) < 0.03) b1.vx = 0;
-              if (Math.abs(b1.vy) < 0.03) b1.vy = 0;
-              if (Math.abs(b2.vx) < 0.03) b2.vx = 0;
-              if (Math.abs(b2.vy) < 0.03) b2.vy = 0;
-            } else {
-              // Bubbles are separating or motionless: apply quiet friction damping
-              const frictionDamping = 1 - Math.min(0.12, ((b1.friction || 0.016) + (b2.friction || 0.016)) * 2);
-              b1.vx *= frictionDamping;
-              b1.vy *= frictionDamping;
-              b2.vx *= frictionDamping;
-              b2.vy *= frictionDamping;
-              if (Math.abs(b1.vx) < 0.03) b1.vx = 0;
-              if (Math.abs(b1.vy) < 0.03) b1.vy = 0;
-              if (Math.abs(b2.vx) < 0.03) b2.vx = 0;
-              if (Math.abs(b2.vy) < 0.03) b2.vy = 0;
+              if (Math.abs(b1.vx) < 0.02 && Math.abs(b1.vy) < 0.02) {
+                b1.vx = 0;
+                b1.vy = 0;
+              }
+              if (Math.abs(b2.vx) < 0.02 && Math.abs(b2.vy) < 0.02) {
+                b2.vx = 0;
+                b2.vy = 0;
+              }
             }
           }
         }
