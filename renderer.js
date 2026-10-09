@@ -437,29 +437,31 @@ export class Renderer {
   renderBubble(ctx, b, allBubbles, height, width, targetDiameter = 0) {
     // Temporal jitter suppression filter:
     // When bubbles are compressed or resting in stacks, multi-body constraints can introduce
-    // sub-pixel micro-fluctuations (0.05px - 0.25px). We use an adaptive deadband filter:
-    // - Sub-pixel jitter (< 0.08px): Deadband lock (0% movement, rock-solid stillness)
-    // - Micro-vibration (0.08px - 0.45px): Heavy low-pass dampening (absorbs vibration)
-    // - Moderate motion (0.45px - 2.0px): Smooth fluid tracking
-    // - Dynamic motion / spawning (> 2.0px): Instant follow with 0 lag
+    // sub-pixel micro-fluctuations (0.10px - 0.30px). We use an adaptive deadband filter:
+    // - Sub-pixel jitter (< 0.36px): Deadband lock (0% movement, rock-solid stillness)
+    // - Low-frequency settling (0.36px - 1.2px): Progressive damping
+    // - Dynamic motion / spawning (> 1.2px): Instant follow with 0 lag
     if (b.renderX === undefined || isNaN(b.renderX)) {
       b.renderX = b.x;
       b.renderY = b.y;
+      b.isStationary = false;
     } else {
       const dX = b.x - b.renderX;
       const dY = b.y - b.renderY;
       const dDist = Math.hypot(dX, dY);
-      if (dDist < 0.08) {
-        // Deadband: lock completely motionless
-      } else if (dDist < 0.45) {
-        b.renderX += dX * 0.15;
-        b.renderY += dY * 0.15;
-      } else if (dDist < 2.0) {
-        b.renderX += dX * 0.60;
-        b.renderY += dY * 0.60;
+      if (dDist < 0.36) {
+        // Complete deadband lock: freeze position rock-solid
+        b.isStationary = true;
+      } else if (dDist < 1.2) {
+        const t = (dDist - 0.36) / (1.2 - 0.36);
+        const filterT = 0.25 + t * 0.45;
+        b.renderX += dX * filterT;
+        b.renderY += dY * filterT;
+        b.isStationary = false;
       } else {
         b.renderX = b.x;
         b.renderY = b.y;
+        b.isStationary = false;
       }
     }
 
@@ -497,6 +499,7 @@ export class Renderer {
         const blend = Math.min(1.0, (overlap - 0.10) / 0.90);
         const chordDist = radius * (1 - blend) + Math.max(1, Math.min(radius, rawChordDist)) * blend;
         interactingNeighbors.push({
+          neighbor: nb,
           angle,
           dist,
           chordDist,
@@ -543,64 +546,77 @@ export class Renderer {
     }
 
     // 3. Compute clean non-overlapping deformed contour points (strictly zero overlap)
-    const numPoints = 64;
-    const rawRadii = new Float32Array(numPoints);
-
-    for (let i = 0; i < numPoints; i++) {
-      const theta = (i / numPoints) * Math.PI * 2;
-      let r = radius;
-
-      // Exact chord clipping against neighboring bubbles - strictly zero overlap
+    let points = b.contourPoints;
+    let needsContourUpdate = !points || !b.isStationary;
+    if (!needsContourUpdate) {
       for (let n of interactingNeighbors) {
-        const cosDiff = Math.cos(theta - n.angle);
-        if (cosDiff > 0.001) {
-          const rChord = n.chordDist / cosDiff;
-          if (rChord < r) {
-            r = rChord;
-          }
+        if (!n.neighbor.isStationary) {
+          needsContourUpdate = true;
+          break;
         }
       }
+    }
 
-      // Exact chord clipping against floor / walls - strictly zero boundary overshoot
-      for (let bd of boundaries) {
-        const cosDiff = Math.cos(theta - bd.angle);
-        if (cosDiff > 0.001) {
-          const rChord = bd.chordDist / cosDiff;
-          if (rChord < r) {
-            r = rChord;
+    if (needsContourUpdate) {
+      const numPoints = 64;
+      const rawRadii = new Float32Array(numPoints);
+
+      for (let i = 0; i < numPoints; i++) {
+        const theta = (i / numPoints) * Math.PI * 2;
+        let r = radius;
+
+        // Exact chord clipping against neighboring bubbles - strictly zero overlap
+        for (let n of interactingNeighbors) {
+          const cosDiff = Math.cos(theta - n.angle);
+          if (cosDiff > 0.001) {
+            const rChord = n.chordDist / cosDiff;
+            if (rChord < r) {
+              r = rChord;
+            }
           }
         }
+
+        // Exact chord clipping against floor / walls - strictly zero boundary overshoot
+        for (let bd of boundaries) {
+          const cosDiff = Math.cos(theta - bd.angle);
+          if (cosDiff > 0.001) {
+            const rChord = bd.chordDist / cosDiff;
+            if (rChord < r) {
+              r = rChord;
+            }
+          }
+        }
+
+        rawRadii[i] = r;
       }
 
-      rawRadii[i] = r;
-    }
+      // Smooth transition corners with inward filleting (strictly non-penetrating: never exceeds raw clipping chord)
+      const smoothedRadii = new Float32Array(numPoints);
+      for (let i = 0; i < numPoints; i++) {
+        const prev = rawRadii[(i - 1 + numPoints) % numPoints];
+        const curr = rawRadii[i];
+        const next = rawRadii[(i + 1) % numPoints];
+        const smoothed = prev * 0.22 + curr * 0.56 + next * 0.22;
+        smoothedRadii[i] = Math.min(rawRadii[i], smoothed);
+      }
 
-    // Smooth transition corners with inward filleting (strictly non-penetrating: never exceeds raw clipping chord)
-    const smoothedRadii = new Float32Array(numPoints);
-    for (let i = 0; i < numPoints; i++) {
-      const prev = rawRadii[(i - 1 + numPoints) % numPoints];
-      const curr = rawRadii[i];
-      const next = rawRadii[(i + 1) % numPoints];
-      const smoothed = prev * 0.22 + curr * 0.56 + next * 0.22;
-      smoothedRadii[i] = Math.min(rawRadii[i], smoothed);
-    }
+      points = [];
+      for (let i = 0; i < numPoints; i++) {
+        const theta = (i / numPoints) * Math.PI * 2;
+        const r = smoothedRadii[i];
+        points.push({
+          x: Math.cos(theta) * r,
+          y: Math.sin(theta) * r
+        });
+      }
 
-    const points = [];
-    for (let i = 0; i < numPoints; i++) {
-      const theta = (i / numPoints) * Math.PI * 2;
-      const r = smoothedRadii[i];
-      points.push({
-        x: Math.cos(theta) * r,
-        y: Math.sin(theta) * r
-      });
+      let minR = radius;
+      for (let i = 0; i < numPoints; i++) {
+        if (smoothedRadii[i] < minR) minR = smoothedRadii[i];
+      }
+      b.minRadius = minR;
+      b.contourPoints = points;
     }
-
-    let minR = radius;
-    for (let i = 0; i < numPoints; i++) {
-      if (smoothedRadii[i] < minR) minR = smoothedRadii[i];
-    }
-    b.minRadius = minR;
-    b.contourPoints = points;
 
     // 4. Define and draw bubble contour
     const traceContour = () => {

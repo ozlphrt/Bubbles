@@ -956,17 +956,10 @@ export class PhysicsEngine {
                 const distRatio = Math.max(0, 1 - kDist / maxRange);
                 const pushStrength = Math.pow(distRatio, 1.2) * (1.2 + (newRadius / 45) * 0.9);
 
-                // Soft outward impulse scaled by mass
+                // Soft outward fluid impulse scaled by mass (no direct position displacement or scale shock)
                 const massFactor = 1.0 / Math.sqrt(Math.max(0.25, nb.mass));
-                nb.vx += unx * pushStrength * 0.65 * massFactor;
-                nb.vy += uny * pushStrength * 0.65 * massFactor;
-
-                // Subtle physical displacement
-                nb.x += unx * pushStrength * 0.6;
-                nb.y += uny * pushStrength * 0.6;
-
-                // Elastic recoil shake pulse on neighbor
-                nb.scalePulse = Math.max(nb.scalePulse || 1.0, 1.0 + distRatio * 0.14);
+                nb.vx += unx * pushStrength * 0.35 * massFactor;
+                nb.vy += uny * pushStrength * 0.35 * massFactor;
               }
             }
 
