@@ -88,19 +88,42 @@
       </div>
     </div>
 
-    <!-- Minimalist Glass Fail Modal -->
+    <!-- Luxurious Glass Game Over / Fail Modal -->
     <div class="modal-overlay hidden" id="modalFail">
       <div class="modal-card modal-card-fail">
-        <div class="modal-eyebrow fail-eyebrow">TIME EXPIRED</div>
-        <h2 class="modal-headline fail-title">Try Again</h2>
-        
-        <div class="fail-summary-box" id="failResultsGrid">
-          <!-- Clean minimal color checklist -->
+        <div class="modal-fail-header">
+          <div class="modal-eyebrow fail-eyebrow">
+            <span class="eyebrow-dot"></span>
+            <span>TIME EXPIRED</span>
+          </div>
+          <h2 class="modal-headline fail-title">Coalescence Incomplete</h2>
+          <p class="modal-subtext">Merge matching colors to target diameter before time runs out</p>
         </div>
 
-        <button id="btnTryAgain" class="btn-hero-primary danger-btn">
-          <span>Retry</span>
-        </button>
+        <div class="fail-score-meter-card">
+          <div class="fail-meter-header">
+            <span class="meter-label">OVERALL COMPLETION</span>
+            <span class="meter-pct" id="failTotalPct">0%</span>
+          </div>
+          <div class="fail-progress-bar-track">
+            <div class="fail-progress-bar-fill" id="failTotalFill" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <div class="fail-checklist-container" id="failResultsGrid">
+          <!-- Dynamic Glass Color Cards with Mini Bubble Canvases & Progress Bars -->
+        </div>
+
+        <div class="modal-buttons-grid">
+          <button id="btnSelectLevelFail" class="btn-hero-secondary btn-icon-label" title="Select Level">
+            <span>☰</span>
+            <span class="btn-label-text">Levels</span>
+          </button>
+          <button id="btnTryAgain" class="btn-hero-primary danger-btn">
+            <span class="btn-replay-glyph">↺</span>
+            <span>Try Again</span>
+          </button>
+        </div>
       </div>
     </div>
 
