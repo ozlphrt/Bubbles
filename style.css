@@ -74,18 +74,18 @@ html, body {
 /* Compact Top Header HUD (Level, Goal, Time) */
 .top-stats-container {
   position: absolute;
-  top: 16px;
+  top: 18px;
   left: 20px;
   display: inline-flex;
   align-items: center;
-  gap: 14px;
-  padding: 6px 16px;
-  background: rgba(10, 15, 26, 0.68);
+  gap: 18px;
+  padding: 9px 22px;
+  background: rgba(10, 15, 26, 0.75);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: var(--radius-full);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.40), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.50), inset 0 1px 0 rgba(255, 255, 255, 0.14);
   pointer-events: none;
   z-index: 10;
   user-select: none;
@@ -94,7 +94,7 @@ html, body {
 .top-stat-group {
   display: flex;
   align-items: baseline;
-  gap: 6px;
+  gap: 8px;
   transition: transform var(--transition-fast);
 }
 
@@ -102,32 +102,32 @@ html, body {
   content: '';
   display: inline-block;
   width: 1px;
-  height: 12px;
-  background: rgba(255, 255, 255, 0.12);
-  margin-left: 8px;
+  height: 18px;
+  background: rgba(255, 255, 255, 0.16);
+  margin-left: 12px;
   align-self: center;
 }
 
 .stat-mini-label {
   font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: 0.82rem;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.10em;
   text-transform: uppercase;
   color: #94a3b8;
-  opacity: 0.90;
+  opacity: 0.95;
   transition: color var(--transition-fast);
 }
 
 .stat-large-val {
   font-family: var(--font-sans);
-  font-size: 1.15rem;
+  font-size: 1.50rem;
   font-weight: 800;
   letter-spacing: -0.01em;
   line-height: 1;
   font-variant-numeric: tabular-nums;
-  color: #f8fafc;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
+  color: #ffffff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
   transition: all var(--transition-fast);
 }
 
@@ -202,17 +202,24 @@ html, body {
 
 @media (max-width: 600px) {
   .top-stats-container {
-    top: 10px;
-    left: 12px;
-    padding: 4px 12px;
-    gap: 10px;
+    top: 14px;
+    left: 14px;
+    padding: 7px 18px;
+    gap: 14px;
+  }
+  .top-stat-group {
+    gap: 6px;
+  }
+  .top-stat-group:not(:last-child)::after {
+    height: 15px;
+    margin-left: 10px;
   }
   .stat-mini-label {
-    font-size: 0.58rem;
+    font-size: 0.72rem;
     letter-spacing: 0.08em;
   }
   .stat-large-val {
-    font-size: 0.98rem;
+    font-size: 1.30rem;
   }
   .top-controls-container {
     top: 14px;
