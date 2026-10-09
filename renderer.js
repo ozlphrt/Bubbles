@@ -544,10 +544,20 @@ export class Renderer {
       smoothedRadii[i] = Math.min(rawRadii[i], smoothed);
     }
 
+    // Temporal smoothing to eliminate 60Hz single-frame facet flickering on compressed contacts
+    if (!b.cachedRadii || b.cachedRadii.length !== numPoints) {
+      b.cachedRadii = new Float32Array(smoothedRadii);
+    } else {
+      const blendRate = 0.55;
+      for (let i = 0; i < numPoints; i++) {
+        b.cachedRadii[i] += (smoothedRadii[i] - b.cachedRadii[i]) * blendRate;
+      }
+    }
+
     const points = [];
     for (let i = 0; i < numPoints; i++) {
       const theta = (i / numPoints) * Math.PI * 2;
-      const r = smoothedRadii[i];
+      const r = b.cachedRadii[i];
       points.push({
         x: Math.cos(theta) * r,
         y: Math.sin(theta) * r
@@ -556,7 +566,7 @@ export class Renderer {
 
     let minR = radius;
     for (let i = 0; i < numPoints; i++) {
-      if (smoothedRadii[i] < minR) minR = smoothedRadii[i];
+      if (b.cachedRadii[i] < minR) minR = b.cachedRadii[i];
     }
     b.minRadius = minR;
     b.contourPoints = points;
