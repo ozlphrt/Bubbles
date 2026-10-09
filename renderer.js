@@ -933,7 +933,7 @@ export class Renderer {
    * Renders an isolated preview bubble with the exact same material shader,
    * thin-film Fresnel rim, Rayleigh interference, and specular glints as gameplay.
    */
-  renderStandaloneBubble(ctx, x, y, radius, colorId) {
+  renderStandaloneBubble(ctx, x, y, radius, colorId, isGoalReached = false) {
     ctx.save();
     ctx.translate(x, y);
 
@@ -959,10 +959,23 @@ export class Renderer {
     traceContour();
 
     // Identical faceted cut-gemstone shader
-    this.applyThemeStyle(ctx, b, radius, traceContour);
+    if (isGoalReached) {
+      ctx.globalAlpha = 0.46;
+      this.applyThemeStyle(ctx, b, radius, traceContour);
+      this.renderLowlightOverlay(ctx, b, radius, traceContour);
+    } else {
+      this.applyThemeStyle(ctx, b, radius, traceContour);
+    }
 
     // Identical diamond sparkle flares, caustics & prismatic dispersion
-    this.renderHighlights(ctx, radius, b, null, 0, traceContour);
+    if (isGoalReached) {
+      ctx.save();
+      ctx.globalAlpha = 0.18;
+      this.renderHighlights(ctx, radius, b, null, 0, traceContour);
+      ctx.restore();
+    } else {
+      this.renderHighlights(ctx, radius, b, null, 0, traceContour);
+    }
 
     ctx.restore();
   }
